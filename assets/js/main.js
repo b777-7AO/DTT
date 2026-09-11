@@ -1,4 +1,4 @@
-/* DTT — shared behaviour: partial includes, nav, slider, year */
+/* DTT · shared behaviour: partial includes, navigation, footer year */
 
 (function () {
   // ---- Include header/footer partials -------------------------------------
@@ -21,7 +21,7 @@
     afterInclude();
   }
 
-  // Prepend the root prefix to relative href/src (skip absolute, anchor, mailto).
+  // Prepend the root prefix to relative href/src (skip absolute, anchor, mailto, tel).
   function rewriteLinks(html, root) {
     return html.replace(/(href|src)="([^"]*)"/g, (m, attr, val) => {
       if (/^(https?:|#|mailto:|tel:|\/)/.test(val)) return m;
@@ -34,41 +34,28 @@
     const toggle = document.getElementById('navToggle');
     const nav = document.getElementById('mainNav');
     if (toggle && nav) {
-      toggle.addEventListener('click', () => nav.classList.toggle('open'));
+      toggle.addEventListener('click', () => {
+        const open = nav.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
     }
+    // Header shadow once the page is scrolled
+    const header = document.querySelector('header.site-header');
+    if (header) {
+      const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 8);
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+    }
+    // Mark the current top-level nav item
+    const here = location.pathname.split('/').pop() || 'index.html';
+    document.querySelectorAll('nav.main-nav > ul > li > a').forEach((a) => {
+      const target = (a.getAttribute('href') || '').split('/').pop().split('#')[0];
+      if (target && target === here && !a.getAttribute('href').includes('#')) a.parentElement.classList.add('active');
+    });
     // Current year in footer
     const y = document.getElementById('year');
     if (y) y.textContent = new Date().getFullYear();
   }
 
-  // ---- Hero slider ---------------------------------------------------------
-  function initSlider() {
-    const slider = document.querySelector('.slider');
-    if (!slider) return;
-    const slides = [...slider.querySelectorAll('.slide')];
-    const dots = [...slider.querySelectorAll('.slider-dots button')];
-    if (!slides.length) return;
-    let i = 0, timer;
-
-    function go(n) {
-      slides[i].classList.remove('active');
-      dots[i]?.classList.remove('active');
-      i = (n + slides.length) % slides.length;
-      slides[i].classList.add('active');
-      dots[i]?.classList.add('active');
-    }
-    function next() { go(i + 1); }
-    function start() { timer = setInterval(next, 6000); }
-    function reset() { clearInterval(timer); start(); }
-
-    dots.forEach((d, n) => d.addEventListener('click', () => { go(n); reset(); }));
-    slider.querySelector('.slider-arrow.next')?.addEventListener('click', () => { next(); reset(); });
-    slider.querySelector('.slider-arrow.prev')?.addEventListener('click', () => { go(i - 1); reset(); });
-    start();
-  }
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    await includePartials();
-    initSlider();
-  });
+  document.addEventListener('DOMContentLoaded', includePartials);
 })();

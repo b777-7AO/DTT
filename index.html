@@ -1,210 +1,220 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deutsche Tor Technik — Doors that suit you</title>
-  <meta name="description" content="DTT crafts custom garage doors and front doors in genuine wood — where quality meets design. Doors that suit you, service that understands you.">
+  <title>DTT Deutsche Tor-Technik · Tore, die zu Ihnen passen</title>
+  <meta name="description" content="Maßgefertigte Garagentore, Hof- und Gartentore, Industrietore, Spezialtore und Sicherheitstüren aus Idstein. Beratung, Montage und Service aus einer Hand.">
   <link rel="icon" href="assets/img/logo-square.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
   <div data-include="partials/header.html" data-root=""></div>
 
-  <!-- 1. HERO SLIDER -->
-  <section class="slider">
-    <div class="slides">
-      <div class="slide active" style="background-image:linear-gradient(90deg,rgba(0,14,40,.78),rgba(0,18,129,.25)),url('assets/img/hero-1.jpg')">
-        <div class="container">
-          <div class="slide-copy">
-            <span class="eyebrow">Custom-made in genuine wood</span>
-            <h2>Doors that suit you</h2>
-            <p>Bespoke garage doors and front doors crafted from real wood — where quality meets design.</p>
-            <a href="products.html" class="btn btn-primary">Discover our doors</a>
-          </div>
-        </div>
-      </div>
-      <div class="slide" style="background-image:linear-gradient(90deg,rgba(0,14,40,.78),rgba(0,18,129,.25)),url('assets/img/gallery-1.jpg')">
-        <div class="container">
-          <div class="slide-copy">
-            <span class="eyebrow">Garage Doors</span>
-            <h2>Made to measure, made to last</h2>
-            <p>Sectional, side-hinged and up-and-over doors, tailored to your home.</p>
-            <a href="products/gate.html" class="btn btn-primary">Explore garage doors</a>
-          </div>
-        </div>
-      </div>
-      <div class="slide" style="background-image:linear-gradient(90deg,rgba(0,14,40,.78),rgba(0,18,129,.25)),url('assets/img/gallery-3.jpg')">
-        <div class="container">
-          <div class="slide-copy">
-            <span class="eyebrow">Front Doors</span>
-            <h2>The first impression of your home</h2>
-            <p>Solid-wood front doors designed around your style and built to protect.</p>
-            <a href="products/autodoor.html" class="btn btn-primary">Explore front doors</a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <button class="slider-arrow prev" aria-label="Previous">&#8249;</button>
-    <button class="slider-arrow next" aria-label="Next">&#8250;</button>
-    <div class="slider-dots">
-      <button class="active" aria-label="Slide 1"></button>
-      <button aria-label="Slide 2"></button>
-      <button aria-label="Slide 3"></button>
-    </div>
-  </section>
-
-  <!-- 2. FIRST BANNER — intro split -->
-  <section class="block">
-    <div class="container intro-split">
-      <div class="copy">
-        <span class="eyebrow">Who we are</span>
-        <h2 class="section-title">Tailor-made doors, crafted with care</h2>
-        <p>Deutsche Tor Technik designs and builds custom garage doors and front doors in genuine wood. Every door is made to measure for your home, combining traditional craftsmanship with modern technology.</p>
-        <p>From the first consultation to installation and service, we are with you every step of the way — doors that suit you, service that understands you.</p>
-        <a href="pages/company.html" class="btn btn-ghost">More about us</a>
-      </div>
-      <div class="media">
-        <img src="assets/img/gallery-2.jpg" alt="Custom wooden door by Deutsche Tor Technik">
-      </div>
-    </div>
-  </section>
-
-  <!-- 3. PRODUCT CATEGORIES grid (4) -->
-  <section class="block alt">
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-title">
     <div class="container">
-      <div class="section-title-row">
-        <span class="eyebrow">Our ranges</span>
-        <h2 class="section-title">What we make</h2>
-        <p>Custom doors and the technology that drives them.</p>
-      </div>
-      <div class="cat-grid">
-        <a class="cat-tile" href="products/gate.html" style="background-image:linear-gradient(180deg,rgba(0,18,129,.1),rgba(0,14,40,.85)),url('assets/img/gallery-1.jpg')">
-          <div class="cat-body"><h3>Garage Doors</h3><span>Sectional · Side-hinged · Up-and-over</span></div>
-        </a>
-        <a class="cat-tile" href="products/autodoor.html" style="background-image:linear-gradient(180deg,rgba(0,18,129,.1),rgba(0,14,40,.85)),url('assets/img/gallery-3.jpg')">
-          <div class="cat-body"><h3>Front Doors</h3><span>Solid wood · Design · Side panels</span></div>
-        </a>
-        <a class="cat-tile" href="products/outdoor.html" style="background-image:linear-gradient(180deg,rgba(0,18,129,.1),rgba(0,14,40,.85)),url('assets/img/gallery-2.jpg')">
-          <div class="cat-body"><h3>Wood &amp; Design</h3><span>Species · Finishes · Custom design</span></div>
-        </a>
-        <a class="cat-tile" href="products/accessories.html" style="background-image:linear-gradient(180deg,rgba(0,18,129,.1),rgba(0,14,40,.85)),url('assets/img/hero-1.jpg')">
-          <div class="cat-body"><h3>Drives &amp; Accessories</h3><span>Openers · Remotes · Safety</span></div>
-        </a>
-      </div>
-
-      <div class="section-title-row" style="margin-top:3.5rem">
-        <h2 class="section-title">Featured</h2>
-      </div>
-      <div class="cards-grid">
-        <a class="card" href="products/gate.html">
-          <div class="thumb"><img src="assets/img/gallery-1.jpg" alt=""></div>
-          <div class="body"><span class="tag">Garage</span><h3>Sectional wood door</h3><p>Warm real-wood sectional door, made to measure.</p><span class="card-link">View →</span></div>
-        </a>
-        <a class="card" href="products/autodoor.html">
-          <div class="thumb"><img src="assets/img/gallery-3.jpg" alt=""></div>
-          <div class="body"><span class="tag">Front door</span><h3>Solid-wood entrance</h3><p>Bespoke front door with secure hardware.</p><span class="card-link">View →</span></div>
-        </a>
-        <a class="card" href="products/outdoor.html">
-          <div class="thumb"><img src="assets/img/gallery-2.jpg" alt=""></div>
-          <div class="body"><span class="tag">Design</span><h3>Custom wood finish</h3><p>Choice of species, surfaces and finishes.</p><span class="card-link">View →</span></div>
-        </a>
-        <a class="card" href="products/accessories.html">
-          <div class="thumb"><img src="assets/img/hero-1.jpg" alt=""></div>
-          <div class="body"><span class="tag">Drive</span><h3>Garage door opener</h3><p>Quiet, smart drive with remote control.</p><span class="card-link">View →</span></div>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- 4. GALLERY / SOCIAL STRIP -->
-  <section class="block">
-    <div class="container">
-      <div class="section-title-row">
-        <span class="eyebrow">Our work</span>
-        <h2 class="section-title">References</h2>
-      </div>
-      <div class="ig-strip">
-        <a href="pages/news.html"><img src="assets/img/gallery-1.jpg" alt=""></a>
-        <a href="pages/news.html"><img src="assets/img/gallery-2.jpg" alt=""></a>
-        <a href="pages/news.html"><img src="assets/img/gallery-3.jpg" alt=""></a>
-        <a href="pages/news.html"><img src="assets/img/hero-1.jpg" alt=""></a>
-        <a href="pages/news.html"><img src="assets/img/gallery-1.jpg" alt=""></a>
-        <a href="pages/news.html"><img src="assets/img/gallery-3.jpg" alt=""></a>
-      </div>
-    </div>
-  </section>
-
-  <!-- 5. FEATURE BANNER -->
-  <section class="block alt">
-    <div class="container">
-      <div class="feature-banner">
-        <div class="fb-inner">
-          <div class="fb-copy">
-            <span class="eyebrow">Genuine wood</span>
-            <h2>The natural beauty of real wood</h2>
-            <p style="opacity:.9">Every door tells a story in its grain. We work with carefully selected wood species and finishes so your door is as unique as your home.</p>
-            <a href="products/outdoor.html" class="btn btn-primary">Explore wood &amp; design</a>
-          </div>
-          <div class="fb-media" style="background-image:url('assets/img/gallery-2.jpg')"></div>
+      <div class="hero-card">
+        <h1 id="hero-title">Tore, die zu<br>Ihnen passen.</h1>
+        <span class="rule" aria-hidden="true"></span>
+        <p class="lead">Maßgefertigte Lösungen für Zuhause, Gewerbe und Industrie.</p>
+        <div class="hero-actions">
+          <a href="products.html" class="btn btn-primary">Produkte entdecken</a>
+          <a href="pages/contact.html" class="btn btn-ghost">Beratung anfragen</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 6. SPLIT PROMO -->
-  <section class="block">
-    <div class="container promo-split">
-      <a class="promo-card a" href="pages/catalog.html" style="background-image:linear-gradient(135deg,rgba(0,18,129,.85),rgba(0,14,40,.85)),url('assets/img/gallery-1.jpg')">
-        <span class="eyebrow" style="color:#ffd27a">Door configurator</span>
-        <h3>Design your door online</h3>
-        <p style="opacity:.9">Choose the type, wood, surface and details — and request your quote.</p>
-      </a>
-      <a class="promo-card b" href="pages/academy.html" style="background-image:linear-gradient(135deg,rgba(0,163,224,.85),rgba(0,18,129,.85)),url('assets/img/hero-1.jpg')">
-        <span class="eyebrow" style="color:#ffd27a">Service</span>
-        <h3>Installation &amp; maintenance</h3>
-        <p style="opacity:.9">Professional fitting and after-sales service across the region.</p>
-      </a>
-    </div>
-  </section>
-
-  <!-- STATS -->
-  <section class="block alt">
-    <div class="container stats">
-      <div class="stat"><div class="num">100%</div><div class="label">Made to measure</div></div>
-      <div class="stat"><div class="num">Echtholz</div><div class="label">Genuine wood</div></div>
-      <div class="stat"><div class="num">A–Z</div><div class="label">Consult to install</div></div>
-      <div class="stat"><div class="num">Idstein</div><div class="label">Made in Germany</div></div>
-    </div>
-  </section>
-
-  <!-- 7. MAP -->
-  <section class="maps">
-    <div class="map-placeholder">Deutsche Tor Technik · 65510 Idstein, Germany</div>
-  </section>
-
-  <!-- 8. USEFUL RESOURCES -->
-  <section class="block">
+  <!-- CATEGORIES -->
+  <section class="categories" aria-label="Produktbereiche">
     <div class="container">
-      <div class="section-title-row">
-        <span class="eyebrow">Useful</span>
-        <h2 class="section-title">How we can help</h2>
+      <div class="cat5">
+        <a class="cat-card" href="products.html#garagentore">
+          <div class="img"><img src="assets/img/cat-garagentore.jpg" alt="Anthrazitfarbenes Garagentor an einem modernen Haus" loading="lazy"></div>
+          <div class="label"><h3>Garagentore</h3><span class="mini-rule"></span></div>
+        </a>
+        <a class="cat-card" href="products.html#hoftore">
+          <div class="img"><img src="assets/img/cat-hoftore.jpg" alt="Schwarzes Hoftor aus Lamellen vor einem Einfamilienhaus" loading="lazy"></div>
+          <div class="label"><h3>Hof- &amp; Gartentore</h3><span class="mini-rule"></span></div>
+        </a>
+        <a class="cat-card" href="products.html#industrietore">
+          <div class="img"><img src="assets/img/cat-industrietore.jpg" alt="Industrie-Sektionaltor mit Verglasung an einer Halle" loading="lazy"></div>
+          <div class="label"><h3>Industrietore</h3><span class="mini-rule"></span></div>
+        </a>
+        <a class="cat-card" href="products.html#spezialtore">
+          <div class="img"><img src="assets/img/cat-spezialtore.jpg" alt="Großes Falttor in Grau als Sonderlösung" loading="lazy"></div>
+          <div class="label"><h3>Spezialtore</h3><span class="mini-rule"></span></div>
+        </a>
+        <a class="cat-card" href="products.html#sicherheitstueren">
+          <div class="img"><img src="assets/img/cat-sicherheitstueren.jpg" alt="Dunkle Sicherheits-Haustür mit Olivenbäumen" loading="lazy"></div>
+          <div class="label"><h3>Sicherheitstüren</h3><span class="mini-rule"></span></div>
+        </a>
       </div>
-      <div class="resources-grid">
-        <a class="resource" href="pages/catalog.html">
-          <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
-          <h3>Configurator</h3><p>Design and price your door step by step.</p><span class="card-link">Start →</span>
+    </div>
+  </section>
+
+  <!-- TRUST BAR -->
+  <section class="trust" aria-label="Kennzahlen">
+    <div class="container">
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 4.5 5.5v6c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5v-6L12 2.5Z"/><path d="m8.8 12 2.2 2.2 4.4-4.6"/></svg>
+        <span>Über 1.000 Lösungen</span>
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9.5V8a4 4 0 0 1 8 0v1.5"/><path d="M6.5 9.5h11"/><circle cx="12" cy="11.5" r="3.5"/><path d="M4.5 21.5v-1.7a5.5 5.5 0 0 1 5.5-5.5h4a5.5 5.5 0 0 1 5.5 5.5v1.7"/><path d="M9.5 14.6 12 18l2.5-3.4"/></svg>
+        <span>23 Servicetechniker</span>
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5v-9Z"/><path d="M3.5 7.5 12 12l8.5-4.5"/><path d="M12 12v9"/><path d="m7.7 5.3 8.6 4.5"/></svg>
+        <span>50 Produktgruppen</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLAIM -->
+  <section class="block dark" aria-labelledby="claim-title">
+    <div class="container claim-grid">
+      <div>
+        <span class="eyebrow">Deutsche Tor-Technik</span>
+        <h2 id="claim-title">Handgefertigte Echtholz-Tore aus dem Herzen der Dolomiten. Montiert und betreut aus Idstein.</h2>
+      </div>
+      <div>
+        <p>DTT ist ein junges Unternehmen mit erfahrenen Profis aus der Torbranche. Wir verbinden exklusive, hochwertige Produkte mit einem Service, der Ihre Bedürfnisse versteht: von der ersten Beratung über Aufmaß und Montage bis zur Wartung.</p>
+        <p>Neben handgefertigten Echtholz-Toren führen wir Standard-Garagentore in allen Ausführungen, Oberflächen und Farben sowie Industrietore aller Art.</p>
+        <div class="facts">
+          <div class="fact"><div class="num">2021</div><div class="lbl">Gründung in Idstein</div></div>
+          <div class="fact"><div class="num">100 %</div><div class="lbl">Maßanfertigung möglich</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRIVATKUNDEN -->
+  <section class="block" id="privatkunden" aria-labelledby="privat-title">
+    <div class="container split">
+      <div class="media"><img src="assets/img/privat.jpg" alt="Modernes Einfamilienhaus mit geöffnetem Echtholz-Garagentor" loading="lazy"></div>
+      <div>
+        <span class="eyebrow">Für Privatkunden</span>
+        <h2 id="privat-title">Ein Tor, das zu Ihrem Zuhause gehört.</h2>
+        <p>Ob Schwing-, Sektional- oder Flügeltor: Wir fertigen Ihr Garagentor nach Maß, in Echtholz, Aluminium oder Stahl. Dazu passende Hof- und Gartentore und Haustüren, damit alles aus einer Hand kommt und zusammen wirkt.</p>
+        <ul class="checks">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span>Echtholz-Garagentore, von Hand gefertigt</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span>Standardtore in allen Ausführungen, Oberflächen und Farben</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span>Antriebe, Smart-Home-Anbindung und Sicherheitstechnik</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span>Beratung vor Ort, Aufmaß und Montage durch eigene Techniker</span></li>
+        </ul>
+        <a href="products.html#garagentore" class="btn btn-primary">Garagentore ansehen</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- INDUSTRIE -->
+  <section class="block alt" id="industrie" aria-labelledby="industrie-title">
+    <div class="container split reverse">
+      <div class="media"><img src="assets/img/industrie.jpg" alt="Rotes Industrie-Sektionaltor an einem Gewerbegebäude" loading="lazy"></div>
+      <div>
+        <span class="eyebrow">Für Industrie &amp; Gewerbe</span>
+        <h2 id="industrie-title">Tore, die Ihren Betrieb am Laufen halten.</h2>
+        <p>Sektionaltore, Schnelllauftore, Rolltore und Falttore für Hallen, Logistik und Werkstätten. Wir planen mit Ihnen die passende Lösung, liefern in kurzer Zeit und halten Ihre Tore mit Wartungsverträgen zuverlässig in Betrieb.</p>
+        <ul class="checks">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span>Industrie-Sektionaltore, Schnelllauf- und Rolltore</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span>Spezialtore für individuelle Anforderungen</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span>UVV-Prüfung, Wartung und Reparatur mit 23 Servicetechnikern</span></li>
+        </ul>
+        <a href="products.html#industrietore" class="btn btn-primary">Industrietore ansehen</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICE -->
+  <section class="block" aria-labelledby="service-title">
+    <div class="container">
+      <div class="section-title-row center">
+        <span class="eyebrow">Service, der Sie versteht</span>
+        <h2 class="section-title" id="service-title">Vom ersten Gespräch bis zur jährlichen Wartung.</h2>
+        <p>Ein Ansprechpartner, ein Team. Wir begleiten Ihr Projekt in vier klaren Schritten.</p>
+      </div>
+      <div class="service-grid">
+        <div class="service">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4v-14Z"/><path d="M8 9.5h8M8 12.5h5"/></svg></div>
+          <span class="step">Schritt 1</span>
+          <h3>Beratung vor Ort</h3>
+          <p>Wir schauen uns Ihre Situation an und finden gemeinsam die Torlösung, die passt.</p>
+        </div>
+        <div class="service">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3.5 16.5 13-13 4 4-13 13h-4v-4Z"/><path d="m13 7 1.5 1.5M10.5 9.5 12 11M8 12l1.5 1.5"/></svg></div>
+          <span class="step">Schritt 2</span>
+          <h3>Aufmaß &amp; Planung</h3>
+          <p>Millimetergenaues Aufmaß, technische Planung und ein klares Angebot ohne Überraschungen.</p>
+        </div>
+        <div class="service">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5h11v9H3zM14 10h4l3 3v2.5h-7z"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg></div>
+          <span class="step">Schritt 3</span>
+          <h3>Lieferung &amp; Montage</h3>
+          <p>Unsere eigenen Techniker montieren fachgerecht, sauber und zum vereinbarten Termin.</p>
+        </div>
+        <div class="service">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0 5 5L9 22l-3-3L16.5 8.5"/><path d="M14.5 6.5 17 4l3 3-2.5 2.5"/></svg></div>
+          <span class="step">Schritt 4</span>
+          <h3>Wartung &amp; Reparatur</h3>
+          <p>Regelmäßige Prüfung, schnelle Hilfe im Störfall und Ersatzteile für Ihr Tor.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÜBER UNS -->
+  <section class="block alt" aria-labelledby="about-title">
+    <div class="container about-grid">
+      <div class="media"><img src="assets/img/handwerk.jpg" alt="Handwerker bearbeitet ein Holzbauteil" loading="lazy"></div>
+      <div>
+        <span class="eyebrow">Über uns</span>
+        <h2 class="section-title" id="about-title">Jung als Unternehmen. Erfahren im Handwerk.</h2>
+        <p>Die DTT Deutsche Tor-Technik wurde 2021 in Idstein gegründet und baut auf die Erfahrung langjähriger Profis aus der Torbranche. Unser Anspruch: exklusive, hochwertige Produkte mit erstklassigem Service zu verbinden. Bei uns stehen Ihre Lösung und Ihre Bedürfnisse im Mittelpunkt, nicht der Katalog.</p>
+        <blockquote>„Tore, die zu Ihnen passen. Service, der Sie versteht.“<cite>Leitsatz der DTT Deutsche Tor-Technik</cite></blockquote>
+        <p style="margin-top:1.6rem"><a href="pages/company.html" class="text-link">Mehr über uns <span aria-hidden="true">›</span></a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- REFERENZEN -->
+  <section class="block" aria-labelledby="refs-title">
+    <div class="container">
+      <div class="refs-head">
+        <div class="section-title-row">
+          <span class="eyebrow">Referenzen</span>
+          <h2 class="section-title" id="refs-title">Ausgewählte Projekte.</h2>
+        </div>
+        <a href="pages/news.html" class="text-link">Alle Referenzen <span aria-hidden="true">›</span></a>
+      </div>
+      <div class="refs">
+        <a href="pages/news.html"><img src="assets/img/ref-1.jpg" alt="Garagentore in einer Tiefgarage" loading="lazy"></a>
+        <a href="pages/news.html"><img src="assets/img/ref-2.jpg" alt="Schwarze Kassetten-Garagentore an einem Wohnhaus" loading="lazy"></a>
+        <a href="pages/news.html"><img src="assets/img/ref-3.jpg" alt="Designtür in einem Wohnraum mit Holzdecke" loading="lazy"></a>
+        <a href="pages/news.html"><img src="assets/img/ref-4.jpg" alt="Sicherheitstür an einer hellen Hausfassade" loading="lazy"></a>
+        <a href="pages/news.html"><img src="assets/img/ref-5.jpg" alt="Holzgaragentor an einem Chalet in den Bergen" loading="lazy"></a>
+        <a href="pages/news.html"><img src="assets/img/ref-6.jpg" alt="Haustür in Corten-Optik neben einer Natursteinwand" loading="lazy"></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-band" aria-labelledby="cta-title">
+    <div class="container">
+      <div>
+        <h2 id="cta-title">Ihr Projekt. Unser Tor.</h2>
+        <p>Erzählen Sie uns, was Sie planen. Wir melden uns innerhalb eines Werktags.</p>
+      </div>
+      <div class="actions">
+        <a class="phone" href="tel:+4960825179970">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg>
+          +49 (0) 6082 51 79 97 0
         </a>
-        <a class="resource" href="pages/academy.html">
-          <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2 7 9l-4 4 4 4 7-7"/><path d="m14 6 4 4"/><path d="M16 18h5"/></svg></div>
-          <h3>Service</h3><p>Installation, maintenance and repair.</p><span class="card-link">Learn more →</span>
-        </a>
-        <a class="resource" href="pages/contact.html">
-          <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-          <h3>Visit us</h3><p>Come and see our doors in Idstein.</p><span class="card-link">Contact →</span>
-        </a>
+        <a href="pages/contact.html" class="btn btn-outline">Projekt anfragen</a>
       </div>
     </div>
   </section>
