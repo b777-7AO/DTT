@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D-Tor-Konfigurator · DTT Deutsche Tor-Technik</title>
+  <meta name="description" content="Garagentor in 3D konfigurieren: Torart, Design, RAL-Farbe oder Holz, Verglasung und Antrieb wählen und direkt am Haus oder auf dem eigenen Foto ansehen.">
+  <link rel="icon" href="assets/img/logo-square.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/konfigurator.css?v=6">
+  <script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  } }
+  </script>
+</head>
+<body class="cfg-page">
+  <div data-include="partials/header.html" data-root=""></div>
+
+  <main class="cfg" id="cfg">
+    <!-- 3D STAGE -->
+    <section class="cfg-stage" aria-label="3D-Ansicht">
+      <div class="cfg-tabs" role="tablist" aria-label="Ansicht">
+        <button class="cfg-tab" role="tab" aria-selected="true" data-mode="3d">3D-Haus</button>
+        <button class="cfg-tab" role="tab" aria-selected="false" data-mode="photo">Ihr Foto</button>
+      </div>
+
+      <div class="cfg-canvas-wrap" id="canvasWrap">
+        <canvas id="cfgCanvas" aria-label="3D-Darstellung von Haus und Garagentor"></canvas>
+        <div class="cfg-loading" id="cfgLoading"><span class="spinner"></span> 3D-Ansicht wird geladen …</div>
+      </div>
+
+      <div class="cfg-photo" id="photoMode" hidden>
+        <div class="cfg-photo-stage" id="photoStage">
+          <div class="cfg-photo-empty" id="photoEmpty">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.6"/></svg>
+            <strong>Foto Ihres Hauses laden</strong>
+            <p>Das Bild bleibt auf Ihrem Gerät und wird nicht hochgeladen. Danach die vier Eckpunkte des Tors auf Ihre Garagenöffnung ziehen.</p>
+            <label class="btn btn-primary">Foto auswählen<input type="file" id="photoInput" accept="image/*" hidden></label>
+          </div>
+          <img id="photoImg" alt="Ihr Haus" hidden>
+          <img id="doorOverlay" alt="" hidden>
+          <div class="cfg-handle" data-corner="0" hidden></div>
+          <div class="cfg-handle" data-corner="1" hidden></div>
+          <div class="cfg-handle" data-corner="2" hidden></div>
+          <div class="cfg-handle" data-corner="3" hidden></div>
+        </div>
+        <div class="cfg-photo-tools" id="photoTools" hidden>
+          <label class="btn btn-ghost btn-sm">Anderes Foto<input type="file" id="photoInput2" accept="image/*" hidden></label>
+          <button class="btn btn-ghost btn-sm" id="photoReset" type="button">Ecken zurücksetzen</button>
+          <span class="cfg-hint">Ecken an die Garagenöffnung ziehen. Farbe und Design ändern sich live.</span>
+        </div>
+      </div>
+
+      <div class="cfg-views" id="cfgViews">
+        <button type="button" data-view="street" class="is-active">Straße</button>
+        <button type="button" data-view="front">Frontal</button>
+        <button type="button" data-view="close">Nah</button>
+        <button type="button" data-view="inside">Garage innen</button>
+      </div>
+      <div class="cfg-stage-actions" id="stageActions">
+        <button type="button" class="btn btn-dark btn-sm" id="toggleDoor">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+          <span>Tor öffnen</span>
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm cfg-on-light" id="saveImage">Bild speichern</button>
+      </div>
+    </section>
+
+    <!-- PANEL -->
+    <aside class="cfg-panel" aria-label="Konfiguration">
+      <header class="cfg-panel-head">
+        <span class="eyebrow">Tor-Konfigurator</span>
+        <h1>Ihr Tor. Ihr Haus. In 3D.</h1>
+        <p>Torart, Design und Farbe wählen. Alles ändert sich sofort in der Ansicht. Für Ihr eigenes Haus wechseln Sie oben auf „Ihr Foto“.</p>
+      </header>
+
+      <section class="cfg-group">
+        <h2><span class="num">1</span> Torart</h2>
+        <div class="cfg-cards" id="optType"></div>
+      </section>
+
+      <section class="cfg-group">
+        <h2><span class="num">2</span> Design</h2>
+        <div class="cfg-chips" id="optDesign"></div>
+      </section>
+
+      <section class="cfg-group">
+        <h2><span class="num">3</span> Farbe &amp; Oberfläche</h2>
+        <div class="cfg-subhead">RAL-Farben</div>
+        <div class="cfg-swatches" id="optColorRal"></div>
+        <div class="cfg-subhead">Echtholz &amp; Holzdekor</div>
+        <div class="cfg-swatches" id="optColorWood"></div>
+        <div class="cfg-subhead">Oberfläche</div>
+        <div class="cfg-chips" id="optFinish"></div>
+      </section>
+
+      <section class="cfg-group">
+        <h2><span class="num">4</span> Ausstattung</h2>
+        <label class="cfg-switch"><input type="checkbox" id="optGlazing"><span class="track"></span><span class="text"><strong>Lichtausschnitte</strong><small>Fensterreihe im oberen Bereich</small></span></label>
+        <label class="cfg-switch"><input type="checkbox" id="optDrive" checked><span class="track"></span><span class="text"><strong>Elektrischer Antrieb</strong><small>Mit Handsender, im Innenraum sichtbar</small></span></label>
+      </section>
+
+      <section class="cfg-group" id="houseGroup">
+        <h2><span class="num">5</span> Ihr Haus</h2>
+        <div class="cfg-subhead">Garage</div>
+        <div class="cfg-chips" id="optWidth"></div>
+        <div class="cfg-subhead">Fassade</div>
+        <div class="cfg-swatches small" id="optFacade"></div>
+        <div class="cfg-subhead">Dach</div>
+        <div class="cfg-chips" id="optRoof"></div>
+      </section>
+
+      <section class="cfg-summary">
+        <h2>Ihre Konfiguration</h2>
+        <dl id="summary"></dl>
+        <p class="cfg-price">Preis auf Anfrage. Wir melden uns innerhalb eines Werktags mit Aufmaß-Termin und Angebot.</p>
+        <div class="cfg-summary-actions">
+          <a class="btn btn-primary" id="requestBtn" href="pages/contact.html">Konfiguration anfragen</a>
+          <button class="btn btn-ghost" id="shareBtn" type="button">Link kopieren</button>
+        </div>
+        <p class="cfg-note" id="shareNote" hidden>Link kopiert. Sie können ihn speichern oder weiterleiten.</p>
+      </section>
+    </aside>
+  </main>
+
+  <div data-include="partials/footer.html" data-root=""></div>
+  <script src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/konfigurator.js?v=6"></script>
+</body>
+</html>

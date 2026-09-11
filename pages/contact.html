@@ -42,5 +42,9 @@
   </section>
   <div data-include="../partials/footer.html" data-root="../"></div>
   <script src="../assets/js/main.js"></script>
+  <script>
+    (function(){ var k=new URLSearchParams(location.search).get('konfiguration'); if(!k) return;
+      var t=document.querySelector('textarea'); if(t) t.value='Anfrage aus dem 3D-Konfigurator:\n\n'+k+'\n\n'; })();
+  </script>
 </body>
 </html>

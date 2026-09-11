@@ -12,6 +12,12 @@ Gartentore, Industrietore, Spezialtore und Sicherheitstüren.
 - **Fotos**: Produkt- und Referenzfotos stammen von der Silvelox-Website (DTT ist
   Silvelox-Partner für Deutschland) plus eigene DTT-Aufnahmen (`gallery-1.jpg`, `gallery-2.jpg`).
   Vor dem Livegang Bildrechte mit Silvelox klären.
+- **3D-Konfigurator** (`konfigurator.html`, `assets/js/konfigurator.js`, Three.js 0.170 per CDN-Importmap):
+  prozedural gebautes Haus (Einzel-/Doppelgarage, Fassadenfarbe, Flach-/Satteldach), drei Torarten
+  (Sektional-, Schwing-, Flügeltor) mit Öffnungsanimation, 7 Designs, 12 RAL-Farben, 6 Holzoberflächen,
+  Verglasung, Antrieb, Kamera-Presets, Bild speichern, Link teilen (Konfiguration im URL-Hash),
+  Anfrage-Button füllt das Kontaktformular vor. Modus „Ihr Foto“: eigenes Hausfoto laden (bleibt lokal),
+  Tor per vier Eckpunkten perspektivisch in die Garagenöffnung ziehen, Export als JPG.
 - Plain HTML/CSS/JS, kein Build-Schritt. Header/Footer als Partials via `assets/js/main.js`.
 
 ## Kontaktdaten (von deutsche-tor-technik.de übernommen)
