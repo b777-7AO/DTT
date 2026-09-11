@@ -7,8 +7,8 @@ Gartentore, Industrietore, Spezialtore und Sicherheitstüren.
 - **Startseite** (`index.html`, Deutsch) nach Layout-Vorlage vom 11.09.2026: weiße Hero-Karte
   auf Vollbild-Foto, fünf Produktkarten, Kennzahlen-Leiste, dunkler Claim, Privatkunden /
   Industrie, Service-Schritte, Über uns, Referenzen, roter CTA-Streifen, Footer.
-- **Marke**: Signalrot `#a4080b` auf Anthrazit `#1b1b1b`, Schrift Inter. Logo als Inline-SVG
-  (DTT-Wortmarke, roter Balken) in `partials/header.html` und `partials/footer.html`.
+- **Marke**: Original-DTT-Farben (Royalblau `#0018a8`, Navy `#000e28`, Orange `#f58220`, Cyan `#00a3e0`), Montserrat + Roboto. Original-Logo als `assets/img/logo-hd.png`
+  (aus dem offiziellen Logo freigestellt) in Header und Footer.
 - **Fotos**: Produkt- und Referenzfotos stammen von der Silvelox-Website (DTT ist
   Silvelox-Partner für Deutschland) plus eigene DTT-Aufnahmen (`gallery-1.jpg`, `gallery-2.jpg`).
   Vor dem Livegang Bildrechte mit Silvelox klären.
