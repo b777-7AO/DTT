@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 /* ------------------------------------------------------------------
    Options
@@ -26,37 +27,47 @@ const WOOD = [
   { id: 'grau', name: 'Eiche grau', base: '#8c8378', grain: '#554d44' }, { id: 'fichte', name: 'Fichte weiß', base: '#e3ddd0', grain: '#b3a892' },
 ];
 const FINISH = { matt: 'Matt', seide: 'Seidenglanz', struktur: 'Feinstruktur' };
-const WIDTHS = { single: { label: 'Einzelgarage 2,5 m', w: 2.5 }, double: { label: 'Doppelgarage 5,0 m', w: 5.0 } };
+const SIZE_PRESETS = [{ label: 'Einzelgarage', w: 2500, h: 2125 }, { label: 'Einzel hoch', w: 3000, h: 2250 }, { label: 'Doppelgarage', w: 5000, h: 2250 }, { label: 'Doppel hoch', w: 5500, h: 2500 }];
+const LIMITS = { w: [2000, 6500], h: [1875, 3000] };
 const FACADE = [
   { id: 'weiss', name: 'Weiß', hex: '#efece5' }, { id: 'hellgrau', name: 'Hellgrau', hex: '#cdd1d3' },
   { id: 'sand', name: 'Sandstein', hex: '#d8c8a9' }, { id: 'anthrazit', name: 'Anthrazit', hex: '#4b4e51' },
+  { id: 'klinker', name: 'Klinker', hex: '#8d4b3a', brick: true },
 ];
 const ROOF = { flat: 'Flachdach', gable: 'Satteldach' };
-const DOOR_H = 2.25;
 
-const state = { type: 'sectional', design: 'gross', color: '7016', finish: 'matt', glazing: false, drive: true, width: 'double', facade: 'weiss', roof: 'flat' };
+const state = { type: 'sectional', design: 'gross', color: '7016', finish: 'matt', glazing: false, drive: true, w: 5000, h: 2250, facade: 'weiss', roof: 'flat' };
+const PRESETS = [
+  { id: 'modern', label: 'Modern Anthrazit', patch: { type: 'sectional', design: 'gross', color: '7016', finish: 'struktur', glazing: false } },
+  { id: 'klassik', label: 'Klassisch Weiß', patch: { type: 'sectional', design: 'kassette', color: '9016', finish: 'matt', glazing: true } },
+  { id: 'holz', label: 'Echtholz Eiche', patch: { type: 'tilt', design: 'lamellen', color: 'eiche', glazing: false } },
+  { id: 'landhaus', label: 'Landhaus Grün', patch: { type: 'wing', design: 'rahmen', color: '6005', finish: 'seide', glazing: true } },
+];
 readHash();
 
 /* ------------------------------------------------------------------
    Renderer, scene, camera
 ------------------------------------------------------------------ */
+const T = { start: performance.now() };
 const canvas = document.getElementById('cfgCanvas');
 const wrap = document.getElementById('canvasWrap');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-const SKY = new THREE.Color(0xd9e4ee);
-scene.background = SKY;
-scene.fog = new THREE.Fog(SKY, 45, 130);
+const SKY = new THREE.Color(0xd7dfe6);
+scene.background = makeSky();
+scene.backgroundBlurriness = 0;
+scene.fog = new THREE.Fog(SKY, 50, 140);
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 0.55;
+T.pmrem = performance.now();
 
 const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 250);
 const controls = new OrbitControls(camera, canvas);
@@ -72,11 +83,11 @@ const sun = new THREE.DirectionalLight(0xfff1dc, 2.6);
 sun.position.set(-9, 15, 16);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { near: 1, far: 70, left: -18, right: 18, top: 18, bottom: -18 });
+Object.assign(sun.shadow.camera, { near: 1, far: 70, left: -14, right: 14, top: 14, bottom: -14 });
 sun.shadow.camera.updateProjectionMatrix();
 sun.shadow.bias = -0.00015;
 sun.shadow.normalBias = 0.06;
-sun.shadow.radius = 4;
+sun.shadow.radius = 3;
 scene.add(hemi, sun);
 hemi.layers.enable(1);
 sun.layers.enable(1);
@@ -120,6 +131,33 @@ function makeWood(wood, horizontal) {
   t.repeat.set(horizontal ? 1.4 : 2.2, horizontal ? 2.2 : 1.4);
   texCache.set(key, t); return t;
 }
+function makePavers() {
+  if (texCache.has('pavers')) return texCache.get('pavers');
+  const s = 512, c = document.createElement('canvas'); c.width = c.height = s; const ctx = c.getContext('2d');
+  ctx.fillStyle = '#9f9b93'; ctx.fillRect(0, 0, s, s);
+  const bw = 64, bh = 32; let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let y = 0; y < s; y += bh) { const off = (y / bh) % 2 ? bw / 2 : 0;
+    for (let x = -bw; x < s; x += bw) { const g = 190 + Math.round(rnd() * 34); ctx.fillStyle = `rgb(${g},${g - 3},${g - 9})`; ctx.fillRect(x + off + 1.5, y + 1.5, bw - 3, bh - 3); } }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.repeat.set(6, 18);
+  texCache.set('pavers', t); return t;
+}
+function makeBrick() {
+  if (texCache.has('brick')) return texCache.get('brick');
+  const s = 512, c = document.createElement('canvas'); c.width = c.height = s; const ctx = c.getContext('2d');
+  ctx.fillStyle = '#d9d2c6'; ctx.fillRect(0, 0, s, s);
+  const bw = 64, bh = 20; let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let y = 0; y < s; y += bh) { const off = (y / bh) % 2 ? bw / 2 : 0;
+    for (let x = -bw; x < s; x += bw) { const v = rnd(); ctx.fillStyle = `rgb(${132 + v * 40},${70 + v * 22},${56 + v * 16})`; ctx.fillRect(x + off + 2, y + 2, bw - 4, bh - 4); } }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.repeat.set(3, 9);
+  texCache.set('brick', t); return t;
+}
+function makeSky() {
+  const c = document.createElement('canvas'); c.width = 4; c.height = 512; const ctx = c.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, 512);
+  g.addColorStop(0, '#5f8fc9'); g.addColorStop(.42, '#b7cfe6'); g.addColorStop(.5, '#e4ecf3'); g.addColorStop(.56, '#d7dfe6'); g.addColorStop(1, '#c9d2d9');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 4, 512);
+  const t = new THREE.CanvasTexture(c); t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+}
 const bumpTex = (() => { const t = makeNoise('#808080', 60, 256, 6); t.colorSpace = THREE.NoColorSpace; return t; })();
 
 /* ------------------------------------------------------------------
@@ -127,12 +165,17 @@ const bumpTex = (() => { const t = makeNoise('#808080', 60, 256, 6); t.colorSpac
 ------------------------------------------------------------------ */
 const M = {
   frame: new THREE.MeshStandardMaterial({ color: 0x33363a, roughness: .5, metalness: .4 }),
-  glass: new THREE.MeshPhysicalMaterial({ color: 0x1b2a3a, metalness: .55, roughness: .08, envMapIntensity: 1.4, transparent: true, opacity: .92 }),
+  glass: new THREE.MeshStandardMaterial({ color: 0x1b2a3a, metalness: .8, roughness: .1, envMapIntensity: 1.4 }),
   chrome: new THREE.MeshStandardMaterial({ color: 0xe0e2e4, metalness: 1, roughness: .22 }),
   roof: new THREE.MeshStandardMaterial({ color: 0x3a3b3e, roughness: .9 }),
   tiles: new THREE.MeshStandardMaterial({ color: 0x46403f, roughness: .95 }),
   wood: new THREE.MeshStandardMaterial({ map: null, roughness: .6 }),
   concrete: new THREE.MeshStandardMaterial({ map: makeNoise('#c6c2b9', 22, 256, 30), roughness: .95 }),
+  pavers: new THREE.MeshStandardMaterial({ map: null, roughness: .9 }),
+  plinth: new THREE.MeshStandardMaterial({ color: 0x5b5f63, roughness: .9 }),
+  sill: new THREE.MeshStandardMaterial({ color: 0xcfd2d4, roughness: .5, metalness: .3 }),
+  seal: new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: .9 }),
+  doorLight: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .5, metalness: .12 }),
   interior: new THREE.MeshStandardMaterial({ color: 0xd8d8d4, roughness: .95 }),
   floor: new THREE.MeshStandardMaterial({ map: makeNoise('#9c9c98', 26, 256, 14), roughness: .9 }),
   lawn: new THREE.MeshStandardMaterial({ map: makeNoise('#6d8c4c', 34, 256, 80), roughness: 1 }),
@@ -149,6 +192,7 @@ const M = {
 };
 M.wood.map = makeWood(WOOD[0], true);
 M.facade.bumpMap = bumpTex; M.facade.bumpScale = .0015;
+M.pavers.map = makePavers();
 
 function applyDoorMaterial() {
   const wood = WOOD.find(w => w.id === state.color);
@@ -156,6 +200,7 @@ function applyDoorMaterial() {
   if (wood) {
     M.door.map = makeWood(wood, horizontal); M.door.color.set(0xffffff); M.door.roughness = .58; M.door.metalness = 0; M.door.bumpMap = null;
     M.doorDark.color.set(wood.grain).multiplyScalar(.6);
+    M.doorLight.map = null; M.doorLight.color.set(wood.base).multiplyScalar(1.25);
   } else {
     const ral = RAL.find(r => r.id === state.color) || RAL[0];
     M.door.map = null; M.door.color.set(ral.hex);
@@ -163,8 +208,9 @@ function applyDoorMaterial() {
     M.door.metalness = state.finish === 'seide' ? .18 : .1;
     M.door.bumpMap = state.finish === 'struktur' ? bumpTex : null; M.door.bumpScale = .0035;
     M.doorDark.color.set(ral.hex).multiplyScalar(.5);
+    M.doorLight.color.set(ral.hex).multiplyScalar(1.35); M.doorLight.roughness = M.door.roughness;
   }
-  M.door.needsUpdate = true; M.doorDark.needsUpdate = true;
+  M.door.needsUpdate = true; M.doorDark.needsUpdate = true; M.doorLight.needsUpdate = true;
 }
 
 /* ------------------------------------------------------------------
@@ -173,6 +219,10 @@ function applyDoorMaterial() {
 const box = (w, h, d, mat, x = 0, y = 0, z = 0, shadow = true) => {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = shadow; return m;
+};
+const rbox = (w, h, d, mat, x = 0, y = 0, z = 0, r = .012) => {
+  const m = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, r), mat);
+  m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; return m;
 };
 const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 function dispose(obj) {
@@ -188,10 +238,11 @@ const world = new THREE.Group(); scene.add(world);
 function buildHouse() {
   if (house) { world.remove(house); dispose(house); }
   house = new THREE.Group();
-  const dw = WIDTHS[state.width].w, dh = DOOR_H;
-  const W = dw + 1.3, D = 6.4, H = 3.0;
+  const dw = state.w / 1000, dh = state.h / 1000;
+  const W = dw + 1.3, D = 6.4, H = Math.max(3.0, dh + .8);
   dims = { dw, dh, W, D, H, z0: -0.22 };
-  M.facade.color.set(FACADE.find(f => f.id === state.facade).hex);
+  const fac = FACADE.find(f => f.id === state.facade);
+  M.facade.color.set(fac.brick ? '#ffffff' : fac.hex); M.facade.map = fac.brick ? makeBrick() : null; M.facade.bumpMap = fac.brick ? null : bumpTex; M.facade.needsUpdate = true;
 
   // ---- garage wing
   house.add(box(.65, H, D, M.facade, -(dw / 2 + .325), H / 2, -D / 2));
@@ -207,8 +258,10 @@ function buildHouse() {
   frame.add(box(dw + .16, .08, .12, M.frame, 0, dh + .04, -.06));
   frame.traverse(o => { o.layers.enable(1); o.castShadow = false; });
   house.add(frame);
-  // sill
+  // threshold + plinth band
   house.add(box(dw + .2, .03, .6, M.kerb, 0, .015, .2, false));
+  house.add(box(.66, .35, D + .02, M.plinth, -(dw / 2 + .325), .175, -D / 2 + .005, false));
+  house.add(box(.66, .35, D + .02, M.plinth, (dw / 2 + .325), .175, -D / 2 + .005, false));
 
   // ---- main house (right of the garage)
   const x0 = W / 2 + .06, hw = 8.6, hd = 9.6, zf = -.9;
@@ -223,6 +276,7 @@ function buildHouse() {
     g.add(box(w + .14, h + .14, .06, M.frame, 0, 0, 0, false));
     g.add(box(w, h, .06, M.glass, 0, 0, .012, false));
     g.add(box(.05, h, .07, M.frame, 0, 0, .02, false));
+    g.add(box(w + .3, .05, .16, M.sill, 0, -h / 2 - .1, .05));
     g.position.set(x, y, z + .02); g.rotation.y = rotY; house.add(g);
   };
   win(x0 + 2.0, 4.35, 1.7, 1.5);
@@ -235,6 +289,10 @@ function buildHouse() {
   house.add(box(.03, .9, .05, M.chrome, x0 + 1.45, 1.1, zf + .1, false));
   house.add(box(2.0, .12, 1.3, M.roof, x0 + 1.1, 2.55, zf + .6));
   house.add(box(1.8, .16, 1.2, M.kerb, x0 + 1.1, .08, zf + .6, false));
+  house.add(box(hw + .02, .35, hd + .02, M.plinth, xc, .175, zc, false));
+  // wall lamp beside the front door
+  house.add(box(.1, .22, .12, M.frame, x0 + 1.95, 2.0, zf + .06, false));
+  house.add(box(.06, .1, .06, new THREE.MeshStandardMaterial({ color: 0xfff1c8, emissive: 0xffd48a, emissiveIntensity: .8 }), x0 + 1.95, 1.9, zf + .1, false));
   // roof
   if (state.roof === 'gable') {
     const rise = 2.6, run = hw / 2, o = .5;
@@ -254,7 +312,7 @@ function buildHouse() {
 
   // ---- ground, driveway, street
   const lawn = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), M.lawn); lawn.rotation.x = -Math.PI / 2; lawn.receiveShadow = true; house.add(lawn);
-  const drive = new THREE.Mesh(new THREE.PlaneGeometry(dw + 2.2, 16.6), M.concrete); drive.rotation.x = -Math.PI / 2; drive.position.set(0, .012, 8.3); drive.receiveShadow = true; house.add(drive);
+  const drive = new THREE.Mesh(new THREE.PlaneGeometry(dw + 2.2, 16.6), M.pavers); drive.rotation.x = -Math.PI / 2; drive.position.set(0, .012, 8.3); drive.receiveShadow = true; house.add(drive);
   const path = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.6), M.concrete); path.rotation.x = -Math.PI / 2; path.position.set(x0 + 1.1, .012, zf + 1.5); path.receiveShadow = true; house.add(path);
   const path2 = new THREE.Mesh(new THREE.PlaneGeometry(x0 + 1.1 - dw / 2 + 1.4, 1.4), M.concrete); path2.rotation.x = -Math.PI / 2; path2.position.set((x0 + 1.1 + dw / 2 - .8) / 2, .013, 1.4); path2.receiveShadow = true; house.add(path2);
   const walk = new THREE.Mesh(new THREE.PlaneGeometry(160, 1.8), M.kerb); walk.rotation.x = -Math.PI / 2; walk.position.set(0, .014, 17.4); walk.receiveShadow = true; house.add(walk);
@@ -289,7 +347,7 @@ function buildHouse() {
 ------------------------------------------------------------------ */
 function decorate(panel, w, h, design) {
   const zf = .045 / 2; // front face of the base panel
-  const groove = (y, t = .014) => panel.add(box(w - .04, t, .008, M.doorDark, 0, y, zf, false));
+  const groove = (y, t = .014) => { panel.add(box(w - .04, t, .008, M.doorDark, 0, y, zf, false)); panel.add(box(w - .04, .004, .006, M.doorLight, 0, y - t / 2 - .003, zf, false)); };
   if (design === 'gross') groove(0);
   if (design === 'mittel') [-h / 4, 0, h / 4].forEach(y => groove(y, .01));
   if (design === 'linien') { const n = Math.max(2, Math.round(h / .27)); for (let i = 1; i < n; i++) groove(-h / 2 + i * h / n, .012); }
@@ -319,7 +377,7 @@ function addGlazing(panel, w, y, h = .32) {
     panel.add(box(ww + .06, h + .06, .03, M.frame, x, y, .04, false));
     panel.add(box(ww, h, .03, M.glass, x, y, .05, false)); }
 }
-function handle(parent, x, y) { parent.add(box(.03, .3, .035, M.chrome, x, y, .045, false)); }
+function handle(parent, x, y) { parent.add(box(.09, .34, .006, M.frame, x, y, .028, false)); parent.add(box(.025, .28, .03, M.chrome, x, y, .045, false)); }
 
 function buildDoor() {
   if (doorRig) { world.remove(doorRig.group); dispose(doorRig.group); }
@@ -333,8 +391,9 @@ function buildDoor() {
   if (state.type === 'sectional') {
     const n = 4, ph = dh / n, R = .36, Ht = dh + .25, parts = [];
     for (let i = 0; i < n; i++) {
-      const p = box(dw - .03, ph - .012, .045, M.door, 0, ph * i + ph / 2, z0);
+      const p = rbox(dw - .03, ph - .012, .045, M.door, 0, ph * i + ph / 2, z0);
       decorate(p, dw - .03, ph - .012, design);
+      if (i === 0) p.add(box(dw - .03, .03, .04, M.seal, 0, -(ph - .012) / 2 + .01, 0, false));
       if (state.glazing && i === n - 1) addGlazing(p, dw - .03, 0, Math.min(.3, ph - .16));
       if (i === 0) handle(p, 0, 0);
       g.add(p); parts.push({ p, y0: ph * i + ph / 2 });
@@ -352,8 +411,9 @@ function buildDoor() {
 
   if (state.type === 'tilt') {
     const pivot = new THREE.Group(); pivot.position.set(0, dh, z0);
-    const p = box(dw - .03, dh - .02, .05, M.door, 0, -dh / 2, 0);
+    const p = rbox(dw - .03, dh - .02, .05, M.door, 0, -dh / 2, 0);
     decorate(p, dw - .03, dh - .02, design);
+    p.add(box(dw - .03, .03, .045, M.seal, 0, -(dh - .02) / 2 + .01, 0, false));
     if (state.glazing) addGlazing(p, dw - .03, dh / 2 - .32);
     handle(p, 0, 1.05 - dh / 2);
     pivot.add(p); g.add(pivot);
@@ -366,8 +426,9 @@ function buildDoor() {
     const lw = dw / 2 - .025, pivots = [];
     [-1, 1].forEach(s => {
       const pivot = new THREE.Group(); pivot.position.set(s * dw / 2, dh / 2, z0);
-      const p = box(lw, dh - .02, .05, M.door, -s * lw / 2, 0, 0);
+      const p = rbox(lw, dh - .02, .05, M.door, -s * lw / 2, 0, 0);
       decorate(p, lw, dh - .02, design);
+      p.add(box(lw, .03, .045, M.seal, 0, -(dh - .02) / 2 + .01, 0, false));
       if (state.glazing) addGlazing(p, lw, dh / 2 - .32);
       handle(p, -s * (lw - .16) * 1, 1.05 - dh / 2);
       pivot.add(p); g.add(pivot); pivots.push({ pivot, s });
@@ -426,7 +487,33 @@ function resize() {
 new ResizeObserver(resize).observe(wrap);
 resize();
 
+const dimLabel = document.getElementById('dimLabel'), dimText = document.getElementById('dimText');
+const _v = new THREE.Vector3();
+function updateDimLabel() {
+  if (photo.active) { dimLabel.hidden = true; return; }
+  _v.set(0, dims.dh + .32, dims.z0).project(camera);
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  const x = (_v.x + 1) / 2 * w, y = (1 - _v.y) / 2 * h;
+  const visible = _v.z < 1 && x > 40 && x < w - 40 && y > 60 && y < h - 40;
+  dimLabel.hidden = !visible;
+  if (visible) { dimLabel.style.left = x + 'px'; dimLabel.style.top = y + 'px'; }
+}
 let firstFrame = true;
+// adaptive quality: if the device renders slowly, lower pixel ratio and shadow resolution once
+const perf = { samples: [], last: 0, adjusted: false };
+function adaptQuality(now) {
+  if (perf.adjusted) return;
+  if (perf.last) perf.samples.push(now - perf.last);
+  perf.last = now;
+  if (perf.samples.length < 40) return;
+  const avg = perf.samples.slice(5).reduce((a, b) => a + b, 0) / (perf.samples.length - 5);
+  perf.adjusted = true;
+  if (avg > 45) {
+    renderer.setPixelRatio(1); resize();
+    sun.shadow.mapSize.set(1024, 1024); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+    scene.environmentIntensity = .45;
+  }
+}
 function loop(now) {
   requestAnimationFrame(loop);
   if (camTween) {
@@ -443,7 +530,12 @@ function loop(now) {
   }
   controls.update();
   renderer.render(scene, camera);
-  if (firstFrame) { firstFrame = false; document.getElementById('cfgLoading').classList.add('done'); }
+  updateDimLabel();
+  adaptQuality(now);
+  if (firstFrame) { firstFrame = false; T.frame = performance.now(); window.__t = T; document.getElementById('cfgLoading').classList.add('done');
+    const hint = document.getElementById('cfgHint'); hint.hidden = false;
+    const hide = () => { hint.hidden = true; canvas.removeEventListener('pointerdown', hide); };
+    canvas.addEventListener('pointerdown', hide); setTimeout(hide, 6500); }
 }
 
 /* ------------------------------------------------------------------
@@ -451,7 +543,7 @@ function loop(now) {
 ------------------------------------------------------------------ */
 const photo = {
   active: false, img: document.getElementById('photoImg'), overlay: document.getElementById('doorOverlay'),
-  stage: document.getElementById('photoStage'), handles: [...document.querySelectorAll('.cfg-handle')],
+  stage: document.getElementById('photoStage'), handles: [...document.querySelectorAll('.cfg-handle[data-corner]')],
   corners: null, snapW: 0, snapH: 0, drag: null,
 };
 function renderDoorSnapshot() {
@@ -486,6 +578,11 @@ function applyOverlay() {
   const pts = photo.corners.map(([nx, ny]) => [r.x + nx * r.w, r.y + ny * r.h]);
   transform2d(photo.overlay, photo.snapW, photo.snapH, pts);
   photo.handles.forEach((hd, i) => { hd.style.left = pts[i][0] + 'px'; hd.style.top = pts[i][1] + 'px'; hd.hidden = false; });
+  const svg = document.getElementById('quadSvg'); svg.removeAttribute('hidden');
+  document.getElementById('quadPoly').setAttribute('points', pts.map(p => p.join(',')).join(' '));
+  const mv = document.getElementById('moveHandle'); mv.hidden = false;
+  const cx = pts.reduce((a, p) => a + p[0], 0) / 4, cy = pts.reduce((a, p) => a + p[1], 0) / 4;
+  mv.style.left = cx + 'px'; mv.style.top = cy + 'px';
   photo.overlay.hidden = false;
 }
 function loadPhoto(file) {
@@ -503,6 +600,15 @@ photo.handles.forEach((hd, i) => {
   });
   hd.addEventListener('pointerup', () => { photo.drag = null; });
 });
+(() => {
+  const mv = document.getElementById('moveHandle'); let last = null;
+  mv.addEventListener('pointerdown', e => { mv.setPointerCapture(e.pointerId); last = [e.clientX, e.clientY]; e.preventDefault(); });
+  mv.addEventListener('pointermove', e => {
+    if (!last) return; const r = photoRect(); const dx = (e.clientX - last[0]) / r.w, dy = (e.clientY - last[1]) / r.h; last = [e.clientX, e.clientY];
+    photo.corners = photo.corners.map(([x, y]) => [x + dx, y + dy]); applyOverlay();
+  });
+  mv.addEventListener('pointerup', () => { last = null; });
+})();
 document.getElementById('photoInput').addEventListener('change', e => loadPhoto(e.target.files[0]));
 document.getElementById('photoInput2').addEventListener('change', e => loadPhoto(e.target.files[0]));
 document.getElementById('photoReset').addEventListener('click', () => { defaultCorners(); applyOverlay(); });
@@ -566,12 +672,15 @@ function swatch(container, id, label, css, pressed) { const b = document.createE
 
 function renderUI() {
   const t = $('optType'); t.innerHTML = '';
-  Object.entries(TYPES).forEach(([id, v]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'cfg-card'; b.dataset.id = id; b.innerHTML = `${ICONS[id]}<span>${v.label}</span>`; b.title = v.desc; b.setAttribute('aria-pressed', String(state.type === id)); t.appendChild(b); });
+  Object.entries(TYPES).forEach(([id, v]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'cfg-card'; b.dataset.id = id; b.innerHTML = `${ICONS[id]}<span>${v.label}<small>${v.desc}</small></span>`; b.setAttribute('aria-pressed', String(state.type === id)); t.appendChild(b); });
   const d = $('optDesign'); d.innerHTML = ''; TYPES[state.type].designs.forEach(id => chip(d, id, DESIGNS[id], state.design === id));
   const r = $('optColorRal'); r.innerHTML = ''; RAL.forEach(c => swatch(r, c.id, `${c.name}<br>RAL ${c.id}`, c.hex, state.color === c.id));
   const w = $('optColorWood'); w.innerHTML = ''; WOOD.forEach(c => swatch(w, c.id, c.name, `repeating-linear-gradient(100deg, ${c.base} 0 4px, ${c.grain}55 4px 5px, ${c.base} 5px 9px, ${c.grain}33 9px 10px)`, state.color === c.id));
   const f = $('optFinish'); f.innerHTML = ''; Object.entries(FINISH).forEach(([id, l]) => chip(f, id, l, state.finish === id));
-  const wd = $('optWidth'); wd.innerHTML = ''; Object.entries(WIDTHS).forEach(([id, v]) => chip(wd, id, v.label, state.width === id));
+  const wd = $('optWidth'); wd.innerHTML = ''; SIZE_PRESETS.forEach((v, i) => chip(wd, 'size' + i, v.label, state.w === v.w && state.h === v.h));
+  $('inpW').value = state.w; $('inpH').value = state.h;
+  const pr = $('optPreset'); pr.innerHTML = ''; PRESETS.forEach(v => { const on = Object.entries(v.patch).every(([k, val]) => state[k] === val); chip(pr, v.id, v.label, on); });
+  const sel = $('colorName'); if (sel) sel.textContent = colorLabel();
   const fa = $('optFacade'); fa.innerHTML = ''; FACADE.forEach(c => swatch(fa, c.id, c.name, c.hex, state.facade === c.id));
   const ro = $('optRoof'); ro.innerHTML = ''; Object.entries(ROOF).forEach(([id, l]) => chip(ro, id, l, state.roof === id));
   $('optGlazing').checked = state.glazing; $('optDrive').checked = state.drive;
@@ -582,14 +691,19 @@ function renderUI() {
 }
 function colorLabel() { const w = WOOD.find(c => c.id === state.color); if (w) return `${w.name} (Holz)`; const r = RAL.find(c => c.id === state.color); return `${r.name}, RAL ${r.id}`; }
 function summaryLines() {
-  return [['Torart', TYPES[state.type].label], ['Design', DESIGNS[state.design]], ['Farbe', colorLabel()], ['Oberfläche', WOOD.some(c => c.id === state.color) ? 'Holz, geölt' : FINISH[state.finish]], ['Lichtausschnitte', state.glazing ? 'Ja' : 'Nein'], ['Antrieb', state.drive ? 'Elektrisch' : 'Manuell'], ['Garage', WIDTHS[state.width].label]];
+  return [['Torart', TYPES[state.type].label], ['Design', DESIGNS[state.design]], ['Farbe', colorLabel()], ['Oberfläche', WOOD.some(c => c.id === state.color) ? 'Holz, geölt' : FINISH[state.finish]], ['Lichtausschnitte', state.glazing ? 'Ja' : 'Nein'], ['Antrieb', state.drive ? 'Elektrisch' : 'Manuell'], ['Maße (B × H)', `${state.w} × ${state.h} mm`], ['Fassade', FACADE.find(f => f.id === state.facade).name + ', ' + ROOF[state.roof]]];
 }
 function renderSummary() {
   $('summary').innerHTML = summaryLines().map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
   const text = summaryLines().map(([k, v]) => `${k}: ${v}`).join('\n') + `\nLink: ${location.href.split('#')[0]}${hash()}`;
-  $('requestBtn').href = `pages/contact.html?konfiguration=${encodeURIComponent(text)}`;
+  const href = `pages/kontakt.html?konfiguration=${encodeURIComponent(text)}`;
+  $('requestBtn').href = href; $('stickyRequest').href = href;
+  dimText.textContent = `${state.w} × ${state.h} mm`;
+  $('stickySummary').textContent = `${TYPES[state.type].label} · ${DESIGNS[state.design]} · ${colorLabel()} · ${state.w} × ${state.h} mm`;
+  const wood = WOOD.find(c => c.id === state.color), ral = RAL.find(c => c.id === state.color);
+  $('stickyDot').style.background = wood ? `repeating-linear-gradient(100deg, ${wood.base} 0 3px, ${wood.grain}66 3px 4px)` : ral.hex;
 }
-function hash() { return `#t=${state.type}&d=${state.design}&c=${state.color}&f=${state.finish}&g=${state.glazing ? 1 : 0}&m=${state.drive ? 1 : 0}&w=${state.width}&fa=${state.facade}&r=${state.roof}`; }
+function hash() { return `#t=${state.type}&d=${state.design}&c=${state.color}&f=${state.finish}&g=${state.glazing ? 1 : 0}&m=${state.drive ? 1 : 0}&w=${state.w}&h=${state.h}&fa=${state.facade}&r=${state.roof}`; }
 function readHash() {
   if (!location.hash) return;
   const p = new URLSearchParams(location.hash.slice(1));
@@ -599,7 +713,8 @@ function readHash() {
   const colors = [...RAL, ...WOOD].map(c => c.id); state.color = pick('c', colors, state.color);
   state.finish = pick('f', FINISH, state.finish);
   state.glazing = p.get('g') === '1'; state.drive = p.get('m') !== '0';
-  state.width = pick('w', WIDTHS, state.width);
+  const num = (key, lim, dflt) => { const v = parseInt(p.get(key), 10); return Number.isFinite(v) ? Math.min(lim[1], Math.max(lim[0], v)) : dflt; };
+  state.w = num('w', LIMITS.w, state.w); state.h = num('h', LIMITS.h, state.h);
   state.facade = pick('fa', FACADE.map(c => c.id), state.facade);
   state.roof = pick('r', ROOF, state.roof);
 }
@@ -619,11 +734,19 @@ document.addEventListener('click', e => {
   else if (box === 'optDesign') update({ design: id });
   else if (box === 'optColorRal' || box === 'optColorWood') update({ color: id });
   else if (box === 'optFinish') update({ finish: id });
-  else if (box === 'optWidth') update({ width: id }, true);
+  else if (box === 'optWidth') { const v = SIZE_PRESETS[parseInt(id.slice(4), 10)]; update({ w: v.w, h: v.h }, true); }
+  else if (box === 'optPreset') update(PRESETS.find(v => v.id === id).patch);
   else if (box === 'optFacade') update({ facade: id }, true);
   else if (box === 'optRoof') update({ roof: id }, true);
 });
 $('optGlazing').addEventListener('change', e => update({ glazing: e.target.checked }));
+function sizeInput(id, key, lim) {
+  const el = $(id);
+  const commit = () => { let v = parseInt(el.value, 10); if (!Number.isFinite(v)) v = state[key]; v = Math.min(lim[1], Math.max(lim[0], Math.round(v / 5) * 5)); el.value = v; if (v !== state[key]) update({ [key]: v }, true); };
+  el.addEventListener('change', commit); el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } });
+}
+sizeInput('inpW', 'w', LIMITS.w); sizeInput('inpH', 'h', LIMITS.h);
+$('resetBtn').addEventListener('click', () => { history.replaceState(null, '', location.pathname); location.reload(); });
 $('optDrive').addEventListener('change', e => update({ drive: e.target.checked }));
 $('toggleDoor').addEventListener('click', () => setDoor(doorTarget === 0));
 document.querySelectorAll('#cfgViews button').forEach(b => b.addEventListener('click', () => goView(b.dataset.view)));
@@ -651,9 +774,14 @@ document.querySelectorAll('.cfg-tab').forEach(tab => tab.addEventListener('click
    Go
 ------------------------------------------------------------------ */
 if (new URLSearchParams(location.search).has('clean')) document.body.classList.add('cfg-clean');
-buildHouse();
-buildDoor();
-renderUI();
+buildHouse(); T.house = performance.now();
+buildDoor(); T.door = performance.now();
+renderUI(); T.ui = performance.now();
 goView('street', true);
 history.replaceState(null, '', hash());
-requestAnimationFrame(loop);
+// compile all shader programs in parallel before the first frame (avoids a long stall on first render)
+(async () => {
+  try { await renderer.compileAsync(scene, camera); } catch (e) { /* fall through, render will compile lazily */ }
+  T.compiled = performance.now();
+  requestAnimationFrame(loop);
+})();

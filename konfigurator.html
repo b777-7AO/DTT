@@ -5,23 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>3D-Tor-Konfigurator · DTT Deutsche Tor-Technik</title>
   <meta name="description" content="Garagentor in 3D konfigurieren: Torart, Design, RAL-Farbe oder Holz, Verglasung und Antrieb wählen und direkt am Haus oder auf dem eigenen Foto ansehen.">
-  <link rel="icon" href="assets/img/logo-square.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="canonical" href="https://b777-7ao.github.io/DTT/konfigurator.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="3D-Tor-Konfigurator · DTT Deutsche Tor-Technik">
+  <meta property="og:description" content="Garagentor in 3D konfigurieren und am Haus oder auf dem eigenen Foto ansehen.">
+  <meta property="og:image" content="https://b777-7ao.github.io/DTT/assets/img/konfigurator.jpg">
+  <meta name="theme-color" content="#000e28">
+  <link rel="stylesheet" href="assets/css/fonts.css">
   <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="stylesheet" href="assets/css/konfigurator.css?v=6">
+  <link rel="stylesheet" href="assets/css/konfigurator.css?v=12">
   <script type="importmap">
   { "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      "three": "./assets/vendor/three/three.module.js",
+      "three/addons/": "./assets/vendor/three/addons/"
   } }
   </script>
 </head>
 <body class="cfg-page">
+  <a class="skip-link" href="#main">Zum Inhalt springen</a>
   <div data-include="partials/header.html" data-root=""></div>
 
-  <main class="cfg" id="cfg">
+  <main class="cfg" id="main">
     <!-- 3D STAGE -->
     <section class="cfg-stage" aria-label="3D-Ansicht">
       <div class="cfg-tabs" role="tablist" aria-label="Ansicht">
@@ -32,6 +38,11 @@
       <div class="cfg-canvas-wrap" id="canvasWrap">
         <canvas id="cfgCanvas" aria-label="3D-Darstellung von Haus und Garagentor"></canvas>
         <div class="cfg-loading" id="cfgLoading"><span class="spinner"></span> 3D-Ansicht wird geladen …</div>
+        <div class="cfg-dim" id="dimLabel" hidden><span class="dot"></span><span id="dimText"></span></div>
+        <div class="cfg-hint-overlay" id="cfgHint" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V6a2 2 0 1 1 4 0v6"/><path d="M12 11a2 2 0 1 1 4 0v1a2 2 0 1 1 4 0v3a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L4.5 14a1.8 1.8 0 0 1 3-2l.5.8"/></svg>
+          <span>Ziehen zum Drehen, Scrollen oder zwei Finger zum Zoomen</span>
+        </div>
       </div>
 
       <div class="cfg-photo" id="photoMode" hidden>
@@ -44,15 +55,17 @@
           </div>
           <img id="photoImg" alt="Ihr Haus" hidden>
           <img id="doorOverlay" alt="" hidden>
-          <div class="cfg-handle" data-corner="0" hidden></div>
-          <div class="cfg-handle" data-corner="1" hidden></div>
-          <div class="cfg-handle" data-corner="2" hidden></div>
-          <div class="cfg-handle" data-corner="3" hidden></div>
+          <svg class="cfg-quad" id="quadSvg" hidden aria-hidden="true"><polygon id="quadPoly" points=""></polygon></svg>
+          <div class="cfg-handle" data-corner="0" hidden title="Ecke oben links"></div>
+          <div class="cfg-handle" data-corner="1" hidden title="Ecke oben rechts"></div>
+          <div class="cfg-handle" data-corner="2" hidden title="Ecke unten rechts"></div>
+          <div class="cfg-handle" data-corner="3" hidden title="Ecke unten links"></div>
+          <div class="cfg-handle move" id="moveHandle" hidden title="Tor verschieben"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3"/></svg></div>
         </div>
         <div class="cfg-photo-tools" id="photoTools" hidden>
           <label class="btn btn-ghost btn-sm">Anderes Foto<input type="file" id="photoInput2" accept="image/*" hidden></label>
           <button class="btn btn-ghost btn-sm" id="photoReset" type="button">Ecken zurücksetzen</button>
-          <span class="cfg-hint">Ecken an die Garagenöffnung ziehen. Farbe und Design ändern sich live.</span>
+          <span class="cfg-hint">Orangefarbene Ecken auf die Garagenöffnung ziehen, Kreuz verschiebt das ganze Tor. Farbe und Design ändern sich live.</span>
         </div>
       </div>
 
@@ -74,9 +87,14 @@
     <!-- PANEL -->
     <aside class="cfg-panel" aria-label="Konfiguration">
       <header class="cfg-panel-head">
-        <span class="eyebrow">Tor-Konfigurator</span>
+        <div class="cfg-head-row">
+          <span class="eyebrow">Tor-Konfigurator</span>
+          <button type="button" class="cfg-reset" id="resetBtn">Zurücksetzen</button>
+        </div>
         <h1>Ihr Tor. Ihr Haus. In 3D.</h1>
         <p>Torart, Design und Farbe wählen. Alles ändert sich sofort in der Ansicht. Für Ihr eigenes Haus wechseln Sie oben auf „Ihr Foto“.</p>
+        <div class="cfg-subhead">Schnellstart</div>
+        <div class="cfg-chips" id="optPreset"></div>
       </header>
 
       <section class="cfg-group">
@@ -90,7 +108,7 @@
       </section>
 
       <section class="cfg-group">
-        <h2><span class="num">3</span> Farbe &amp; Oberfläche</h2>
+        <h2><span class="num">3</span> Farbe &amp; Oberfläche <span class="cfg-sel" id="colorName"></span></h2>
         <div class="cfg-subhead">RAL-Farben</div>
         <div class="cfg-swatches" id="optColorRal"></div>
         <div class="cfg-subhead">Echtholz &amp; Holzdekor</div>
@@ -107,7 +125,11 @@
 
       <section class="cfg-group" id="houseGroup">
         <h2><span class="num">5</span> Ihr Haus</h2>
-        <div class="cfg-subhead">Garage</div>
+        <div class="cfg-subhead">Tormaß (lichte Öffnung)</div>
+        <div class="cfg-size">
+          <label>Breite<span class="unit"><input type="number" id="inpW" min="2000" max="6500" step="5" inputmode="numeric">mm</span></label>
+          <label>Höhe<span class="unit"><input type="number" id="inpH" min="1875" max="3000" step="5" inputmode="numeric">mm</span></label>
+        </div>
         <div class="cfg-chips" id="optWidth"></div>
         <div class="cfg-subhead">Fassade</div>
         <div class="cfg-swatches small" id="optFacade"></div>
@@ -120,16 +142,21 @@
         <dl id="summary"></dl>
         <p class="cfg-price">Preis auf Anfrage. Wir melden uns innerhalb eines Werktags mit Aufmaß-Termin und Angebot.</p>
         <div class="cfg-summary-actions">
-          <a class="btn btn-primary" id="requestBtn" href="pages/contact.html">Konfiguration anfragen</a>
+          <a class="btn btn-primary" id="requestBtn" href="pages/kontakt.html">Konfiguration anfragen</a>
           <button class="btn btn-ghost" id="shareBtn" type="button">Link kopieren</button>
         </div>
         <p class="cfg-note" id="shareNote" hidden>Link kopiert. Sie können ihn speichern oder weiterleiten.</p>
       </section>
+
+      <div class="cfg-sticky" id="stickyBar">
+        <div class="cfg-sticky-text"><span class="dot" id="stickyDot"></span><span id="stickySummary"></span></div>
+        <a class="btn btn-primary btn-sm" id="stickyRequest" href="pages/kontakt.html">Anfragen</a>
+      </div>
     </aside>
   </main>
 
   <div data-include="partials/footer.html" data-root=""></div>
   <script src="assets/js/main.js"></script>
-  <script type="module" src="assets/js/konfigurator.js?v=6"></script>
+  <script type="module" src="assets/js/konfigurator.js?v=15"></script>
 </body>
 </html>

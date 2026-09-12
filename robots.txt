@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://b777-7ao.github.io/DTT/sitemap.xml

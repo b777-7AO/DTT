@@ -48,9 +48,12 @@
     }
     // Mark the current top-level nav item
     const here = location.pathname.split('/').pop() || 'index.html';
-    document.querySelectorAll('nav.main-nav > ul > li > a').forEach((a) => {
-      const target = (a.getAttribute('href') || '').split('/').pop().split('#')[0];
-      if (target && target === here && !a.getAttribute('href').includes('#')) a.parentElement.classList.add('active');
+    document.querySelectorAll('nav.main-nav > ul > li').forEach((li) => {
+      const hit = [...li.querySelectorAll('a')].some((a) => {
+        const href = a.getAttribute('href') || '';
+        return !href.includes('#') && href.split('/').pop() === here;
+      });
+      if (hit) li.classList.add('active');
     });
     // Current year in footer
     const y = document.getElementById('year');

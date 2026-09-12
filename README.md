@@ -23,10 +23,12 @@ Gartentore, Industrietore, Spezialtore und Sicherheitstüren.
 ## Kontaktdaten (von deutsche-tor-technik.de übernommen)
 Meilbachstraße 18 · 65510 Idstein · +49 (0) 6082 51 79 97 0 · info@deutsche-tor-technik.de
 
-## Unterseiten
-`products.html`, `products/*.html`, `pages/*.html` sind noch die englischen Platzhalterseiten
-der ersten Version. Sie nutzen bereits den neuen Header, Footer und die neuen Farben.
-Nächster Schritt: Inhalte auf Deutsch und auf die fünf Produktgruppen umstellen.
+## Seiten
+- `index.html` Startseite · `products.html` Produktübersicht · `konfigurator.html` 3D-Konfigurator · `404.html`
+- `products/` garagentore, hoftore, industrietore, spezialtore, sicherheitstueren
+- `pages/` service, ueber-uns, referenzen, kontakt (mailto-Formular, wird vom Konfigurator vorbefüllt), karriere, downloads, impressum, datenschutz, agb
+- Gemeinsames Grundgerüst: `partials/header.html` + `partials/footer.html` (per `assets/js/main.js` eingebunden, `data-root` regelt relative Pfade), Komponenten in `assets/css/style.css`.
+- Fonts (Montserrat, Roboto) und Three.js liegen lokal in `assets/fonts` und `assets/vendor` (keine Google/CDN-Requests, DSGVO-freundlich). `sitemap.xml` und `robots.txt` vorhanden.
 
 ## Lokal starten
 Die Partials werden per `fetch` geladen, daher über HTTP ausliefern (nicht `file://`):
