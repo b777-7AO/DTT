@@ -783,5 +783,5 @@ history.replaceState(null, '', hash());
 (async () => {
   try { await renderer.compileAsync(scene, camera); } catch (e) { /* fall through, render will compile lazily */ }
   T.compiled = performance.now();
-  requestAnimationFrame(loop);
+  loop(performance.now());   // draw once immediately, even if the tab is not visible yet
 })();
