@@ -297,6 +297,9 @@ function buildHouse() {
     house.add(box(.09, .2, .1, M.darkMetal, s * (dw / 2 + .325), dh - .25, .05, { shadow: false }));
     house.add(box(.05, .012, .06, M.lamp, s * (dw / 2 + .325), dh - .36, .06, { shadow: false }));
   });
+  // ceiling light inside the garage (so the interior and the "Garage innen" view are readable with the door closed)
+  const bulb = new THREE.PointLight(0xfff0dc, 22, 14, 2); bulb.position.set(1.3, H - .2, -D / 2 - .6); house.add(bulb);
+  house.add(box(.7, .05, .14, M.lamp, 1.3, H - .03, -D / 2 - .6, { shadow: false }));
   // downpipe at the garage corner
   const pipe = (x, z, h) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, h, 12), M.darkMetal); m.position.set(x, h / 2, z); m.castShadow = true; house.add(m); };
   pipe(-W / 2 - .07, .07, H + .3);
@@ -495,11 +498,12 @@ function buildDoor() {
   }
 
   // frame (Zarge) inside the reveal for doors mounted in the opening: extends 1 cm into the wall (no coplanar faces)
+  // the profiles overlap the leaf edges by 1-2 cm (rebate), so nothing shows through from inside
   const zarge = (parent) => {
-    const t = .07, d = .1, zc = -.09;
-    parent.add(box(t, dh - t + .01, d, M.frame, -(dw / 2 - t / 2 + .01), (dh - t + .01) / 2, zc, { shadow: false }));
-    parent.add(box(t, dh - t + .01, d, M.frame, (dw / 2 - t / 2 + .01), (dh - t + .01) / 2, zc, { shadow: false }));
-    parent.add(box(dw + .02, t, d, M.frame, 0, dh - t / 2 + .01, zc, { shadow: false }));
+    const t = .07, d = .1, zc = -.088, top = .10, hv = dh - top + .01;
+    parent.add(box(t, hv, d, M.frame, -(dw / 2 - t / 2 + .01), hv / 2, zc, { shadow: false }));
+    parent.add(box(t, hv, d, M.frame, (dw / 2 - t / 2 + .01), hv / 2, zc, { shadow: false }));
+    parent.add(box(dw + .02, top, d, M.frame, 0, dh + .01 - top / 2, zc, { shadow: false }));
   };
 
   if (state.type === 'tilt') {
@@ -516,7 +520,7 @@ function buildDoor() {
 
   if (state.type === 'wing') {
     zarge(snap);
-    const h = dh - .11, lw = dw / 2 - .09, depth = .045, zL = -.06, pivots = [];
+    const h = dh - .11, lw = dw / 2 - .075, depth = .045, zL = -.06, pivots = [];   // leaves meet in the middle
     const band = state.glazing ? [h / 2 - .5, h / 2 - .14] : null;
     [-1, 1].forEach(s => {
       // hinge axis on the outer front edge of the leaf, so the leaf swings clear of the frame profile
