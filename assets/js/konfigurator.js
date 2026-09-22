@@ -89,7 +89,7 @@ const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
 // all textures go through one manager so the loading overlay only lifts when the first set has arrived
 let assetsReady = false;
-const manager = new THREE.LoadingManager(() => { assetsReady = true; });
+const manager = new THREE.LoadingManager(() => { assetsReady = true; if (typeof finishLoading === 'function') finishLoading(); });
 const loader = new THREE.TextureLoader(manager);
 const texCache = new Map();
 function tx(file, { srgb = false, tile = 1, wrap = true } = {}) {
@@ -614,6 +614,17 @@ function adaptQuality(now) {
   }
 }
 let overlayDone = false;
+function finishLoading() {
+  if (overlayDone || !doorRig) return;
+  overlayDone = true;
+  controls.update(); draw();                                              // one frame with all textures, even if the tab is hidden
+  document.getElementById('cfgLoading').classList.add('done');
+  perf.last = 0; perf.samples.length = 0;                                 // measure frame times only after the textures are in
+  const hint = document.getElementById('cfgHint'); hint.hidden = false;
+  const hide = () => { hint.hidden = true; canvas.removeEventListener('pointerdown', hide); };
+  canvas.addEventListener('pointerdown', hide); setTimeout(hide, 6500);
+  setTimeout(() => { ['okoume', 'oak', 'larch'].forEach(woodSet); brickMat(); tileMat(); }, 1200);   // prefetch the on-demand sets
+}
 function loop(now) {
   requestAnimationFrame(loop);
   if (camTween) {
@@ -632,15 +643,9 @@ function loop(now) {
   draw();
   updateDimLabel();
   if (firstFrame) { firstFrame = false; T.frame = performance.now(); window.__t = T; }
-  if (!overlayDone && (assetsReady || now - T.start > 7000)) {
-    overlayDone = true; document.getElementById('cfgLoading').classList.add('done');
-    perf.last = 0; perf.samples.length = 0;                               // measure frame times only after the textures are in
-    const hint = document.getElementById('cfgHint'); hint.hidden = false;
-    const hide = () => { hint.hidden = true; canvas.removeEventListener('pointerdown', hide); };
-    canvas.addEventListener('pointerdown', hide); setTimeout(hide, 6500);
-    setTimeout(() => { ['okoume', 'oak', 'larch'].forEach(woodSet); brickMat(); tileMat(); }, 1200);   // prefetch the on-demand sets
-  }
+  if (!overlayDone && (assetsReady || now - T.start > 7000)) finishLoading();
   if (overlayDone) adaptQuality(now);
+  window.__frames = (window.__frames || 0) + 1;
 }
 
 /* ------------------------------------------------------------------
