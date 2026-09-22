@@ -413,7 +413,10 @@ function makeLeaf(w, h, design, { depth = .045, band = null, joints = true } = {
   // back plate(s), split around a glazing band
   const plates = band ? [[-h / 2, band[0]], [band[1], h / 2]] : [[-h / 2, h / 2]];
   const plateMat = design === 'rahmen' ? M.door : M.doorDark;   // dark back plate = shadow in the grooves and joints
-  plates.forEach(([a, b]) => g.add(box(w, b - a, depth, plateMat, 0, (a + b) / 2, -depth / 2, { rot: true })));
+  plates.forEach(([a, b]) => {
+    g.add(box(w, b - a, depth, plateMat, 0, (a + b) / 2, -depth / 2, { rot: true }));
+    g.add(box(w, b - a, .004, M.door, 0, (a + b) / 2, -depth - .002, { rot: true, shadow: false }));   // rear skin in the door finish (seen from inside)
+  });
   let ranges = [];
   if (design === 'glatt') ranges = [yRange];
   if (design === 'gross') ranges = [[yRange[0], -.009], [.009, yRange[1]]];
@@ -540,26 +543,31 @@ let doorT = 0, doorTarget = 0, doorAnimStart = null, doorFrom = 0;
 let camTween = null;
 // orbit targets sit in front of the facade and the orbit is limited to the front half, so the camera never passes through a wall
 function views() {
-  const { dw } = dims;
-  const front = { az: [-1.25, 1.25], dist: [3.0, 34] };
+  const { dw, W, D, H } = dims;
+  const front = { az: [-1.25, 1.25], dist: [3.0, 34], polar: .35 };
+  // inside the garage the orbit radius, sweep and elevation are limited by the inner walls and the ceiling
+  const maxD = Math.min(4.6, D - 1.6), halfIn = W / 2 - .5;
+  const azIn = Math.min(.7, Math.asin(Math.min(1, halfIn / maxD)) * .9);
+  const polarIn = Math.acos(Math.min(1, (H - .35 - 1.15) / maxD));
   return {
     street: { pos: [dw * .55 + 7.6, 2.3, 13.9], tgt: [1.7, 1.4, .6], ...front },
     front:  { pos: [0, 1.7, 10.2], tgt: [0, 1.3, .5], ...front },
     close:  { pos: [2.2, 1.5, 5.8], tgt: [0, 1.25, .45], ...front },
-    inside: { pos: [.6, 1.5, -4.3], tgt: [0, 1.15, -.4], az: [Math.PI - .75, Math.PI + .75], dist: [2.0, 5.2] },
+    inside: { pos: [Math.min(.6, halfIn * .4), 1.5, -4.2], tgt: [0, 1.15, -.4], az: [Math.PI - azIn, Math.PI + azIn], dist: [2.0, maxD], polar: polarIn },
   };
 }
 let pendingLimits = null;
 function applyLimits(v) {
   controls.minAzimuthAngle = v.az[0]; controls.maxAzimuthAngle = v.az[1];
   controls.minDistance = v.dist[0]; controls.maxDistance = v.dist[1];
+  controls.minPolarAngle = v.polar;
 }
 function goView(name, instant = false) {
   const v0 = views()[name] || views().street;
   const k = camera.aspect < 1 ? 1 + (1 - camera.aspect) * 1.1 : 1;
   const v = { tgt: v0.tgt, pos: v0.tgt.map((t, i) => t + (v0.pos[i] - t) * k) };
   document.querySelectorAll('#cfgViews button').forEach(b => b.classList.toggle('is-active', b.dataset.view === name));
-  controls.minAzimuthAngle = -Infinity; controls.maxAzimuthAngle = Infinity; controls.minDistance = 0.5; controls.maxDistance = 60;
+  controls.minAzimuthAngle = -Infinity; controls.maxAzimuthAngle = Infinity; controls.minDistance = 0.5; controls.maxDistance = 60; controls.minPolarAngle = 0;
   if (instant) { camera.position.fromArray(v.pos); controls.target.fromArray(v.tgt); applyLimits(v0); controls.update(); return; }
   pendingLimits = v0;
   camTween = { from: camera.position.clone(), fromT: controls.target.clone(), to: new THREE.Vector3().fromArray(v.pos), toT: new THREE.Vector3().fromArray(v.tgt), start: performance.now(), dur: 900 };
@@ -884,6 +892,7 @@ document.querySelectorAll('.cfg-tab').forEach(tab => tab.addEventListener('click
    Go
 ------------------------------------------------------------------ */
 if (q.has('clean')) document.body.classList.add('cfg-clean');
+window.__cfg = { camera, controls, state, dims: () => dims };   // for automated checks
 buildHouse(); T.house = performance.now();
 buildDoor(); T.door = performance.now();
 renderUI(); T.ui = performance.now();
