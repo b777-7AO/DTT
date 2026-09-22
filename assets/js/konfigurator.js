@@ -376,6 +376,7 @@ function makeLeaf(w, h, design, { depth = .045, band = null, joints = true } = {
   const g = new THREE.Group();
   const m = joints ? .003 : 0;                          // joint gap at panel edges (shows the recessed back plate)
   const yRange = [-h / 2 + m, h / 2 - m];
+  const RAIL = .05, ex = band ? [band[0] - RAIL, band[1] + RAIL] : null;   // strips must stop at the glazing rails
   const hStrip = (y0, y1, x = 0, sw = w) => g.add(box(sw, y1 - y0, RAISE, M.door, x, (y0 + y1) / 2, RAISE / 2, { shadow: false, rot: true }));
   const vStrip = (x0, x1, y0, y1) => g.add(box(x1 - x0, y1 - y0, RAISE, M.door, (x0 + x1) / 2, (y0 + y1) / 2, RAISE / 2, { shadow: false }));
   // back plate(s), split around a glazing band
@@ -389,11 +390,11 @@ function makeLeaf(w, h, design, { depth = .045, band = null, joints = true } = {
   if (design === 'linien') { const n = Math.max(2, Math.round(h / .165)), bh = (h - 2 * m) / n, gp = .0035; for (let i = 0; i < n; i++) ranges.push([yRange[0] + i * bh + (i ? gp : 0), yRange[0] + (i + 1) * bh - (i < n - 1 ? gp : 0)]); }
   if (design === 'lamellen') {
     const n = Math.max(3, Math.round(w / .116)), bw = w / n, gp = .003;
-    clipRanges([yRange], band).forEach(([a, b]) => { for (let i = 0; i < n; i++) vStrip(-w / 2 + i * bw + (i ? gp : 0), -w / 2 + (i + 1) * bw - (i < n - 1 ? gp : 0), a, b); });
+    clipRanges([yRange], ex).forEach(([a, b]) => { for (let i = 0; i < n; i++) vStrip(-w / 2 + i * bw + (i ? gp : 0), -w / 2 + (i + 1) * bw - (i < n - 1 ? gp : 0), a, b); });
   }
   if (design === 'kassette') {
-    hStrip(yRange[0], yRange[1]);   // smooth face, cassettes raised on top
-    const avail = clipRanges([yRange], band);
+    const avail = clipRanges([yRange], ex);
+    avail.forEach(([a, b]) => hStrip(a, b));   // smooth face, cassettes raised on top
     avail.forEach(([a, b]) => {
       const ah = b - a; if (ah < .3) return;
       const rows = ah > 1.3 ? Math.round(ah / .65) : 1, n = Math.max(1, Math.round(w / .62)), cw = w / n - .14, ch = Math.min(ah / rows - .16, .95);
@@ -407,19 +408,20 @@ function makeLeaf(w, h, design, { depth = .045, band = null, joints = true } = {
   }
   if (design === 'rahmen') {
     const t = .14;
-    clipRanges([yRange], band).forEach(([a, b]) => {
+    clipRanges([yRange], ex).forEach(([a, b]) => {
       hStrip(b - t, b); hStrip(a, a + t);
       vStrip(-w / 2, -w / 2 + t, a + t, b - t); vStrip(w / 2 - t, w / 2, a + t, b - t);
     });
     ranges = [];
   }
-  clipRanges(ranges, band).forEach(([a, b]) => hStrip(a, b));
-  // glazing band: dark frame rails, mullions and reflective glass
+  clipRanges(ranges, ex).forEach(([a, b]) => hStrip(a, b));
+  // glazing band: dark frame rails (2 mm shallower than the back plate, no coplanar faces), mullions and reflective glass
   if (band) {
     const bh = band[1] - band[0], yc = (band[0] + band[1]) / 2, n = Math.max(1, Math.round(w / .62)), pw = w / n, mt = .05;
-    g.add(box(w, .05, depth + RAISE, M.frame, 0, band[0] - .025, (RAISE - depth) / 2, { shadow: false }));
-    g.add(box(w, .05, depth + RAISE, M.frame, 0, band[1] + .025, (RAISE - depth) / 2, { shadow: false }));
-    for (let i = 0; i <= n; i++) { const x = -w / 2 + i * pw, cw = (i === 0 || i === n) ? mt : mt; g.add(box(cw, bh, depth + RAISE, M.frame, x + (i === 0 ? mt / 2 : i === n ? -mt / 2 : 0), yc, (RAISE - depth) / 2, { shadow: false })); }
+    const fd = depth + RAISE - .002, fz = (RAISE - depth + .002) / 2;
+    g.add(box(w, RAIL, fd, M.frame, 0, band[0] - RAIL / 2, fz, { shadow: false }));
+    g.add(box(w, RAIL, fd, M.frame, 0, band[1] + RAIL / 2, fz, { shadow: false }));
+    for (let i = 0; i <= n; i++) { const x = -w / 2 + i * pw; g.add(box(mt, bh, fd, M.frame, x + (i === 0 ? mt / 2 : i === n ? -mt / 2 : 0), yc, fz, { shadow: false })); }
     g.add(box(w - .02, bh - .01, .012, M.glass, 0, yc, -.02, { shadow: false }));
   }
   return g;
