@@ -3,8 +3,13 @@
    walls with real openings and reveals (no coplanar faces), Silvelox essences, stains and RAL lacquers. */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const TEX = 'assets/tex/';
+const q = new URLSearchParams(location.search);
 
 /* ------------------------------------------------------------------
    Options
@@ -72,15 +77,20 @@ const T = { start: performance.now() };
 const canvas = document.getElementById('cfgCanvas');
 const wrap = document.getElementById('canvasWrap');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+// ambient occlusion (contact shadows in reveals, corners, under the roof edges): desktop-class devices only
+const useAO = !q.has('noao') && window.matchMedia('(pointer: fine)').matches && Math.min(window.innerWidth, window.innerHeight) > 600;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, useAO ? 1.5 : 1.75));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 1.04;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
-const loader = new THREE.TextureLoader();
+// all textures go through one manager so the loading overlay only lifts when the first set has arrived
+let assetsReady = false;
+const manager = new THREE.LoadingManager(() => { assetsReady = true; });
+const loader = new THREE.TextureLoader(manager);
 const texCache = new Map();
 function tx(file, { srgb = false, tile = 1, wrap = true } = {}) {
   const key = file + '|' + tile;
@@ -109,6 +119,20 @@ const camera = new THREE.PerspectiveCamera(42, 1, 0.2, 320);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
 controls.maxPolarAngle = Math.PI / 2 - 0.03; controls.minDistance = 2.2; controls.maxDistance = 34; controls.enablePan = false;
+
+// post-processing: MSAA render target -> GTAO (cut-out trees excluded from the depth pass, they would leave square haloes) -> tone mapping
+class AOPass extends GTAOPass {
+  overrideVisibility() { super.overrideVisibility(); this.scene.traverse(o => { if (o.userData.cutout) o.visible = false; }); }
+}
+let composer = null, aoPass = null, aoOn = useAO;
+if (useAO) {
+  composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { samples: 4, type: THREE.HalfFloatType }));
+  composer.addPass(new RenderPass(scene, camera));
+  aoPass = new AOPass(scene, camera, 1, 1, {}, { radius: .34, distanceExponent: 1, thickness: 1, scale: 1, samples: 16, distanceFallOff: 1, screenSpaceRadius: false }, { lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 4, radiusExponent: 1, rings: 2, samples: 16 });
+  aoPass.output = GTAOPass.OUTPUT.Default; aoPass.blendIntensity = .85;
+  composer.addPass(aoPass); composer.addPass(new OutputPass());
+}
+function draw() { if (composer && aoOn) composer.render(); else renderer.render(scene, camera); }
 
 const sun = new THREE.DirectionalLight(0xfff3e0, 3.3);
 sun.position.copy(sunDir).multiplyScalar(45).add(new THREE.Vector3(3, 0, 0));
@@ -168,11 +192,12 @@ function woodSet(base) {
   return woodSets[base];
 }
 const fineStructure = tx('finestructure_n.jpg', { tile: .22 });
+const paintRough = tx('paint_r.jpg', { tile: .7 });   // faint orange-peel variation on lacquered panels
 
 function srgbToLin(hex) { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; } // THREE.Color converts sRGB hex to linear working space
 function applyDoorMaterial() {
   const d = M.door, wood = WOOD.find(w => w.id === state.color);
-  const hadMap = !!d.map, hadNormal = !!d.normalMap;
+  const hadMap = !!d.map, hadNormal = !!d.normalMap, hadRough = !!d.roughnessMap;
   if (wood) {
     const set = woodSet(wood.base), tgt = srgbToLin(wood.hex), base = srgbToLin(WOOD_BASE_MEAN[wood.base]);
     d.map = set.map; d.roughnessMap = set.roughnessMap; d.normalMap = set.normalMap;
@@ -182,14 +207,14 @@ function applyDoorMaterial() {
     M.doorDark.color.set(wood.hex).multiplyScalar(.45);
   } else {
     const ral = RAL.find(r => r.id === state.color) || RAL[0];
-    d.map = null; d.roughnessMap = null; d.color.set(ral.hex);
-    d.roughness = { matt: .5, seide: .32, struktur: .68 }[state.finish];
+    d.map = null; d.roughnessMap = paintRough; d.color.set(ral.hex);
+    d.roughness = { matt: .52, seide: .34, struktur: .7 }[state.finish];
     d.metalness = .06;
     d.normalMap = state.finish === 'struktur' ? fineStructure : null; d.normalScale.set(.55, .55);
     d.clearcoat = state.finish === 'seide' ? .55 : 0; d.clearcoatRoughness = .3;
     M.doorDark.color.set(ral.hex).multiplyScalar(.45);
   }
-  if (hadMap !== !!d.map || hadNormal !== !!d.normalMap) d.needsUpdate = true;
+  if (hadMap !== !!d.map || hadNormal !== !!d.normalMap || hadRough !== !!d.roughnessMap) d.needsUpdate = true;
   M.doorDark.needsUpdate = true;
 }
 
@@ -266,8 +291,12 @@ function buildHouse() {
   const plinth = (x0, x1, z, depth = .04) => house.add(box(x1 - x0, .38, depth, M.plinth, (x0 + x1) / 2, .19, z, { shadow: false }));
   plinth(-W / 2 - .02, -dw / 2, 0); plinth(dw / 2, W / 2 + .02, 0);
   house.add(box(.04, .38, D, M.plinth, -W / 2, .19, -D / 2, { shadow: false }));
-  // threshold
+  // threshold, wall lights beside the door
   house.add(box(dw + .3, .035, .5, M.kerb, 0, .0175, .22, { shadow: false }));
+  [-1, 1].forEach(s => {
+    house.add(box(.09, .2, .1, M.darkMetal, s * (dw / 2 + .325), dh - .25, .05, { shadow: false }));
+    house.add(box(.05, .012, .06, M.lamp, s * (dw / 2 + .325), dh - .36, .06, { shadow: false }));
+  });
   // downpipe at the garage corner
   const pipe = (x, z, h) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, h, 12), M.darkMetal); m.position.set(x, h / 2, z); m.castShadow = true; house.add(m); };
   pipe(-W / 2 - .07, .07, H + .3);
@@ -309,6 +338,7 @@ function buildHouse() {
   house.add(box(1.7, .15, 1.1, M.kerb, x0 + doorOp.x + .55, .075, zf + .55, { shadow: false }));
   house.add(box(.09, .2, .1, M.frame, x0 + 2.05, 2.05, zf + .04, { shadow: false }));
   house.add(box(.05, .09, .05, M.lamp, x0 + 2.05, 1.95, zf + .07, { shadow: false }));
+  house.add(box(.34, .4, .12, M.darkMetal, x0 + 2.15, 1.2, zf + .05, { shadow: false }));   // letterbox
   const clad = wall(3.6, 2.5, .06, [{ x: wins[0].x - .2, y: wins[0].y - 3.05, w: wins[0].w, h: wins[0].h }], M.cladding);
   clad.position.set(x0 + .2, 3.05, zf + .04); house.add(clad);
   plinth(x0 + doorOp.x + doorOp.w, x0 + hw + .02, zf); plinth(x0, x0 + doorOp.x, zf);
@@ -338,6 +368,7 @@ function buildHouse() {
   // ---- ground: lawn, driveway, path, sidewalk, kerb, street
   house.add(plane(400, 400, M.lawn, 0, 0, 0));
   house.add(plane(dw + 2.2, 17.2, M.pavers, 0, .02, 8.6));
+  [-1, 1].forEach(s => house.add(box(.12, .07, 17.2, M.kerb, s * (dw / 2 + 1.16), .035, 8.6, { shadow: false })));   // kerb stones along the drive
   house.add(plane(1.4, 1.6, M.concrete, x0 + doorOp.x + .55, .025, zf + 1.9));
   house.add(plane(x0 + doorOp.x + .55 - dw / 2 + 1.4, 1.4, M.concrete, (x0 + doorOp.x + .55 + dw / 2 - .8) / 2, .04, 1.9));
   house.add(plane(400, 2.0, M.concrete, 0, .03, 18.2));
@@ -345,9 +376,9 @@ function buildHouse() {
   house.add(plane(400, 9, M.asphalt, 0, .015, 23.8));
 
   // ---- greenery (photographic cut-outs on crossed planes, trimmed hedges)
-  const cross = (file, x, z, h, aspect, rot = 0) => {
+  const cross = (file, x, z, h, aspect, rot = 0, planes = 3) => {
     const g = new THREE.Group(), m = cutoutMat(file), w = h * aspect;
-    for (let i = 0; i < 2; i++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); p.rotation.y = rot + i * Math.PI / 2; p.position.y = h / 2; p.castShadow = true; g.add(p); }
+    for (let i = 0; i < planes; i++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); p.rotation.y = rot + i * Math.PI / planes; p.position.y = h / 2; p.castShadow = true; p.userData.cutout = true; g.add(p); }
     g.position.set(x, 0, z); house.add(g);
   };
   const cyp = (x, z, h = 4.6, r = 0) => cross('tree_cypress.webp', x, z, h, 164 / 1002, r);
@@ -485,8 +516,9 @@ function buildDoor() {
     const h = dh - .11, lw = dw / 2 - .09, depth = .045, zL = -.06, pivots = [];
     const band = state.glazing ? [h / 2 - .5, h / 2 - .14] : null;
     [-1, 1].forEach(s => {
-      const pivot = new THREE.Group(); pivot.position.set(s * (dw / 2 - .075), h / 2 + .03, zL - depth / 2);
-      const leaf = makeLeaf(lw, h, design, { depth, band, joints: false }); leaf.position.set(-s * lw / 2, 0, depth / 2);
+      // hinge axis on the outer front edge of the leaf, so the leaf swings clear of the frame profile
+      const pivot = new THREE.Group(); pivot.position.set(s * (dw / 2 - .075), h / 2 + .03, zL + RAISE);
+      const leaf = makeLeaf(lw, h, design, { depth, band, joints: false }); leaf.position.set(-s * lw / 2, 0, -RAISE);
       handle(leaf, -s * (lw / 2 - .18), 1.05 - h / 2, RAISE); seal(leaf, lw, -h / 2, -.02);
       pivot.add(leaf); snap.add(pivot); pivots.push({ pivot, s });
       [.35, h / 2, h - .35].forEach(y => snap.add(box(.04, .12, .06, M.frame, s * (dw / 2 - .085), y + .03, zL + .01, { shadow: false })));
@@ -506,21 +538,30 @@ function buildDoor() {
 ------------------------------------------------------------------ */
 let doorT = 0, doorTarget = 0, doorAnimStart = null, doorFrom = 0;
 let camTween = null;
+// orbit targets sit in front of the facade and the orbit is limited to the front half, so the camera never passes through a wall
 function views() {
   const { dw } = dims;
+  const front = { az: [-1.25, 1.25], dist: [3.0, 34] };
   return {
-    street: { pos: [dw * .55 + 7.6, 2.3, 13.6], tgt: [1.7, 1.5, -1.5] },
-    front:  { pos: [0, 1.7, 9.8], tgt: [0, 1.35, 0] },
-    close:  { pos: [2.1, 1.5, 5.3], tgt: [0, 1.3, -.2] },
-    inside: { pos: [.8, 1.6, -5.4], tgt: [0, 1.15, 0] },
+    street: { pos: [dw * .55 + 7.6, 2.3, 13.9], tgt: [1.7, 1.4, .6], ...front },
+    front:  { pos: [0, 1.7, 10.2], tgt: [0, 1.3, .5], ...front },
+    close:  { pos: [2.2, 1.5, 5.8], tgt: [0, 1.25, .45], ...front },
+    inside: { pos: [.6, 1.5, -4.3], tgt: [0, 1.15, -.4], az: [Math.PI - .75, Math.PI + .75], dist: [2.0, 5.2] },
   };
+}
+let pendingLimits = null;
+function applyLimits(v) {
+  controls.minAzimuthAngle = v.az[0]; controls.maxAzimuthAngle = v.az[1];
+  controls.minDistance = v.dist[0]; controls.maxDistance = v.dist[1];
 }
 function goView(name, instant = false) {
   const v0 = views()[name] || views().street;
   const k = camera.aspect < 1 ? 1 + (1 - camera.aspect) * 1.1 : 1;
   const v = { tgt: v0.tgt, pos: v0.tgt.map((t, i) => t + (v0.pos[i] - t) * k) };
   document.querySelectorAll('#cfgViews button').forEach(b => b.classList.toggle('is-active', b.dataset.view === name));
-  if (instant) { camera.position.fromArray(v.pos); controls.target.fromArray(v.tgt); controls.update(); return; }
+  controls.minAzimuthAngle = -Infinity; controls.maxAzimuthAngle = Infinity; controls.minDistance = 0.5; controls.maxDistance = 60;
+  if (instant) { camera.position.fromArray(v.pos); controls.target.fromArray(v.tgt); applyLimits(v0); controls.update(); return; }
+  pendingLimits = v0;
   camTween = { from: camera.position.clone(), fromT: controls.target.clone(), to: new THREE.Vector3().fromArray(v.pos), toT: new THREE.Vector3().fromArray(v.tgt), start: performance.now(), dur: 900 };
 }
 function setDoor(open) {
@@ -537,6 +578,7 @@ function resize() {
   const w = wrap.clientWidth, h = wrap.clientHeight;
   if (!w || !h) return;
   renderer.setSize(w, h, false);
+  if (composer) composer.setSize(w, h);
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 new ResizeObserver(resize).observe(wrap);
@@ -563,18 +605,22 @@ function adaptQuality(now) {
   const avg = perf.samples.slice(5).reduce((a, b) => a + b, 0) / (perf.samples.length - 5);
   perf.adjusted = true;
   if (avg > 45) {
-    renderer.setPixelRatio(1); resize();
-    sun.shadow.mapSize.set(1024, 1024); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
-    renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.needsUpdate = true;
+    aoOn = false;                                     // drop ambient occlusion first, then resolution and shadow quality
+    renderer.setPixelRatio(1); if (composer) composer.setPixelRatio(1); resize();
+    if (avg > 70) {
+      sun.shadow.mapSize.set(1024, 1024); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+      renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.needsUpdate = true;
+    }
   }
 }
+let overlayDone = false;
 function loop(now) {
   requestAnimationFrame(loop);
   if (camTween) {
     const k = Math.min(1, (now - camTween.start) / camTween.dur), e = ease(k);
     camera.position.lerpVectors(camTween.from, camTween.to, e);
     controls.target.lerpVectors(camTween.fromT, camTween.toT, e);
-    if (k >= 1) camTween = null;
+    if (k >= 1) { camTween = null; if (pendingLimits) { applyLimits(pendingLimits); pendingLimits = null; } }
   }
   if (doorAnimStart !== null) {
     const k = Math.min(1, (now - doorAnimStart) / 2400);
@@ -583,13 +629,18 @@ function loop(now) {
     if (k >= 1) doorAnimStart = null;
   }
   controls.update();
-  renderer.render(scene, camera);
+  draw();
   updateDimLabel();
-  adaptQuality(now);
-  if (firstFrame) { firstFrame = false; T.frame = performance.now(); window.__t = T; document.getElementById('cfgLoading').classList.add('done');
+  if (firstFrame) { firstFrame = false; T.frame = performance.now(); window.__t = T; }
+  if (!overlayDone && (assetsReady || now - T.start > 7000)) {
+    overlayDone = true; document.getElementById('cfgLoading').classList.add('done');
+    perf.last = 0; perf.samples.length = 0;                               // measure frame times only after the textures are in
     const hint = document.getElementById('cfgHint'); hint.hidden = false;
     const hide = () => { hint.hidden = true; canvas.removeEventListener('pointerdown', hide); };
-    canvas.addEventListener('pointerdown', hide); setTimeout(hide, 6500); }
+    canvas.addEventListener('pointerdown', hide); setTimeout(hide, 6500);
+    setTimeout(() => { ['okoume', 'oak', 'larch'].forEach(woodSet); brickMat(); tileMat(); }, 1200);   // prefetch the on-demand sets
+  }
+  if (overlayDone) adaptQuality(now);
 }
 
 /* ------------------------------------------------------------------
@@ -812,7 +863,7 @@ $('shareBtn').addEventListener('click', async () => {
 $('saveImage').addEventListener('click', () => {
   let url;
   if (photo.active && !photo.img.hidden) url = exportPhoto();
-  else { renderer.render(scene, camera); url = renderer.domElement.toDataURL('image/jpeg', .92); }
+  else { draw(); url = renderer.domElement.toDataURL('image/jpeg', .92); }
   const a = document.createElement('a'); a.href = url; a.download = `DTT-Tor-${TYPES[state.type].label}-${state.color}.jpg`; a.click();
 });
 document.querySelectorAll('.cfg-tab').forEach(tab => tab.addEventListener('click', () => {
@@ -827,7 +878,6 @@ document.querySelectorAll('.cfg-tab').forEach(tab => tab.addEventListener('click
 /* ------------------------------------------------------------------
    Go
 ------------------------------------------------------------------ */
-const q = new URLSearchParams(location.search);
 if (q.has('clean')) document.body.classList.add('cfg-clean');
 buildHouse(); T.house = performance.now();
 buildDoor(); T.door = performance.now();
