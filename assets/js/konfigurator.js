@@ -209,7 +209,7 @@ function updateLabels() {
   const dl = $('dimLabel');
   if (!studioMode || !showDims || turnTarget) { dl.hidden = true; $('dimW').hidden = $('dimH').hidden = $('dimT').hidden = true; if (!photo.active) { place(dl, 0, dims.dh + th + .32, 0); dl.hidden = dl.hidden || !showDims; } return; }
   dl.hidden = true;
-  place($('dimW'), 0, -.22, .35); place($('dimH'), dims.dw / 2 + .3, (dims.dh + th) / 2, 0); place($('dimT'), -dims.dw / 2 - .12, dims.dh + th + .18, -.04);
+  place($('dimW'), 0, -.22, .35); place($('dimH'), dims.dw / 2 + .3, (dims.dh + th) / 2, 0); place($('dimT'), 0, dims.dh + th + .3, 0, 10);
 }
 let firstFrame = true, overlayDone = false;
 const perf = { samples: [], last: 0, adjusted: false };
@@ -270,12 +270,12 @@ const thumbs = (() => {
   };
 })();
 
-/* ------------------------------------------------------------------ Price indication (Silvelox list prices 08/2026) */
+/* ------------------------------------------------------------------ Price indication (manufacturer list prices 08/2026) */
 function priceFor(st) {
   const t = C.TYPES[st.type], m = C.MODELS[st.model], lines = [], warn = [];
   if (!t.priced || !m.table) return { lines, total: null, note: 'Preis auf Anfrage', warn };
   const sec = C.sector(st.w, st.h);
-  if (!sec) return { lines, total: null, note: 'Dieses Maß liegt außerhalb des Silvelox Rasters: Preis und Machbarkeit auf Anfrage', warn };
+  if (!sec) return { lines, total: null, note: 'Dieses Maß liegt außerhalb des Standard-Rasters: Preis und Machbarkeit auf Anfrage', warn };
   if (m.sectors && !m.sectors.includes(sec)) return { lines, total: null, note: `${m.label} ist nur in den Sektoren ${m.sectors.join(' und ')} lieferbar, Preis auf Anfrage`, warn };
   if (m.maxH && st.h > m.maxH) return { lines, total: null, note: `${m.label} ist bis ${m.maxH} mm Höhe lieferbar, Preis auf Anfrage`, warn };
   const ess = C.ESSENCES.find(e => e.id === st.essence) || C.ESSENCES[0];
@@ -442,7 +442,7 @@ function renderUI() {
   // 5 Maße & Haus
   $('inpW').value = state.w; $('inpH').value = state.h;
   const sp = $('optSize'); sp.innerHTML = ''; C.SIZE_PRESETS.forEach((v, i) => chip(sp, 'size' + i, `${v.label} ${v.w} × ${v.h}`, state.w === v.w && state.h === v.h));
-  const sec = C.sector(state.w, state.h); $('sectorNote').textContent = isSecur ? (sec ? `Preissektor ${sec}, Rahmenpfosten ${C.pillarFor(state.w, state.h, state.pedestrian)} mm, Bestellmaß Außenkante Rahmen.${state.h > 2980 ? ' ' + C.SECTOR_NOTES.certified : ''}` : 'Außerhalb des Silvelox Rasters: Preis und Machbarkeit auf Anfrage.') : 'Bestellmaß = lichte Öffnung.';
+  const sec = C.sector(state.w, state.h); $('sectorNote').textContent = isSecur ? (sec ? `Preissektor ${sec}, Rahmenpfosten ${C.pillarFor(state.w, state.h, state.pedestrian)} mm, Bestellmaß Außenkante Rahmen.${state.h > 2980 ? ' ' + C.SECTOR_NOTES.certified : ''}` : 'Außerhalb des Standard-Rasters: Preis und Machbarkeit auf Anfrage.') : 'Bestellmaß = lichte Öffnung.';
   const fa = $('optFacade'); fa.innerHTML = ''; C.FACADE.forEach(c => swatch(fa, c.id, c.name, c.hex, state.facade === c.id));
   const ro = $('optRoof'); ro.innerHTML = ''; Object.entries(C.ROOF).forEach(([id, l]) => chip(ro, id, l, state.roof === id));
   const pr = $('optPreset'); pr.innerHTML = ''; C.PRESETS.forEach(v => chip(pr, v.id, v.label, Object.entries(v.patch).every(([k, val]) => state[k] === val)));
@@ -464,7 +464,7 @@ function renderSummary() {
   const r = priceRange();
   if (p.total != null) {
     const range = r && r.max > r.min ? `<p class="cfg-price-range"><span>Preisspanne ${C.MODELS[state.model].label} in ${state.w} × ${state.h} mm</span><strong>${eur(r.min)} bis ${eur(r.max)}</strong><small>je nach Holzart, mit den gewählten Optionen</small></p>` : '';
-    box.innerHTML = `<div class="cfg-price-total"><span>Preisindikation Listenpreis</span><strong>${eur(p.total)}</strong></div><ul class="cfg-price-lines">${p.lines.map(([l, v]) => `<li><span>${l}</span><span>${eur(v)}</span></li>`).join('')}</ul>${range}${p.warn.map(w => `<p class="cfg-price-warn">${w}</p>`).join('')}<p class="cfg-price-note">Silvelox Listenpreis 08/2026 netto ab Werk, ohne MwSt., Lieferung, Montage und Aufmaß. ${p.note} <a href="pages/preise.html">Alle Listenpreise</a></p>`;
+    box.innerHTML = `<div class="cfg-price-total"><span>Preisindikation Listenpreis</span><strong>${eur(p.total)}</strong></div><ul class="cfg-price-lines">${p.lines.map(([l, v]) => `<li><span>${l}</span><span>${eur(v)}</span></li>`).join('')}</ul>${range}${p.warn.map(w => `<p class="cfg-price-warn">${w}</p>`).join('')}<p class="cfg-price-note">Listenpreis 08/2026 netto ab Werk, ohne MwSt., Lieferung, Montage und Aufmaß. ${p.note} <a href="pages/preise.html">Alle Listenpreise</a></p>`;
   } else box.innerHTML = `<div class="cfg-price-total"><span>Preis</span><strong>auf Anfrage</strong></div><p class="cfg-price-note">${p.note}. Wir melden uns innerhalb eines Werktags mit Aufmaß-Termin und Angebot. ${C.TYPES[state.type].priced ? '' : 'Zur Orientierung: <a href="pages/preise.html">Listenpreise SECUR</a>.'}</p>`;
   const text = summaryLines().map(([k, v]) => `${k}: ${v}`).join('\n') + (p.total != null ? `\nPreisindikation: ${eur(p.total)} (Listenpreis netto)` : '') + `\nLink: ${location.href.split('#')[0].split('?')[0]}${hash()}`;
   const href = `pages/kontakt.html?konfiguration=${encodeURIComponent(text)}`;

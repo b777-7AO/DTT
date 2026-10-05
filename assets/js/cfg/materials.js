@@ -87,7 +87,7 @@ export function createMaterials(renderer, manager) {
       d.clearcoat = state.finish === 'seide' ? .55 : .12; d.clearcoatRoughness = state.finish === 'seide' ? .3 : .6;
       dark = new THREE.Color(ral.hex).multiplyScalar(.42).getStyle(); label = `RAL ${ral.id} ${ral.name}`;
     } else {
-      // stain or natural essence: photographic grain tinted to the Silvelox chart colour
+      // stain or natural essence: photographic grain tinted to the manufacturer chart colour
       const ess = ESSENCES.find(e => e.id === state.essence) || ESSENCES[0];
       const stain = state.surface === 'stain' ? STAINS.find(s => s.id === state.color) : null;
       const set = woodSet(ess.base), tgt = lin(stain ? stain.hex : ess.hex), base = lin(WOOD_BASE_MEAN[ess.base]);

@@ -489,6 +489,6 @@ footer.site-footer { background: var(--navy); color: rgba(255,255,255,.75); }
   .refs-head { flex-direction: column; align-items: flex-start; gap: 1rem; }
 }
 
-/* Silvelox range media */
-.silvelox-media { margin: 0 0 2rem; }
-.silvelox-media img { width: 100%; height: auto; display: block; aspect-ratio: 3 / 2; object-fit: cover; }
+/* Echtholz range media */
+.programm-media { margin: 0 0 2rem; }
+.programm-media img { width: 100%; height: auto; display: block; aspect-ratio: 3 / 2; object-fit: cover; }

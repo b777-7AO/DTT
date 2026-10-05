@@ -1,6 +1,6 @@
 /* DTT Tor-Studio · Produktkatalog
-   Quelle: Silvelox Preisliste SECUR / SECURPLUS 08/2026 (Rev. 00), Silvelox Produktseiten (Garagentore: Secur, Secur Plus,
-   Sektionaltore SR, Seitensektionaltore SL, Basculap, Flügeltore). Alle Preise = Silvelox Listenpreise netto ab Werk in EUR. */
+   Quelle: Hersteller-Preisliste SECUR / SECURPLUS 08/2026 (Rev. 00), Hersteller-Produktseiten (Garagentore: Secur, Secur Plus,
+   Sektionaltore SR, Seitensektionaltore SL, Basculap, Flügeltore). Alle Preise = Listenpreise netto ab Werk in EUR. */
 
 export const TYPES = {
   secur: {
@@ -11,7 +11,7 @@ export const TYPES = {
   },
   sr: {
     label: 'SR Sektionaltor', short: 'Sektionaltor',
-    desc: 'Echtholz-Sektionaltor von Silvelox: läuft in Schienen unter die Decke, Platz vor und hinter dem Tor bleibt frei.',
+    desc: 'Echtholz-Sektionaltor aus unserer Manufaktur: läuft in Schienen unter die Decke, Platz vor und hinter dem Tor bleibt frei.',
     facts: ['Lamellen aus Echtholz, 80 mm', 'Läuft unter die Decke', 'Antrieb mit Handsender', 'Lichtausschnitte und Schlupftür möglich'],
     families: ['sr'], priced: false, kind: 'sectional',
   },
@@ -77,7 +77,7 @@ export const MODELS = {
   // ---- Japanese Mood (S. 23)
   sugi:     { family: 'japan', label: 'SUGI',      pattern: 'vboard', pitch: .14, wood: 'sugi',     desc: 'Verkohlte Fichtenbretter, weiß pigmentiert versiegelt.', table: 'japan' },
   wabisabi: { family: 'japan', label: 'WABI SABI', pattern: 'vboard', pitch: .14, wood: 'wabisabi', desc: 'Gealterte Fichtenbretter, hydro-geölt.', table: 'japan' },
-  // ---- Sektionaltor SR / SL (Silvelox Produktseiten)
+  // ---- Sektionaltor SR / SL (Hersteller-Produktseiten)
   sr_piana:      { family: 'sr', label: 'Piana',      pattern: 'flat',    desc: 'Glatte Lamellen.' },
   sr_multidoga:  { family: 'sr', label: 'Multidoga',  pattern: 'hboard',  pitch: .07, desc: 'Mehrere Bretter je Lamelle.' },
   sr_bidoga:     { family: 'sr', label: 'Bidoga',     pattern: 'hgroove', pitch: .25, desc: 'Zwei Bretter je Lamelle.' },
@@ -109,7 +109,7 @@ export const RAL = [
   { id: '6013', name: 'Schilfgrün', hex: '#7e8a5a' }, { id: '6021', name: 'Blassgrün', hex: '#8fa58b' }, { id: '8017', name: 'Schokobraun', hex: '#42221b' },
   { id: '8019', name: 'Graubraun', hex: '#3e3b39' },
 ];
-// Imprägnierungen (Standardfarben, 12 Jahre Garantie) auf Okoumé-Basis: Zielfarbe aus der Silvelox-Farbkarte
+// Imprägnierungen (Standardfarben, 12 Jahre Garantie) auf Okoumé-Basis: Zielfarbe aus der Hersteller-Farbkarte
 export const STAINS = [
   { id: 'douglas', name: 'Douglasie', hex: '#92562b', sw: 't_douglas' }, { id: 'miele', name: 'Honig', hex: '#a4743b', sw: 't_miele' },
   { id: 'noce', name: 'Nussbaum', hex: '#6c4422', sw: 't_noce' }, { id: 'noce_sc', name: 'Nussbaum dunkel', hex: '#402e20', sw: 't_noce_scuro' },

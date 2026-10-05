@@ -1,4 +1,4 @@
-/* DTT · Preise: Tabellen aus dem Katalog (Silvelox Preisliste 08/2026) */
+/* DTT · Preise: Tabellen aus dem Katalog (Hersteller-Preisliste 08/2026) */
 import * as C from './cfg/catalog.js';
 const $ = id => document.getElementById(id);
 const eur = n => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
@@ -20,7 +20,7 @@ function cards() {
 }
 function sectorTable() {
   const w = +$('pw').value, h = +$('ph').value, sec = C.sector(w, h);
-  if (!sec) { $('sectorText').innerHTML = `<strong>Außerhalb des Silvelox Rasters.</strong> Für ${w} × ${h} mm prüfen wir die Machbarkeit und erstellen ein individuelles Angebot.`; $('sectorTable').innerHTML = ''; return; }
+  if (!sec) { $('sectorText').innerHTML = `<strong>Außerhalb des Standard-Rasters.</strong> Für ${w} × ${h} mm prüfen wir die Machbarkeit und erstellen ein individuelles Angebot.`; $('sectorTable').innerHTML = ''; return; }
   $('sectorText').innerHTML = `<strong>Sektor ${sec}</strong> für ${w} × ${h} mm Außenmaß Rahmen, Rahmenpfosten ${C.pillarFor(w, h)} mm.`;
   const rows = FAM.map(f => { const t = C.PRICES[f.table][sec]; return `<tr><th scope="row">${f.label}<small>${f.models}</small></th>${['okoume', 'fir', 'oak', 'brushed', 'stone', 'wood'].map(c => `<td>${t[c] ? eur(t[c]) : '<span class="na">–</span>'}</td>`).join('')}</tr>`; });
   $('sectorTable').innerHTML = `<thead><tr><th>Familie</th>${['okoume', 'fir', 'oak', 'brushed', 'stone', 'wood'].map(c => `<th>${COLS[c]}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody>`;

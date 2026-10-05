@@ -1,5 +1,5 @@
 /* DTT Tor-Studio · Torgeometrie
-   Maßhaltig nach Silvelox (Torblatt 80 mm, Rahmenpfosten 110 mm, Gegengewichtskasten 370 mm tief, Fräsnut 9 × 5 mm).
+   Maßhaltig nach Herstellerangaben (Torblatt 80 mm, Rahmenpfosten 110 mm, Gegengewichtskasten 370 mm tief, Fräsnut 9 × 5 mm).
    Jede Fräsung ist echte Geometrie: dunkle Rückplatte + erhabene Leisten/Kassetten, keine koplanaren Flächen. */
 import * as THREE from 'three';
 import { MODELS, HANDLES, pillarFor } from './catalog.js';
@@ -220,7 +220,7 @@ export function makeLeaf(w, h, modelId, M, { depth = LEAF_T, band = null, joints
     for (let i = 0; i <= n; i++) { const x = -w / 2 + i * pw; g.add(box(mt, bh, fd, M.frame, x + (i === 0 ? mt / 2 : i === n ? -mt / 2 : 0), yc, fz, { shadow: false })); }
     g.add(box(w - .02, bh - .01, .012, M.glass, 0, yc, -.02, { shadow: false }));
   }
-  // built-in windows (Silvelox D02): wooden spacers in the door colour, safety glass
+  // built-in windows (Option D02): wooden spacers in the door colour, safety glass
   if (windows) windows.forEach(([x, y, ww, wh]) => {
     g.add(box(ww + .06, wh + .06, raise + .03, M.doorDark, x, y, (raise + .03) / 2 - .012, { shadow: false }));
     g.add(box(ww + .02, wh + .02, .03, M.door, x, y, raise + .006, { shadow: false, rot: true }));
