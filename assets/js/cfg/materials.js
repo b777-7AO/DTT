@@ -19,11 +19,30 @@ export function createMaterials(renderer, manager) {
   }
   const pbr = (name, tile, { rough = true, mirror = false } = {}) => ({ map: tx(name + '_d.jpg', { srgb: true, tile, mirror }), normalMap: tx(name + '_n.jpg', { tile, mirror }), roughnessMap: rough ? tx(name + '_r.jpg', { tile, mirror }) : null });
   const std = (o) => new THREE.MeshStandardMaterial(o);
+  /* soft value-noise blotches (lightMap on uv channel 0) to break up large tiled surfaces */
+  const noiseCache = new Map();
+  function noiseTex(lo, hi, metres = 14) {
+    const key = lo + '|' + hi + '|' + metres; if (noiseCache.has(key)) return noiseCache.get(key);
+    const N = 256, c = document.createElement('canvas'); c.width = c.height = N; const ctx = c.getContext('2d');
+    const img = ctx.createImageData(N, N), g = 8, grid = []; let seed = 7 + metres;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (let y = 0; y <= g; y++) { grid[y] = []; for (let x = 0; x <= g; x++) grid[y][x] = rnd(); }
+    const sm = t => t * t * (3 - 2 * t);
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const fx = x / N * g, fy = y / N * g, x0 = Math.floor(fx) % g, y0 = Math.floor(fy) % g, tx_ = sm(fx - Math.floor(fx)), ty_ = sm(fy - Math.floor(fy));
+      const a = grid[y0][x0], b = grid[y0][(x0 + 1) % g], cc = grid[(y0 + 1) % g][x0], d = grid[(y0 + 1) % g][(x0 + 1) % g];
+      const v = (a * (1 - tx_) + b * tx_) * (1 - ty_) + (cc * (1 - tx_) + d * tx_) * ty_;
+      const l = Math.round(255 * (lo + (hi - lo) * v)); const i = (y * N + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = l; img.data[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1 / metres, 1 / metres); t.channel = 0; t.colorSpace = THREE.NoColorSpace;
+    noiseCache.set(key, t); return t;
+  }
 
   const M = {
-    plaster: std({ color: 0xefece5, roughness: .93, normalMap: tx('plaster_n.jpg', { tile: 2.2 }), normalScale: new THREE.Vector2(.32, .32) }),
+    plaster: std({ color: 0xefece5, roughness: .93, normalMap: tx('plaster_n.jpg', { tile: 2.2, mirror: true }), normalScale: new THREE.Vector2(.28, .28), lightMap: noiseTex(.85, 1.0), lightMapIntensity: 1 }),
     interior: std({ color: 0xe6e4df, roughness: .95 }),
-    plinth: std({ color: 0x55585c, roughness: .9, normalMap: tx('plaster_n.jpg', { tile: 2.2 }), normalScale: new THREE.Vector2(.3, .3) }),
+    plinth: std({ color: 0x55585c, roughness: .9, normalMap: tx('plaster_n.jpg', { tile: 2.2, mirror: true }), normalScale: new THREE.Vector2(.3, .3) }),
     frame: std({ color: 0x2a2d30, roughness: .42, metalness: .55 }),          // anthracite RAL 7016 textured steel frame
     chrome: std({ color: 0xdadcdd, metalness: 1, roughness: .2 }),
     metal: std({ color: 0x9da2a6, metalness: .85, roughness: .38 }),
@@ -34,10 +53,10 @@ export function createMaterials(renderer, manager) {
     seal: std({ color: 0x141414, roughness: .92 }),
     gravel: std({ ...pbr('gravel', 1.1), roughness: 1, color: 0xd6d3cd }),
     garageFloor: std({ ...pbr('garagefloor', 3), roughness: 1 }),
-    pavers: std({ ...pbr('pavers', 2.0), roughness: 1 }),
+    pavers: std({ ...pbr('pavers', 2.0, { mirror: true }), roughness: 1, lightMap: noiseTex(.8, 1.0, 9), lightMapIntensity: 1 }),
     concrete: std({ ...pbr('concrete', 2.0), roughness: 1 }),
     asphalt: std({ ...pbr('asphalt', 4), roughness: 1 }),
-    lawn: std({ map: tx('lawn_d.jpg', { srgb: true, tile: 2.6 }), normalMap: tx('lawn_n.jpg', { tile: 2.6 }), normalScale: new THREE.Vector2(.5, .5), roughness: 1 }),
+    lawn: std({ map: tx('lawn_d.jpg', { srgb: true, tile: 2.6, mirror: true }), normalMap: tx('lawn_n.jpg', { tile: 2.6, mirror: true }), normalScale: new THREE.Vector2(.5, .5), roughness: 1, lightMap: noiseTex(.62, 1.0, 18), lightMapIntensity: 1 }),
     hedge: std({ map: tx('hedge_d.jpg', { srgb: true, tile: 1.1 }), normalMap: tx('hedge_n.jpg', { tile: 1.1 }), normalScale: new THREE.Vector2(.8, .8), roughness: 1 }),
     cladding: std({ ...pbr('wood_clad', 1.25), roughness: 1, color: 0xd9c0a0 }),
     kerb: std({ color: 0xb4b1aa, roughness: .9 }),

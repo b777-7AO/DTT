@@ -86,7 +86,7 @@ const { M, tx } = mats;
 const scene = new THREE.Scene();
 const sky = tx('sky.jpg', { srgb: true, wrap: false }); sky.mapping = THREE.EquirectangularReflectionMapping;
 let skyEnv = sky; new RGBELoader(manager).load(TEX + 'sky_1k.hdr', t => { t.mapping = THREE.EquirectangularReflectionMapping; skyEnv = t; if (state.mode === 'house') scene.environment = t; });
-scene.background = sky; scene.environment = sky; scene.environmentIntensity = .55; scene.backgroundIntensity = 1;
+scene.background = sky; scene.environment = sky; scene.environmentIntensity = .55; scene.backgroundIntensity = .9;
 const SUN_IN_SKY = new THREE.Vector3(.555, .742, .377), SKY_ROT = 1.95;
 const pmrem = new THREE.PMREMGenerator(renderer); const studioEnv = pmrem.fromScene(new RoomEnvironment(), .04).texture; pmrem.dispose();
 scene.backgroundRotation.set(0, SKY_ROT, 0); scene.environmentRotation.set(0, SKY_ROT, 0);
