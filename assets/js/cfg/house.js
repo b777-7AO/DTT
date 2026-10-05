@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { FACADE } from './catalog.js';
 import { box } from './door.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const plane = (w, h, mat, x, y, z) => {
   const g = new THREE.PlaneGeometry(w, h); const uv = g.attributes.uv;
@@ -127,11 +128,68 @@ export function buildHouse({ mats, state, openH }) {
   const cyp = (x, z, h = 4.6, r = 0) => cross('tree_cypress.webp', x, z, h, 164 / 1002, r);
   const lind = (x, z, h = 8.5, r = 0) => cross('tree_linden.webp', x, z, h, 837 / 993, r);
   cyp(-W / 2 - 1.3, .9, 4.4, .3); cyp(-W / 2 - 2.5, -.5, 3.9, 1.1); cyp(x0 + hw + 1.4, zf + .7, 4.8, .5); cyp(x0 + hw + 2.6, zf - 1.3, 4.2, 1.4);
-  lind(-W / 2 - 7.5, -4, 9, .2); lind(x0 + hw + 8, -7.5, 8, .9); lind(-15, 11, 8.5, 1.7); lind(x0 + hw + 11, 9, 7.5, .6);
-  const hedge = (x, z, w, d, h = .8) => house.add(box(w, h, d, M.hedge, x, h / 2, z));
-  hedge(-W / 2 - 3.6, 4.2, 5.6, .7); hedge(x0 + hw / 2 + 1.2, zf + 4.6, 5.2, .7); hedge(-W / 2 - .6, 9.5, 1.0, 8.5, .55);
-  cross('shrub.webp', x0 + .25, zf + 1.05, 1.15, 422 / 768, .4); cross('shrub.webp', x0 + doorOp.x + doorOp.w + .55, zf + 1.05, 1.15, 422 / 768, .9);
+  house.add(impostorTree(mats, 'olive', -W / 2 - 7.5, -4, 6.4, .2)); house.add(impostorTree(mats, 'small', x0 + hw + 8, -7.5, 5.2, .9));
+  house.add(impostorTree(mats, 'small', -15, 11, 5.6, 1.7)); house.add(impostorTree(mats, 'olive', x0 + hw + 11, 9, 6.0, .6));
+  house.add(impostorTree(mats, 'small', -W / 2 - 4.2, 13.5, 4.6, 2.3));
+  // trimmed hedges built from clusters of the scanned bush (two staggered rows, stretched upwards)
+  const hedgeItems = [];
+  const hedgeRow = (x0_, z0_, x1_, z1_, h = .85) => { const dx = x1_ - x0_, dz = z1_ - z0_, L = Math.hypot(dx, dz), nx = -dz / L, nz = dx / L, n = Math.max(2, Math.round(L / .55));
+    for (let r = 0; r < 2; r++) for (let i = 0; i < n; i++) { const t = (i + .5) / n, j = (r ? .2 : -.2) + ((i * 7) % 3 - 1) * .05; const sc = 2.5 + ((i * 5 + r) % 3) * .25;
+      hedgeItems.push({ file: 'shrub_04_lo.glb', x: x0_ + dx * t + nx * j, z: z0_ + dz * t + nz * j, s: sc, sy: h / .22 * (.92 + ((i + r) % 2) * .1), rot: i * 1.7 + r * .9 }); } };
+  hedgeRow(-W / 2 - 6.4, 4.2, -W / 2 - .8, 4.2); hedgeRow(x0 + hw / 2 - 1.4, zf + 4.6, x0 + hw / 2 + 3.8, zf + 4.6); hedgeRow(-W / 2 - .6, 5.3, -W / 2 - .6, 13.7, .6);
+  // scanned planters at the entrance, shrubs along the hedges and lawn edges
+  const items = [
+    { file: 'potted_plant_01.glb', x: x0 + .3, z: zf + .95, s: 1.25, rot: .4 }, { file: 'potted_plant_01.glb', x: x0 + doorOp.x + doorOp.w + .6, z: zf + .95, s: 1.25, rot: 2.1 },
+  ];
+  placeModels(house, items.concat(hedgeItems));
   return { group: house, dims };
+}
+
+
+/* ---------- photoscanned greenery ----------
+   Trees: 8-view impostor atlases rendered in Blender from Poly Haven scans (CC0), billboarded and view-switched per frame.
+   Shrubs and planters: decimated Poly Haven GLB scans, cloned per instance. */
+const IMPOSTORS = { olive: { file: 'imp_island_tree_01.webp', size: 5.03 }, small: { file: 'imp_tree_small_02.webp', size: 4.56 } };
+const atlasCache = new Map();
+function atlas(mats, key) {
+  if (atlasCache.has(key)) return atlasCache.get(key);
+  const t = mats.tx(IMPOSTORS[key].file, { srgb: true, wrap: false }); t.anisotropy = 8; atlasCache.set(key, t); return t;
+}
+export function impostorTree(mats, key, x, z, height, rot = 0) {
+  const def = IMPOSTORS[key], k = height / def.size;
+  const map = atlas(mats, key).clone(); map.repeat.set(.25, .5); map.offset.set(0, .5); map.needsUpdate = true;
+  const mat = new THREE.MeshBasicMaterial({ map, alphaTest: .5, side: THREE.DoubleSide, color: 0xf4f4f0 });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(def.size * k, def.size * k), mat);
+  m.position.set(x, def.size * k / 2 - .02, z); m.castShadow = true; m.userData.cutout = true; m.userData.impostor = { rot, map };
+  return m;
+}
+const _d = new THREE.Vector3();
+export function updateImpostors(root, camera) {
+  root.traverse(o => {
+    const im = o.userData.impostor; if (!im) return;
+    _d.subVectors(camera.position, o.position); const az = Math.atan2(_d.x, _d.z);
+    o.rotation.y = az;
+    const i = ((Math.round((az - im.rot) / (Math.PI / 4)) % 8) + 8) % 8;
+    im.map.offset.set((i % 4) * .25, i < 4 ? .5 : 0);
+  });
+}
+const gltfCache = new Map(); let gltfLoader = null;
+function loadModel(file) {
+  if (gltfCache.has(file)) return gltfCache.get(file);
+  gltfLoader = gltfLoader || new GLTFLoader();
+  const p = new Promise((res, rej) => gltfLoader.load('assets/models/' + file, g => {
+    g.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; const m = o.material; if (m) { m.side = THREE.DoubleSide; if (m.alphaTest > 0 || m.transparent) { m.alphaTest = Math.max(m.alphaTest, .5); m.transparent = false; m.depthWrite = true; } } } });
+    res(g.scene);
+  }, undefined, rej));
+  gltfCache.set(file, p); return p;
+}
+/* place GLB instances asynchronously; `items` = [{ file, x, z, s, rot }] */
+export function placeModels(group, items) {
+  const token = {}; group.userData.greeneryToken = token;
+  items.forEach(it => loadModel(it.file).then(src => {
+    if (group.userData.greeneryToken !== token) return;   // house was rebuilt meanwhile
+    const o = src.clone(); o.position.set(it.x, it.y || 0, it.z); o.rotation.y = it.rot || 0; o.scale.set(it.s || 1, it.sy || it.s || 1, it.s || 1); group.add(o);
+  }).catch(() => {}));
 }
 
 /* Studio: neutral cyclorama, soft floor, no house */

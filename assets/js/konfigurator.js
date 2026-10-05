@@ -12,7 +12,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import * as C from './cfg/catalog.js';
 import { createMaterials, TEX } from './cfg/materials.js';
 import { buildDoorRig, makeLeaf, ease } from './cfg/door.js';
-import { buildHouse, buildStudio, dispose } from './cfg/house.js';
+import { buildHouse, buildStudio, dispose, updateImpostors } from './cfg/house.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -239,7 +239,7 @@ function loop(now) {
   if (doorRig) { const r = doorRig.group.rotation; const d = turnTarget - r.y; if (Math.abs(d) > .0005) r.y += d * .08; else r.y = turnTarget; }
   controls.autoRotate = autoRotate && state.mode === 'studio' && !camTween; controls.autoRotateSpeed = .9;
   if (window.__lens) window.__lens.uniforms.uTime.value = (now % 1000) / 37;
-  controls.update(); draw(); updateLabels();
+  controls.update(); if (house) updateImpostors(house, camera); draw(); updateLabels();
   if (firstFrame) { firstFrame = false; window.__t = { frame: performance.now() }; }
   if (!overlayDone && (assetsReady || now - T0 > 7000)) finishLoading();
   if (overlayDone) adaptQuality(now);
