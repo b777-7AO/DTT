@@ -282,15 +282,15 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
 
   if (type === 'sl') {
     // side sectional: vertical slats run on a floor rail, turn the corner and park along the left garage wall
-    const n = Math.max(4, Math.round(dw / .5)), pw = (dw + .06) / n, h = dh - .06, zL = -T - .05, R = .3, parts = [];
+    const n = Math.max(4, Math.round(dw / .5)), pw = (dw + .06) / n, h = dh - .06, zL = -T - .05, R = .2, parts = [];
     for (let i = 0; i < n; i++) {
       const leaf = makeLeaf(pw, h, state.model, M, {}); const x0 = -dw / 2 - .03 + pw * (i + .5);
       leaf.position.set(x0, h / 2 + .03, zL); snap.add(leaf); parts.push({ p: leaf, x0 });
       if (i === Math.floor(n / 2)) shellHandle(leaf, 0, 1.05 - h / 2, leaf.userData.raise, M, state.handle, handleColor);
     }
     g.add(box(dw + .2, .05, .05, M.metal, 0, h + .09, zL, { shadow: false }));
-    g.add(box(.05, .05, 4.0, M.metal, -dw / 2 - .1 - R, h + .09, zL - R - 2.0, { shadow: false }));
-    const xc = -dw / 2 - .1;   // corner x
+    g.add(box(.05, .05, 4.0, M.metal, -dw / 2 - .06 - R - pw / 2, h + .09, zL - R - 2.0, { shadow: false }));
+    const xc = -dw / 2 - .06;   // corner x (parked slats stay inside the garage wall line)
     animate = t => { const s = ease(t) * (dw + .3 + R * Math.PI / 2); parts.forEach(({ p, x0 }, i) => {
       const d1 = x0 - xc - pw / 2 + i * .002;
       if (s < d1) { p.position.x = x0 - s; p.position.z = zL; p.rotation.y = 0; }
@@ -333,7 +333,8 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
       // leaf top travels up and back along the counterweight guides, the leaf swings to horizontal; protruding doors swing past the frame line
       // open position: leaf horizontal under the ceiling, front edge 10 cm outside the frame line (both trajectories end there);
       // protruding doors swing the lower edge out past the frame while opening, non-protruding doors retract first
-      const up = .22, back = lh - .10, kz = protruding ? e : Math.min(1, e * 1.7);
+      // final: leaf top just under the frame head (inside), front edge flush with the wall face; nothing above the opening
+      const up = Math.max(.04, fh - .05 - lh), back = lh - .07, kz = protruding ? e : Math.min(1, e * 1.7);
       pivot.position.set(0, lh + .02 + up * e, lz - back * kz);
       pivot.rotation.x = -Math.PI / 2 * e;
       arms.forEach((a, i) => { a.position.set((i ? 1 : -1) * (lw / 2 - .02), -lh * .3 * (1 - e) - lh * .25, -lh * .2 * e); a.rotation.x = Math.PI / 2 * e * .5; });
