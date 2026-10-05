@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D-Tor-Konfigurator · DTT Deutsche Tor-Technik</title>
-  <meta name="description" content="Garagentor in 3D konfigurieren: Torart, Design, RAL-Farbe oder Holz, Verglasung und Antrieb wählen und direkt am Haus oder auf dem eigenen Foto ansehen.">
+  <title>Tor-Studio · 3D-Konfigurator für Silvelox Garagentore · DTT Deutsche Tor-Technik</title>
+  <meta name="description" content="Alle Silvelox Garagentore in 3D konfigurieren: SECUR Schwingtor mit 25 Fräsdesigns, Sektionaltore SR und SL, Basculap und Flügeltor. Oberfläche, Ausstattung und Maß wählen, Preisindikation sehen, am Haus oder auf dem eigenen Foto ansehen.">
   <link rel="icon" type="image/png" href="assets/img/favicon.png">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="canonical" href="https://b777-7ao.github.io/DTT/konfigurator.html">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="3D-Tor-Konfigurator · DTT Deutsche Tor-Technik">
-  <meta property="og:description" content="Garagentor in 3D konfigurieren und am Haus oder auf dem eigenen Foto ansehen.">
+  <meta property="og:title" content="Tor-Studio · 3D-Konfigurator · DTT Deutsche Tor-Technik">
+  <meta property="og:description" content="Alle Silvelox Garagentore in 3D konfigurieren, mit Preisindikation und Ansicht am eigenen Haus.">
   <meta property="og:image" content="https://b777-7ao.github.io/DTT/assets/img/konfigurator.jpg">
   <meta name="theme-color" content="#000e28">
   <link rel="stylesheet" href="assets/css/fonts.css">
   <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="stylesheet" href="assets/css/konfigurator.css?v=13">
+  <link rel="stylesheet" href="assets/css/konfigurator.css?v=41">
   <script type="importmap">
   { "imports": {
       "three": "./assets/vendor/three/three.module.js",
@@ -28,17 +28,30 @@
   <div data-include="partials/header.html" data-root=""></div>
 
   <main class="cfg" id="main">
-    <!-- 3D STAGE -->
+    <!-- STAGE -->
     <section class="cfg-stage" aria-label="3D-Ansicht">
-      <div class="cfg-tabs" role="tablist" aria-label="Ansicht">
-        <button class="cfg-tab" role="tab" aria-selected="true" data-mode="3d">3D-Haus</button>
-        <button class="cfg-tab" role="tab" aria-selected="false" data-mode="photo">Ihr Foto</button>
+      <div class="cfg-stage-top">
+        <div class="cfg-tabs" role="tablist" aria-label="Ansicht">
+          <button class="cfg-tab" role="tab" aria-selected="true" data-mode="studio">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 3v18M16 3v18"/></svg>Produkt-Studio
+          </button>
+          <button class="cfg-tab" role="tab" aria-selected="false" data-mode="house">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>Am Haus
+          </button>
+          <button class="cfg-tab" role="tab" aria-selected="false" data-mode="photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.6"/></svg>Ihr Foto
+          </button>
+        </div>
+        <div class="cfg-stage-title"><strong id="stageModel"></strong><span id="stageSurface"></span></div>
       </div>
 
       <div class="cfg-canvas-wrap" id="canvasWrap">
-        <canvas id="cfgCanvas" aria-label="3D-Darstellung von Haus und Garagentor"></canvas>
-        <div class="cfg-loading" id="cfgLoading"><span class="spinner"></span> 3D-Ansicht wird geladen …</div>
+        <canvas id="cfgCanvas" aria-label="3D-Darstellung des Garagentors"></canvas>
+        <div class="cfg-loading" id="cfgLoading"><span class="spinner"></span> 3D-Modell wird geladen …</div>
         <div class="cfg-dim" id="dimLabel" hidden><span class="dot"></span><span id="dimText"></span></div>
+        <div class="cfg-measure cfg-measure-w" id="dimW" hidden></div>
+        <div class="cfg-measure cfg-measure-h" id="dimH" hidden></div>
+        <div class="cfg-measure cfg-measure-t" id="dimT" hidden></div>
         <div class="cfg-hint-overlay" id="cfgHint" hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V6a2 2 0 1 1 4 0v6"/><path d="M12 11a2 2 0 1 1 4 0v1a2 2 0 1 1 4 0v3a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L4.5 14a1.8 1.8 0 0 1 3-2l.5.8"/></svg>
           <span>Ziehen zum Drehen, Scrollen oder zwei Finger zum Zoomen</span>
@@ -69,18 +82,33 @@
         </div>
       </div>
 
-      <div class="cfg-views" id="cfgViews">
-        <button type="button" data-view="street" class="is-active">Straße</button>
-        <button type="button" data-view="front">Frontal</button>
-        <button type="button" data-view="close">Nah</button>
-        <button type="button" data-view="inside">Garage innen</button>
-      </div>
-      <div class="cfg-stage-actions" id="stageActions">
-        <button type="button" class="btn btn-dark btn-sm" id="toggleDoor">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
-          <span>Tor öffnen</span>
-        </button>
-        <button type="button" class="btn btn-ghost btn-sm cfg-on-light" id="saveImage">Bild speichern</button>
+      <div class="cfg-stage-bottom">
+        <div class="cfg-views" id="cfgViews">
+          <div id="viewsStudio">
+            <button type="button" data-view="studio" class="is-active">Ansicht</button>
+            <button type="button" data-view="detail">Detail</button>
+            <button type="button" data-view="back">Rückseite</button>
+          </div>
+          <div id="viewsHouse" hidden>
+            <button type="button" data-view="street">Straße</button>
+            <button type="button" data-view="front">Frontal</button>
+            <button type="button" data-view="close">Nah</button>
+            <button type="button" data-view="inside">Garage innen</button>
+          </div>
+        </div>
+        <div class="cfg-stage-actions" id="stageActions">
+          <button type="button" class="cfg-iconbtn" id="autoRotate" aria-pressed="false" title="Drehteller">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg><span>Drehen</span>
+          </button>
+          <button type="button" class="cfg-iconbtn" id="dimToggle" aria-pressed="true" title="Maße ein-/ausblenden">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17h18M3 7h18"/><path d="M6 7v3M10 7v2M14 7v3M18 7v2M6 17v-3M10 17v-2M14 17v-3M18 17v-2"/></svg><span>Maße</span>
+          </button>
+          <button type="button" class="btn btn-dark btn-sm" id="toggleDoor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+            <span>Tor öffnen</span>
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm cfg-on-light" id="saveImage">Bild speichern</button>
+        </div>
       </div>
     </section>
 
@@ -88,68 +116,112 @@
     <aside class="cfg-panel" aria-label="Konfiguration">
       <header class="cfg-panel-head">
         <div class="cfg-head-row">
-          <span class="eyebrow">Tor-Konfigurator</span>
+          <span class="eyebrow">Tor-Studio · Silvelox Programm</span>
           <button type="button" class="cfg-reset" id="resetBtn">Zurücksetzen</button>
         </div>
-        <h1>Ihr Tor. Ihr Haus. In 3D.</h1>
-        <p>Torart, Design und Farbe wählen. Alles ändert sich sofort in der Ansicht. Für Ihr eigenes Haus wechseln Sie oben auf „Ihr Foto“.</p>
+        <h1>Ihr Tor, maßstäblich in 3D.</h1>
+        <p>Fünf Schritte vom Tortyp bis zur Preisindikation. Jede Wahl erscheint sofort im Modell. Für Ihr eigenes Haus wechseln Sie oben auf „Ihr Foto“.</p>
         <div class="cfg-subhead">Schnellstart</div>
         <div class="cfg-chips" id="optPreset"></div>
       </header>
 
-      <section class="cfg-group">
-        <h2><span class="num">1</span> Torart</h2>
-        <div class="cfg-cards" id="optType"></div>
-      </section>
-
-      <section class="cfg-group">
-        <h2><span class="num">2</span> Design</h2>
-        <div class="cfg-chips" id="optDesign"></div>
-      </section>
-
-      <section class="cfg-group">
-        <h2><span class="num">3</span> Farbe &amp; Oberfläche <span class="cfg-sel" id="colorName"></span></h2>
-        <div class="cfg-subhead">Lackiert (Silvelox RAL-Palette)</div>
-        <div class="cfg-swatches" id="optColorRal"></div>
-        <div class="cfg-subhead">Echtholz: Silvelox Essenzen &amp; Lasuren</div>
-        <div class="cfg-swatches" id="optColorWood"></div>
-        <div class="cfg-subhead">Lackoberfläche</div>
-        <div class="cfg-chips" id="optFinish"></div>
-      </section>
-
-      <section class="cfg-group">
-        <h2><span class="num">4</span> Ausstattung</h2>
-        <label class="cfg-switch"><input type="checkbox" id="optGlazing"><span class="track"></span><span class="text"><strong>Lichtausschnitte</strong><small>Fensterreihe im oberen Bereich</small></span></label>
-        <label class="cfg-switch"><input type="checkbox" id="optDrive" checked><span class="track"></span><span class="text"><strong>Elektrischer Antrieb</strong><small>Mit Handsender, im Innenraum sichtbar</small></span></label>
-      </section>
-
-      <section class="cfg-group" id="houseGroup">
-        <h2><span class="num">5</span> Ihr Haus</h2>
-        <div class="cfg-subhead">Tormaß (lichte Öffnung)</div>
-        <div class="cfg-size">
-          <label>Breite<span class="unit"><input type="number" id="inpW" min="2000" max="6500" step="5" inputmode="numeric">mm</span></label>
-          <label>Höhe<span class="unit"><input type="number" id="inpH" min="1875" max="3000" step="5" inputmode="numeric">mm</span></label>
+      <section class="cfg-step" id="step1">
+        <button type="button" class="cfg-step-head"><span class="num">1</span><span class="t">Tortyp</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-body">
+          <div class="cfg-cards" id="optType"></div>
+          <ul class="cfg-facts" id="typeFacts"></ul>
         </div>
-        <div class="cfg-chips" id="optWidth"></div>
-        <div class="cfg-subhead">Fassade</div>
-        <div class="cfg-swatches small" id="optFacade"></div>
-        <div class="cfg-subhead">Dach</div>
-        <div class="cfg-chips" id="optRoof"></div>
+      </section>
+
+      <section class="cfg-step" id="step2">
+        <button type="button" class="cfg-step-head"><span class="num">2</span><span class="t">Modell</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-body">
+          <div class="cfg-chips cfg-chips-tabs" id="optFamily"></div>
+          <p class="cfg-help" id="familyDesc"></p>
+          <div class="cfg-models" id="optModel"></div>
+        </div>
+      </section>
+
+      <section class="cfg-step" id="step3">
+        <button type="button" class="cfg-step-head"><span class="num">3</span><span class="t">Oberfläche</span><span class="cfg-sel" id="colorName"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-body">
+          <div class="cfg-fixed" id="surfFixed" hidden></div>
+          <div id="surfChoice">
+            <div class="cfg-subhead">Holzart</div>
+            <div class="cfg-swatches small" id="optEssence"></div>
+            <div class="cfg-subhead">Veredelung</div>
+            <div class="cfg-chips" id="optSurface"></div>
+            <div class="cfg-swatches" id="optColor"></div>
+            <div id="finishRow">
+              <div class="cfg-subhead">Lackoberfläche</div>
+              <div class="cfg-chips" id="optFinish"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cfg-step" id="step4">
+        <button type="button" class="cfg-step-head"><span class="num">4</span><span class="t">Ausstattung</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-body">
+          <div id="securOptions">
+            <label class="cfg-switch"><input type="checkbox" id="opt_securplus"><span class="track"></span><span class="text"><strong>SECUR PLUS</strong><small>Einbruchschutz Klasse 3 statt Klasse 1, verstärkter Rahmen</small></span></label>
+            <label class="cfg-switch"><input type="checkbox" id="opt_nonprotruding"><span class="track"></span><span class="text"><strong>Nicht ausschwenkend</strong><small>Torblatt bleibt beim Öffnen innerhalb der Rahmenhöhe</small></span></label>
+            <label class="cfg-switch"><input type="checkbox" id="opt_pedestrian"><span class="track"></span><span class="text"><strong>Schlupftür</strong><small>Durchgang 755 mm, im Tordesign, öffnet nach außen</small></span></label>
+            <div class="cfg-subhead">Fenster</div>
+            <div class="cfg-chips" id="optWindows"></div>
+            <div class="cfg-subhead">Oberlicht</div>
+            <div class="cfg-chips" id="optTransom"></div>
+            <label class="cfg-switch"><input type="checkbox" id="opt_grille"><span class="track"></span><span class="text"><strong>Lüftungsgitter</strong><small>400 × 200 mm, anthrazit</small></span></label>
+          </div>
+          <div id="srOptions" hidden>
+            <label class="cfg-switch"><input type="checkbox" id="opt_glazing"><span class="track"></span><span class="text"><strong>Lichtausschnitte</strong><small>Fensterreihe in der oberen Lamelle</small></span></label>
+          </div>
+          <div class="cfg-subhead">Griff</div>
+          <div class="cfg-swatches small" id="optHandle"></div>
+          <div class="cfg-subhead">Antrieb</div>
+          <div class="cfg-chips" id="optDrive"></div>
+          <div class="cfg-subhead">Smart &amp; Zubehör</div>
+          <label class="cfg-switch"><input type="checkbox" id="opt_sildomo"><span class="track"></span><span class="text"><strong>SILDOMO</strong><small>Öffnen per Smartphone, bis 10 Nutzer</small></span></label>
+          <label class="cfg-switch"><input type="checkbox" id="opt_link"><span class="track"></span><span class="text"><strong>SILDOMO LINK</strong><small>WLAN, Alexa und Google Home</small></span></label>
+          <label class="cfg-switch"><input type="checkbox" id="opt_keypad"><span class="track"></span><span class="text"><strong>Funk-Codetastatur</strong><small>Beleuchtet, mit Unterputz-Empfänger</small></span></label>
+          <label class="cfg-switch"><input type="checkbox" id="opt_remote"><span class="track"></span><span class="text"><strong>Zusätzlicher Handsender</strong><small>4 Kanäle</small></span></label>
+          <label class="cfg-switch"><input type="checkbox" id="opt_blockmatic"><span class="track"></span><span class="text"><strong>BLOCKMATIC</strong><small>Motorische Sicherheitsriegel</small></span></label>
+        </div>
+      </section>
+
+      <section class="cfg-step" id="step5">
+        <button type="button" class="cfg-step-head"><span class="num">5</span><span class="t">Maß &amp; Haus</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-body">
+          <div class="cfg-subhead">Bestellmaß</div>
+          <div class="cfg-size">
+            <label>Breite<span class="unit"><input type="number" id="inpW" min="2000" max="6500" step="5" inputmode="numeric">mm</span></label>
+            <label>Höhe<span class="unit"><input type="number" id="inpH" min="1875" max="3480" step="5" inputmode="numeric">mm</span></label>
+          </div>
+          <div class="cfg-chips" id="optSize"></div>
+          <p class="cfg-help" id="sectorNote"></p>
+          <div id="houseGroup">
+            <div class="cfg-subhead">Fassade</div>
+            <div class="cfg-swatches small" id="optFacade"></div>
+            <div class="cfg-subhead">Dach</div>
+            <div class="cfg-chips" id="optRoof"></div>
+          </div>
+        </div>
       </section>
 
       <section class="cfg-summary">
         <h2>Ihre Konfiguration</h2>
         <dl id="summary"></dl>
-        <p class="cfg-price">Preis auf Anfrage. Wir melden uns innerhalb eines Werktags mit Aufmaß-Termin und Angebot.</p>
+        <div class="cfg-pricebox" id="priceBox"></div>
         <div class="cfg-summary-actions">
-          <a class="btn btn-primary" id="requestBtn" href="pages/kontakt.html">Konfiguration anfragen</a>
+          <a class="btn btn-primary" id="requestBtn" href="pages/kontakt.html">Angebot anfragen</a>
           <button class="btn btn-ghost" id="shareBtn" type="button">Link kopieren</button>
         </div>
         <p class="cfg-note" id="shareNote" hidden>Link kopiert. Sie können ihn speichern oder weiterleiten.</p>
+        <p class="cfg-note">Alle Modelle, Maße und Preise nach Silvelox Preisliste 08/2026. Die 3D-Darstellung ist eine maßstäbliche Visualisierung, die Montage erfolgt nach Aufmaß durch DTT.</p>
       </section>
 
       <div class="cfg-sticky" id="stickyBar">
-        <div class="cfg-sticky-text"><span class="dot" id="stickyDot"></span><span id="stickySummary"></span></div>
+        <div class="cfg-sticky-text"><span class="dot" id="stickyDot"></span><span id="stickySummary"></span><strong id="stickyPrice"></strong></div>
         <a class="btn btn-primary btn-sm" id="stickyRequest" href="pages/kontakt.html">Anfragen</a>
       </div>
     </aside>
@@ -157,6 +229,6 @@
 
   <div data-include="partials/footer.html" data-root=""></div>
   <script src="assets/js/main.js"></script>
-  <script type="module" src="assets/js/konfigurator.js?v=22"></script>
+  <script type="module" src="assets/js/konfigurator.js?v=41"></script>
 </body>
 </html>
