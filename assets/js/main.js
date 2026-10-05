@@ -10,7 +10,7 @@
       const url = slot.getAttribute('data-include');
       const root = slot.getAttribute('data-root') || '';
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-cache' });
         let html = await res.text();
         if (root) html = rewriteLinks(html, root);
         slot.outerHTML = html;
