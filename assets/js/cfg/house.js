@@ -160,7 +160,7 @@ export function buildHouse({ mats, state, openH }) {
   const hedgeRow = (x0_, z0_, x1_, z1_, h = .85) => { const dx = x1_ - x0_, dz = z1_ - z0_, L = Math.hypot(dx, dz), nx = -dz / L, nz = dx / L, n = Math.max(2, Math.round(L / .55));
     for (let r = 0; r < 2; r++) for (let i = 0; i < n; i++) { const t = (i + .5) / n, j = (r ? .2 : -.2) + ((i * 7) % 3 - 1) * .05; const sc = 2.5 + ((i * 5 + r) % 3) * .25;
       hedgeItems.push({ file: 'shrub_04_lo.glb', x: x0_ + dx * t + nx * j, z: z0_ + dz * t + nz * j, s: sc, sy: h / .22 * (.92 + ((i + r) % 2) * .1), rot: i * 1.7 + r * .9 }); } };
-  hedgeRow(-W / 2 - 6.4, 4.2, -W / 2 - .8, 4.2); hedgeRow(x0 + hw / 2 - 1.4, zf + 4.6, x0 + hw / 2 + 3.8, zf + 4.6); hedgeRow(-W / 2 - .6, 5.3, -W / 2 - .6, 13.7, .6);
+  hedgeRow(-W / 2 - 7.0, 4.2, -W / 2 - 2.0, 4.2); hedgeRow(x0 + hw / 2 - 1.0, zf + 4.6, x0 + hw / 2 + 3.8, zf + 4.6);
   // scanned planters at the entrance, shrubs along the hedges and lawn edges
   const items = [
     { file: 'potted_plant_01.glb', x: x0 + .3, z: zf + .95, s: 1.25, rot: .4 }, { file: 'potted_plant_01.glb', x: x0 + doorOp.x + doorOp.w + .6, z: zf + .95, s: 1.25, rot: 2.1 },
