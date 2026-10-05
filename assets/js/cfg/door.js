@@ -331,9 +331,11 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
     animate = t => {
       const e = ease(t);
       // leaf top travels up and back along the counterweight guides, the leaf swings to horizontal; protruding doors swing past the frame line
-      const up = protruding ? .42 : .25, back = protruding ? lh * .55 : lh * .62;
-      pivot.position.set(0, lh + .02 + up * e, lz - back * e);
-      pivot.rotation.x = -Math.PI / 2 * e * (protruding ? 1 : .98);
+      // open position: leaf horizontal under the ceiling, front edge 10 cm outside the frame line (both trajectories end there);
+      // protruding doors swing the lower edge out past the frame while opening, non-protruding doors retract first
+      const up = .22, back = lh - .10, kz = protruding ? e : Math.min(1, e * 1.7);
+      pivot.position.set(0, lh + .02 + up * e, lz - back * kz);
+      pivot.rotation.x = -Math.PI / 2 * e;
       arms.forEach((a, i) => { a.position.set((i ? 1 : -1) * (lw / 2 - .02), -lh * .3 * (1 - e) - lh * .25, -lh * .2 * e); a.rotation.x = Math.PI / 2 * e * .5; });
     };
     if (state.drive !== 'manual' && !studio) { g.add(box(.5, .14, .22, M.drive, lw / 2 - .4, fh + .12, -T - .16, { shadow: false })); }

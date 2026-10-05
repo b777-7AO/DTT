@@ -157,7 +157,7 @@ let surfaceLabel = '';
 /* ------------------------------------------------------------------ Camera views */
 function views() {
   const { dw, W, D, H } = dims, th = transomH() / 1000, oh = dw * .5;
-  const front = { az: [-1.25, 1.25], dist: [3.0, 34], polar: .35 };
+  const front = { az: [-1.25, 1.25], dist: [3.0, 30], polar: .4 };
   const maxD = Math.min(4.6, D - 1.6), halfIn = W / 2 - .5;
   const azIn = Math.min(.7, Math.asin(Math.min(1, halfIn / maxD)) * .9), polarIn = Math.acos(Math.min(1, (H - .35 - 1.15) / maxD));
   const sd = Math.max(5.2, dw * 1.55 + 1.2);
@@ -165,7 +165,7 @@ function views() {
     studio: { pos: [sd * .42, 1.75 + th * .4, sd], tgt: [0, (dims.dh + th) / 2, 0], az: [-1.45, 1.45], dist: [2.4, 16], polar: .25 },
     detail: { pos: [-1.7, 1.05, 2.1], tgt: [-.55, 1.0, 0], az: [-1.45, 1.45], dist: [1.2, 16], polar: .25 },
     back: { pos: [-sd * .45, 1.9, sd * .95], tgt: [0, (dims.dh + th) / 2, 0], az: [-1.45, 1.45], dist: [2.4, 16], polar: .25, turn: Math.PI },
-    street: { pos: [dw * .55 + 7.6, 2.3, 13.9], tgt: [1.7, 1.4, .6], ...front },
+    street: { pos: [dw * .55 + 8.6, 1.9, 23.5], tgt: [1.2, 1.5, 0], ...front },
     front: { pos: [0, 1.7, 10.2], tgt: [0, 1.3, .5], ...front },
     close: { pos: [2.2, 1.5, 5.8], tgt: [0, 1.25, .45], ...front },
     inside: { pos: [Math.min(.6, halfIn * .4), 1.5, -4.2], tgt: [0, 1.15, -.4], az: [Math.PI - azIn, Math.PI + azIn], dist: [2.0, maxD], polar: polarIn },

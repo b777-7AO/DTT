@@ -117,9 +117,33 @@ export function buildHouse({ mats, state, openH }) {
   [-1, 1].forEach(s => house.add(box(.12, .07, 17.2, M.kerb, s * (dw / 2 + 1.16), .035, 8.6, { shadow: false })));
   house.add(plane(1.4, 1.6, M.concrete, x0 + doorOp.x + .55, .025, zf + 1.9));
   house.add(plane(x0 + doorOp.x + .55 - dw / 2 + 1.4, 1.4, M.concrete, (x0 + doorOp.x + .55 + dw / 2 - .8) / 2, .04, 1.9));
+  // street: sidewalk, kerb, 6.5 m asphalt road with a worn centre, kerb and sidewalk on the far side
   house.add(plane(400, 2.0, M.concrete, 0, .03, 18.2));
-  house.add(box(400, .1, .16, M.kerb, 0, .05, 19.28, { shadow: false }));
-  house.add(plane(400, 9, M.asphalt, 0, .015, 23.8));
+  house.add(box(400, .12, .16, M.kerb, 0, .06, 19.28, { shadow: false }));
+  house.add(plane(400, 6.6, M.asphalt, 0, .015, 22.6));
+  house.add(box(400, .12, .16, M.kerb, 0, .06, 25.92, { shadow: false }));
+  house.add(plane(400, 2.0, M.concrete, 0, .03, 27.0));
+  // storm drain + street lamp near the driveway
+  house.add(box(.5, .02, .3, M.darkMetal, dw / 2 + 2.6, .03, 19.6, { shadow: false }));
+  const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, 5.2, 10), M.darkMetal); lampPole.position.set(-dw / 2 - 2.4, 2.6, 18.7); lampPole.castShadow = true; house.add(lampPole);
+  house.add(box(.5, .14, .22, M.darkMetal, -dw / 2 - 2.6, 5.22, 18.7, { shadow: false }));
+  // property boundary: anthracite double-rod fence on both sides, low hedge boxes opposite the street, a tree line and a neighbour house
+  const fence = (x, z0, z1) => { const n = Math.max(2, Math.round((z1 - z0) / 2.5)), L = (z1 - z0) / n;
+    for (let i = 0; i <= n; i++) house.add(box(.06, 1.25, .06, M.darkMetal, x, .625, z0 + i * L, { shadow: false }));
+    for (let i = 0; i < n; i++) { for (let r = 0; r < 7; r++) house.add(box(.012, .008, L - .08, M.darkMetal, x, .18 + r * .16, z0 + (i + .5) * L, { shadow: false })); for (let k = 1; k < 8; k++) house.add(box(.012, 1.12, .008, M.darkMetal, x, .62, z0 + i * L + k * L / 8, { shadow: false })); } };
+  fence(-W / 2 - 8.2, -16, 17.2); fence(x0 + hw + 5.4, -16, 17.2);
+  house.add(box(400, .9, .8, M.hedge, 0, .45, 29.0));
+  house.add(box(400, .9, .8, M.hedge, 0, .45, 29.0 + 60));
+  for (let i = -6; i <= 6; i++) house.add(impostorTree(mats, i % 2 ? 'olive' : 'small', i * 11.5 + 3, 33 + (i % 3) * 2.5, 5.2 + (i % 3) * .8, i * .7));
+  for (let i = -4; i <= 4; i++) house.add(impostorTree(mats, i % 2 ? 'small' : 'olive', -W / 2 - 24 + (i % 2) * 4, -14 + i * 7, 5.4 + (i % 2), i * 1.1));
+  // neighbour house on the left (simple two-storey volume with windows and a flat roof)
+  const nx = -W / 2 - 12.5, nz = -4, nw = 9, nd = 10, nh = 6.2, nfac = M.plaster;
+  const nWins = [{ x: 1.0, y: 3.5, w: 1.6, h: 1.5 }, { x: 3.6, y: 3.5, w: 2.4, h: 1.5 }, { x: 6.8, y: 3.5, w: 1.3, h: 1.5 }, { x: 1.0, y: .8, w: 1.6, h: 1.9 }, { x: 3.6, y: .8, w: 2.4, h: 1.9 }];
+  const nf = wall(nw, nh, T, nWins, nfac); nf.position.set(nx - nw, 0, nz); house.add(nf);
+  house.add(box(.3, nh, nd, nfac, nx - nw + .15, nh / 2, nz - nd / 2)); house.add(box(.3, nh, nd, nfac, nx - .15, nh / 2, nz - nd / 2)); house.add(box(nw, nh, .3, nfac, nx - nw / 2, nh / 2, nz - nd + .15));
+  nWins.forEach(o => win(o, house, g => g.position.add(new THREE.Vector3(nx - nw, 0, nz))));
+  slab(nw, nd, nx - nw / 2, nz - nd / 2, nh);
+  house.add(plane(5.5, 14, M.pavers, nx - 2.9, .02, nz + 7));
   const cross = (file, x, z, h, aspect, rot = 0, planes = 3) => {
     const g = new THREE.Group(), m = cutoutMat(file), w = h * aspect;
     for (let i = 0; i < planes; i++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); p.rotation.y = rot + i * Math.PI / planes; p.position.y = h / 2; p.castShadow = true; p.userData.cutout = true; g.add(p); }
