@@ -1,0 +1,26 @@
+.price-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.price-card { background: #fff; border: 1px solid var(--line); padding: 1.3rem 1.3rem 1.1rem; display: grid; gap: .6rem; align-content: start; }
+.price-card h3 { margin: 0; font-size: 1.05rem; display: grid; gap: .15rem; }
+.price-card h3 small { font-size: .74rem; color: var(--muted); font-weight: 500; letter-spacing: .04em; font-family: var(--font); }
+.price-card p { margin: 0; font-size: .9rem; color: var(--text-soft); }
+.price-card-rows { display: grid; gap: .35rem; border-top: 1px solid var(--line); padding-top: .7rem; }
+.price-card-rows div { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; font-size: .84rem; color: var(--text-soft); }
+.price-card-rows strong { font-family: var(--font-head); color: var(--navy); font-size: 1.05rem; white-space: nowrap; }
+.price-calc { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.price-calc-inputs { display: grid; gap: .8rem; background: #fff; border: 1px solid var(--line); padding: 1.2rem; }
+.price-calc-inputs label { display: grid; gap: .3rem; font-size: .8rem; font-weight: 500; color: var(--text-soft); }
+.price-calc-inputs .unit { display: flex; align-items: center; border: 1.5px solid var(--line); padding-right: .6rem; color: var(--muted); font-size: .8rem; }
+.price-calc-inputs input { border: 0; width: 100%; padding: .6rem .6rem; font: inherit; font-size: 1rem; color: var(--navy); }
+.price-sector { margin: 0; font-size: .88rem; color: var(--text-soft); }
+.table-wrap { overflow-x: auto; }
+.price-table { width: 100%; border-collapse: collapse; background: #fff; font-size: .88rem; }
+.price-table th, .price-table td { padding: .6rem .7rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.price-table thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.price-table tbody th { font-weight: 600; color: var(--navy); font-family: var(--font-head); font-size: .86rem; }
+.price-table tbody th small { display: block; font-family: var(--font); font-weight: 400; color: var(--muted); font-size: .72rem; }
+.price-table td { white-space: nowrap; color: var(--navy); }
+.price-table td:last-child { white-space: normal; color: var(--text-soft); }
+.price-table .na { color: var(--muted); }
+.price-footnote { font-size: .8rem; color: var(--text-soft); margin: 1rem 0 0; }
+@media (max-width: 900px) { .price-cards { grid-template-columns: 1fr 1fr; } .price-calc { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .price-cards { grid-template-columns: 1fr; } }

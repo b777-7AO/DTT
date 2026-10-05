@@ -177,14 +177,27 @@ export const PRICES = {
 };
 export const SURCHARGES = { metalskin_m2: 254, ral_special: 399, wallconcept_m2: { linee: 712, design: 712, japan: 1476, metal: 1313 } };
 
-/* Sektor aus Außenmaß Rahmen (Preisliste S. 16, ausschwenkend, Standard). Außerhalb des abgebildeten Rasters: Preis auf Anfrage. */
+/* Sektor aus Außenmaß Rahmen (Preisliste S. 16, ausschwenkend, Standard). Breitenbänder je Höhenband wie im Raster;
+   das schwarze Treppenfeld rechts oben (nicht lieferbar) und die ausgesparte Ecke rechts unten sind als Grenzen hinterlegt. */
+export function maxWidthFor(h) { if (h <= 2630) return 5970; return Math.max(2670, Math.floor((5770 - 2.5 * (h - 2680)) / 50) * 50); }
+export function minHeightFor(w) { return w <= 4270 ? 1980 : w <= 4870 ? 2130 : 2230; }
 export function sector(w, h) {
+  if (w < 2070 || h < 1980 || h > 3480 || w > maxWidthFor(h) || h < minHeightFor(w)) return null;
+  const band = (limits, names) => { for (let i = 0; i < limits.length; i++) if (w <= limits[i]) return names[i]; return null; };
   if (h <= 2280 && w <= 2670) return 'A0';
-  if (h <= 2580 && w <= 3270) return 'A';
-  if (h <= 2580 && w <= 3770) return 'C';
-  if (h <= 2580 && w <= 3970) return 'E';
-  return null;
+  if (h <= 2580) return band([3270, 3770, 3970, 4570, 5170, 5970], ['A', 'C', 'E', 'G', 'I', 'M']);
+  if (h <= 2980) return band([2670, 3270, 3770, 4570, 5170, 5970], ['B', 'D', 'F', 'H', 'L', 'N']);
+  return band([2670, 3270, 3770, 4570], ['X', 'P', 'V', 'R']);
 }
+/* Rahmenpfosten: 110 mm im inneren Bereich des Rasters, 135 mm (X-Felder) bei größeren Toren oder mit Schlupftür */
+export function pillarFor(w, h, pedestrian = false) {
+  if (pedestrian) return 135;
+  if ((w <= 3270 && h <= 2580) || (w <= 2670 && h <= 3480) || (w <= 3270 && h <= 2880)) return 110;
+  return 135;
+}
+export const SECTOR_NOTES = { certified: 'Tore mit H > 2980 mm sind nicht nach Einbruchschutz-Klasse 1 zertifiziert.', tall: 'Höhen ab 3230 mm sind bei VIP, GEO, FLAT und LAYER nicht lieferbar.', plus: 'SECUR PLUS (Klasse 3) bis Sektor D, bei Breiten ab 3620 mm nur VIP, FOR, GEO, FLAT und LAYER.' };
+
+export const PLUS_SECTORS = ['A0', 'A', 'B', 'C', 'D'];
 export const SIZE_PRESETS = [{ label: 'Einzelgarage', w: 2500, h: 2125 }, { label: 'Einzel hoch', w: 3000, h: 2250 }, { label: 'Breit', w: 3500, h: 2250 }, { label: 'Doppelgarage', w: 5000, h: 2250 }];
 export const LIMITS = { w: [2000, 6500], h: [1875, 3480] };
 export const FACADE = [

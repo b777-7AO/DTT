@@ -47,7 +47,7 @@ export function createMaterials(renderer, manager) {
     drive: std({ color: 0xc4c7ca, roughness: .5, metalness: .3 }),
     lamp: std({ color: 0xfff1c8, emissive: 0xffd48a, emissiveIntensity: .9 }),
     trunk: std({ color: 0x5b4636, roughness: 1 }),
-    studioFloor: std({ color: 0xdedfe1, roughness: .55, metalness: 0 }),
+    studioFloor: std({ color: 0xe4e5e7, roughness: .32, metalness: 0, envMapIntensity: .6 }),
     studioWall: std({ color: 0xe9eaec, roughness: .95 }),
   };
   [M.cladding.map, M.cladding.normalMap, M.cladding.roughnessMap].forEach(t => { t.center.set(.5, .5); t.rotation = Math.PI / 2; });
@@ -77,14 +77,14 @@ export function createMaterials(renderer, manager) {
     if (model.family === 'materia') {
       const st = STONES[model.stone]; Object.assign(d, specialSet(st.tex, 1.0)); d.roughness = 1; d.normalScale.set(.9, .9); dark = '#2a2826'; label = 'Sandstein ' + st.name;
     } else if (model.family === 'japan') {
-      const sw = SPECIAL_WOOD[model.wood]; Object.assign(d, specialSet(sw.tex, .98)); d.roughness = 1; d.normalScale.set(1.1, 1.1); dark = model.wood === 'sugi' ? '#050505' : '#4a4138'; label = sw.name;
+      const sw = SPECIAL_WOOD[model.wood]; Object.assign(d, specialSet(sw.tex, .98)); d.roughness = model.wood === 'sugi' ? .7 : 1; d.normalScale.set(1.1, 1.1); if (model.wood === 'sugi') d.color.setRGB(1.5, 1.3, 1.15); dark = model.wood === 'sugi' ? '#050505' : '#4a4138'; label = sw.name;
     } else if (state.surface === 'metal') {
       const mt = METAL.find(m => m.id === state.color) || METAL[0]; Object.assign(d, specialSet(mt.tex, 1.2));
       d.color.set(mt.hex).multiplyScalar(1.45); d.metalness = .4; d.roughness = .48; d.normalScale.set(.4, .4); d.clearcoat = .25; d.clearcoatRoughness = .5; dark = new THREE.Color(mt.hex).multiplyScalar(.35).getStyle(); label = 'Metal Skin ' + mt.name;
     } else if (state.surface === 'paint') {
       const ral = RAL.find(r => r.id === state.color) || RAL[0];
-      d.roughnessMap = paintRough; d.color.set(ral.hex); d.roughness = state.finish === 'seide' ? .34 : .52; d.metalness = .06;
-      d.clearcoat = state.finish === 'seide' ? .55 : 0; d.clearcoatRoughness = .3;
+      d.roughnessMap = paintRough; d.normalMap = fineStructure; d.normalScale.set(.22, .22); d.color.set(ral.hex); d.roughness = state.finish === 'seide' ? .34 : .5; d.metalness = .04;
+      d.clearcoat = state.finish === 'seide' ? .55 : .12; d.clearcoatRoughness = state.finish === 'seide' ? .3 : .6;
       dark = new THREE.Color(ral.hex).multiplyScalar(.42).getStyle(); label = `RAL ${ral.id} ${ral.name}`;
     } else {
       // stain or natural essence: photographic grain tinted to the Silvelox chart colour

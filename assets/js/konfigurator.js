@@ -6,9 +6,10 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import * as C from './cfg/catalog.js';
 import { createMaterials, TEX } from './cfg/materials.js';
-import { buildDoorRig, makeLeaf, ease, PILLAR } from './cfg/door.js';
+import { buildDoorRig, makeLeaf, ease } from './cfg/door.js';
 import { buildHouse, buildStudio, dispose } from './cfg/house.js';
 
 const q = new URLSearchParams(location.search);
@@ -84,6 +85,7 @@ const scene = new THREE.Scene();
 const sky = tx('sky.jpg', { srgb: true, wrap: false }); sky.mapping = THREE.EquirectangularReflectionMapping;
 scene.background = sky; scene.environment = sky; scene.environmentIntensity = .8; scene.backgroundIntensity = 1;
 const SUN_IN_SKY = new THREE.Vector3(.555, .742, .377), SKY_ROT = 1.95;
+const pmrem = new THREE.PMREMGenerator(renderer); const studioEnv = pmrem.fromScene(new RoomEnvironment(), .04).texture; pmrem.dispose();
 scene.backgroundRotation.set(0, SKY_ROT, 0); scene.environmentRotation.set(0, SKY_ROT, 0);
 const sunDir = SUN_IN_SKY.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -SKY_ROT).normalize();
 const camera = new THREE.PerspectiveCamera(40, 1, .2, 320);
@@ -107,7 +109,7 @@ sun.shadow.bias = -.0004; sun.shadow.normalBias = .035;
 const hemi = new THREE.HemisphereLight(0xdde8ff, 0x6f7a63, .12);
 scene.add(hemi, sun); hemi.layers.enable(1); sun.layers.enable(1);
 // studio key + fill (soft boxes), switched with the mode
-const studioKey = new THREE.DirectionalLight(0xffffff, 2.5); studioKey.position.set(-3.5, 9, 6); studioKey.castShadow = true; studioKey.shadow.mapSize.set(2048, 2048);
+const studioKey = new THREE.DirectionalLight(0xffffff, 2.1); studioKey.position.set(-3.5, 9, 6); studioKey.castShadow = true; studioKey.shadow.mapSize.set(2048, 2048);
 Object.assign(studioKey.shadow.camera, { near: 1, far: 30, left: -6, right: 6, top: 7, bottom: -2 }); studioKey.shadow.camera.updateProjectionMatrix(); studioKey.shadow.bias = -.0003; studioKey.shadow.normalBias = .02;
 const studioFill = new THREE.DirectionalLight(0xe8f0ff, .9); studioFill.position.set(6, 3, 5);
 const studioRim = new THREE.DirectionalLight(0xffffff, .6); studioRim.position.set(0, 4, -6);
@@ -128,8 +130,9 @@ function buildWorld() {
   if (studioMode) { studio = buildStudio({ mats, dims }); world.add(studio); dispose(h.group); }
   else { house = h.group; world.add(house); }
   scene.background = studioMode ? new THREE.Color(0xe9eaec) : sky;
+  scene.environment = studioMode ? studioEnv : sky;
   scene.fog = studioMode ? null : new THREE.Fog(0xc9d2da, 70, 220);
-  scene.environmentIntensity = studioMode ? .95 : .8;
+  scene.environmentIntensity = studioMode ? .75 : .8;
   sun.visible = !studioMode; hemi.visible = !studioMode; studioLights.visible = studioMode;
   renderer.toneMappingExposure = studioMode ? 1.1 : 1.04;
 }
@@ -241,7 +244,7 @@ const thumbs = (() => {
   function init() {
     r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); r.setSize(W, H, false); r.setPixelRatio(1);
     r.toneMapping = THREE.ACESFilmicToneMapping; r.outputColorSpace = THREE.SRGBColorSpace; r.toneMappingExposure = 1.05;
-    sc = new THREE.Scene(); sc.environment = sky; sc.environmentRotation.set(0, SKY_ROT, 0); sc.environmentIntensity = .5;
+    sc = new THREE.Scene(); sc.environment = studioEnv; sc.environmentIntensity = .7;
     const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(-1.5, 2.2, 3); sc.add(key);
     const fill = new THREE.DirectionalLight(0xe8f0ff, .9); fill.position.set(2, .5, 2); sc.add(fill);
     sc.background = new THREE.Color(0xe6e8eb); cam = new THREE.PerspectiveCamera(26, W / H, .05, 20); cam.position.set(.55, .3, 2.05); cam.lookAt(0, -.02, 0);
@@ -268,29 +271,42 @@ const thumbs = (() => {
 })();
 
 /* ------------------------------------------------------------------ Price indication (Silvelox list prices 08/2026) */
-function price() {
-  const t = C.TYPES[state.type], m = C.MODELS[state.model], lines = [];
-  if (!t.priced || !m.table) return { lines, total: null, note: 'Preis auf Anfrage' };
-  const sec = C.sector(state.w, state.h);
-  if (!sec || (m.sectors && !m.sectors.includes(sec))) return { lines, total: null, note: 'Dieses Maß liegt außerhalb der Standard-Sektoren, Preis auf Anfrage' };
-  const ess = C.ESSENCES.find(e => e.id === state.essence) || C.ESSENCES[0];
+function priceFor(st) {
+  const t = C.TYPES[st.type], m = C.MODELS[st.model], lines = [], warn = [];
+  if (!t.priced || !m.table) return { lines, total: null, note: 'Preis auf Anfrage', warn };
+  const sec = C.sector(st.w, st.h);
+  if (!sec) return { lines, total: null, note: 'Dieses Maß liegt außerhalb des Silvelox Rasters: Preis und Machbarkeit auf Anfrage', warn };
+  if (m.sectors && !m.sectors.includes(sec)) return { lines, total: null, note: `${m.label} ist nur in den Sektoren ${m.sectors.join(' und ')} lieferbar, Preis auf Anfrage`, warn };
+  if (m.maxH && st.h > m.maxH) return { lines, total: null, note: `${m.label} ist bis ${m.maxH} mm Höhe lieferbar, Preis auf Anfrage`, warn };
+  const ess = C.ESSENCES.find(e => e.id === st.essence) || C.ESSENCES[0];
   const col = m.table === 'materia' ? 'stone' : m.table === 'japan' ? 'wood' : ess.col;
   const base = C.PRICES[m.table][sec][col];
-  if (!base) return { lines, total: null, note: 'Preis auf Anfrage' };
+  if (!base) return { lines, total: null, note: 'Preis auf Anfrage', warn };
   lines.push([`${t.label} ${m.label}, ${m.family === 'materia' ? 'Sandstein' : m.family === 'japan' ? C.SPECIAL_WOOD[m.wood].name : ess.name}, Sektor ${sec}`, base]);
   let total = base;
   const add = (label, p) => { if (p) { lines.push([label, p]); total += p; } };
-  if (state.surface === 'metal') add('Metal Skin Oberfläche (254 €/m²)', Math.round(254 * state.w * state.h / 1e6));
-  if (state.securplus) add(C.OPTIONS.securplus.label, C.OPTIONS.securplus.price);
-  if (state.nonprotruding) add(C.OPTIONS.nonprotruding.label, C.OPTIONS.nonprotruding.price);
-  if (state.pedestrian) add(C.OPTIONS.pedestrian.label, C.OPTIONS.pedestrian.price);
-  if (state.windows) add(C.OPTIONS['windows_' + state.windows].label, C.OPTIONS['windows_' + state.windows].price);
-  if (state.transom) add(C.OPTIONS['transom_' + state.transom].label, C.OPTIONS['transom_' + state.transom].price);
-  if (state.grille) add(C.OPTIONS.grille.label, C.OPTIONS.grille.price);
-  const hd = C.HANDLES.find(h => h.id === state.handle); if (hd && hd.price) add(hd.name, hd.price);
-  ['sildomo', 'link', 'keypad', 'remote', 'blockmatic'].forEach(k => { if (state[k]) add(C.OPTIONS[k === 'link' ? 'sildomo_link' : k].label, C.OPTIONS[k === 'link' ? 'sildomo_link' : k].price); });
-  return { lines, total, note: state.drive === 'manual' ? 'Manuelle Ausführung: Abzug vom Listenpreis auf Anfrage' : '' };
+  if (st.surface === 'metal') add('Metal Skin Oberfläche (254 €/m²)', Math.round(254 * st.w * st.h / 1e6));
+  if (st.securplus) { if (C.PLUS_SECTORS.includes(sec)) add(C.OPTIONS.securplus.label, C.OPTIONS.securplus.price); else warn.push('SECUR PLUS ist bis Sektor D lieferbar, für dieses Maß auf Anfrage'); }
+  if (st.nonprotruding) add(C.OPTIONS.nonprotruding.label, C.OPTIONS.nonprotruding.price);
+  if (st.pedestrian) add(C.OPTIONS.pedestrian.label, C.OPTIONS.pedestrian.price);
+  if (st.windows) add(C.OPTIONS['windows_' + st.windows].label, C.OPTIONS['windows_' + st.windows].price);
+  if (st.transom) add(C.OPTIONS['transom_' + st.transom].label, C.OPTIONS['transom_' + st.transom].price);
+  if (st.grille) add(C.OPTIONS.grille.label, C.OPTIONS.grille.price);
+  const hd = C.HANDLES.find(h => h.id === st.handle); if (hd && hd.price) add(hd.name, hd.price);
+  ['sildomo', 'link', 'keypad', 'remote', 'blockmatic'].forEach(k => { if (st[k]) add(C.OPTIONS[k === 'link' ? 'sildomo_link' : k].label, C.OPTIONS[k === 'link' ? 'sildomo_link' : k].price); });
+  if (st.h > 2980) warn.push(C.SECTOR_NOTES.certified);
+  return { lines, total, sector: sec, note: st.drive === 'manual' ? 'Manuelle Ausführung: Abzug vom Listenpreis auf Anfrage' : '', warn };
 }
+/* Range for the chosen model and size: cheapest to most expensive covering, each with the chosen options */
+function priceRange() {
+  const m = C.MODELS[state.model]; if (!m.table) return null;
+  const ess = essencesFor(state.model), totals = [];
+  const cands = (m.family === 'materia' || m.family === 'japan') ? [state.essence] : ess.map(e => e.id);
+  cands.forEach(id => { const st = { ...state, essence: id }; if (st.surface === 'metal' && id !== 'okoume') st.surface = 'natural'; const p = priceFor(st); if (p.total != null) totals.push(p.total); });
+  if (!totals.length) return null;
+  return { min: Math.min(...totals), max: Math.max(...totals) };
+}
+function price() { return priceFor(state); }
 const eur = n => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 
 /* ------------------------------------------------------------------ Photo mode (own house photo + perspective overlay) */
@@ -426,7 +442,7 @@ function renderUI() {
   // 5 Maße & Haus
   $('inpW').value = state.w; $('inpH').value = state.h;
   const sp = $('optSize'); sp.innerHTML = ''; C.SIZE_PRESETS.forEach((v, i) => chip(sp, 'size' + i, `${v.label} ${v.w} × ${v.h}`, state.w === v.w && state.h === v.h));
-  const sec = C.sector(state.w, state.h); $('sectorNote').textContent = isSecur ? (sec ? `Preissektor ${sec}, Bestellmaß Außenkante Rahmen.` : 'Außerhalb der Standard-Sektoren: Preis auf Anfrage, Machbarkeit wird geprüft.') : 'Bestellmaß = lichte Öffnung.';
+  const sec = C.sector(state.w, state.h); $('sectorNote').textContent = isSecur ? (sec ? `Preissektor ${sec}, Rahmenpfosten ${C.pillarFor(state.w, state.h, state.pedestrian)} mm, Bestellmaß Außenkante Rahmen.${state.h > 2980 ? ' ' + C.SECTOR_NOTES.certified : ''}` : 'Außerhalb des Silvelox Rasters: Preis und Machbarkeit auf Anfrage.') : 'Bestellmaß = lichte Öffnung.';
   const fa = $('optFacade'); fa.innerHTML = ''; C.FACADE.forEach(c => swatch(fa, c.id, c.name, c.hex, state.facade === c.id));
   const ro = $('optRoof'); ro.innerHTML = ''; Object.entries(C.ROOF).forEach(([id, l]) => chip(ro, id, l, state.roof === id));
   const pr = $('optPreset'); pr.innerHTML = ''; C.PRESETS.forEach(v => chip(pr, v.id, v.label, Object.entries(v.patch).every(([k, val]) => state[k] === val)));
@@ -445,12 +461,15 @@ function summaryLines() {
 function renderSummary() {
   $('summary').innerHTML = summaryLines().map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
   const p = price(); const box = $('priceBox');
-  if (p.total != null) { box.innerHTML = `<div class="cfg-price-total"><span>Preisindikation</span><strong>${eur(p.total)}</strong></div><ul class="cfg-price-lines">${p.lines.map(([l, v]) => `<li><span>${l}</span><span>${eur(v)}</span></li>`).join('')}</ul><p class="cfg-price-note">Silvelox Listenpreis 08/2026 netto ab Werk, ohne MwSt., Lieferung, Montage und Aufmaß. ${p.note}</p>`; }
-  else box.innerHTML = `<div class="cfg-price-total"><span>Preis</span><strong>auf Anfrage</strong></div><p class="cfg-price-note">${p.note}. Wir melden uns innerhalb eines Werktags mit Aufmaß-Termin und Angebot.</p>`;
+  const r = priceRange();
+  if (p.total != null) {
+    const range = r && r.max > r.min ? `<p class="cfg-price-range"><span>Preisspanne ${C.MODELS[state.model].label} in ${state.w} × ${state.h} mm</span><strong>${eur(r.min)} bis ${eur(r.max)}</strong><small>je nach Holzart, mit den gewählten Optionen</small></p>` : '';
+    box.innerHTML = `<div class="cfg-price-total"><span>Preisindikation Listenpreis</span><strong>${eur(p.total)}</strong></div><ul class="cfg-price-lines">${p.lines.map(([l, v]) => `<li><span>${l}</span><span>${eur(v)}</span></li>`).join('')}</ul>${range}${p.warn.map(w => `<p class="cfg-price-warn">${w}</p>`).join('')}<p class="cfg-price-note">Silvelox Listenpreis 08/2026 netto ab Werk, ohne MwSt., Lieferung, Montage und Aufmaß. ${p.note} <a href="pages/preise.html">Alle Listenpreise</a></p>`;
+  } else box.innerHTML = `<div class="cfg-price-total"><span>Preis</span><strong>auf Anfrage</strong></div><p class="cfg-price-note">${p.note}. Wir melden uns innerhalb eines Werktags mit Aufmaß-Termin und Angebot. ${C.TYPES[state.type].priced ? '' : 'Zur Orientierung: <a href="pages/preise.html">Listenpreise SECUR</a>.'}</p>`;
   const text = summaryLines().map(([k, v]) => `${k}: ${v}`).join('\n') + (p.total != null ? `\nPreisindikation: ${eur(p.total)} (Listenpreis netto)` : '') + `\nLink: ${location.href.split('#')[0].split('?')[0]}${hash()}`;
   const href = `pages/kontakt.html?konfiguration=${encodeURIComponent(text)}`;
   $('requestBtn').href = href; $('stickyRequest').href = href;
-  $('dimText').textContent = `${state.w} × ${state.h} mm`; $('dimW').textContent = `${state.w} mm`; $('dimH').textContent = `${state.h + transomH()} mm`; $('dimT').textContent = `Torblatt 80 mm · Rahmen ${Math.round(PILLAR * 1000)} mm`;
+  $('dimText').textContent = `${state.w} × ${state.h} mm`; $('dimW').textContent = `${state.w} mm`; $('dimH').textContent = `${state.h + transomH()} mm`; $('dimT').textContent = `Torblatt 80 mm · Rahmen ${C.pillarFor(state.w, state.h, state.pedestrian)} mm`;
   $('stickySummary').textContent = `${C.MODELS[state.model].label} · ${surfaceLabel} · ${state.w} × ${state.h}`;
   $('stickyPrice').textContent = p.total != null ? eur(p.total) : 'auf Anfrage';
   const wood = state.surface === 'paint' ? (C.RAL.find(c => c.id === state.color) || {}).hex : null;

@@ -2,7 +2,7 @@
    Maßhaltig nach Silvelox (Torblatt 80 mm, Rahmenpfosten 110 mm, Gegengewichtskasten 370 mm tief, Fräsnut 9 × 5 mm).
    Jede Fräsung ist echte Geometrie: dunkle Rückplatte + erhabene Leisten/Kassetten, keine koplanaren Flächen. */
 import * as THREE from 'three';
-import { MODELS, HANDLES } from './catalog.js';
+import { MODELS, HANDLES, pillarFor } from './catalog.js';
 
 const LEAF_T = .08;        // Torblattstärke 80 mm
 const GROOVE_W = .009;     // Nutbreite 9 mm (Fig. 9)
@@ -239,9 +239,10 @@ function shellHandle(parent, x, y, z, M, handleId, color) {
   const mat = M.handle.clone(); mat.color.set(h.hex || color || '#3a3d40');
   if (h.band) { parent.add(box(.30, .022, .004, mat, x, y, z + .002, { shadow: false })); parent.add(box(.14, .022, .004, mat, x, y + .05, z + .002, { shadow: false })); return; }
   // recessed shell: dark pocket + grey shell lip, flush with the leaf
-  parent.add(box(.13, .07, .028, M.doorDark, x, y, z - .013, { shadow: false }));
-  parent.add(box(.14, .08, .003, mat, x, y, z + .0015, { shadow: false }));
-  parent.add(box(.12, .012, .012, mat, x, y + .028, z - .004, { shadow: false }));
+  parent.add(box(.082, .082, .03, M.doorDark, x, y, z - .014, { shadow: false }));
+  parent.add(box(.096, .096, .003, mat, x, y, z + .0015, { shadow: false }));
+  parent.add(box(.064, .014, .014, mat, x, y + .022, z - .006, { shadow: false }));
+  parent.add(box(.014, .05, .006, mat, x, y - .012, z - .02, { shadow: false }));
 }
 function bottomTrim(parent, w, y, z, M, color) { const mat = M.handle.clone(); mat.color.set(color || '#3a3d40'); parent.add(box(w, .06, .006, mat, 0, y + .03, z + .003, { shadow: false })); }
 function seal(parent, w, y, z, M) { parent.add(box(w, .03, .03, M.seal, 0, y - .015, z, { shadow: false })); }
@@ -299,11 +300,15 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
 
   if (type === 'secur' || type === 'basculap') {
     // SECUR: frame pillars 110 mm, 80 mm leaf flush with the frame, counterweight boxes 370 mm deep beside the opening (inside)
-    const fh = dh, fw = dw, zF = -.05, lw = fw - 2 * PILLAR + .02, lh = fh - PILLAR - .03 + .01, lz = zF + .005;
+    const P = pillarFor(state.w, state.h, state.pedestrian) / 1000, FM = type === 'secur' ? M.door : M.frame;
+    const fh = dh, fw = dw, zF = -.05, lw = fw - 2 * P + .02, lh = fh - P - .03 + .01, lz = zF + .005;
     const frame = new THREE.Group();
-    frame.add(box(PILLAR, fh, LEAF_T + .02, M.frame, -(fw / 2 - PILLAR / 2), fh / 2, zF - .01));
-    frame.add(box(PILLAR, fh, LEAF_T + .02, M.frame, (fw / 2 - PILLAR / 2), fh / 2, zF - .01));
-    frame.add(box(fw - 2 * PILLAR + .002, PILLAR, LEAF_T + .02, M.frame, 0, fh - PILLAR / 2, zF - .01));
+    frame.add(box(P, fh, LEAF_T + .02, FM, -(fw / 2 - P / 2), fh / 2, zF - .01));
+    frame.add(box(P, fh, LEAF_T + .02, FM, (fw / 2 - P / 2), fh / 2, zF - .01));
+    frame.add(box(fw - 2 * P + .002, P, LEAF_T + .02, FM, 0, fh - P / 2, zF - .01, { rot: true }));
+    // 12 mm shadow gap between frame and leaf, as on the real door
+    [-1, 1].forEach(sgn => frame.add(box(.012, lh, .03, M.doorDark, sgn * (lw / 2 + .004), lh / 2 + .02, zF - .012, { shadow: false })));
+    frame.add(box(lw + .02, .012, .03, M.doorDark, 0, lh + .026, zF - .012, { shadow: false }));
     snap.add(frame);
     if (studio || true) { [-1, 1].forEach(s => { g.add(box(CW_W, fh - .02, CW_D, M.galv, s * (fw / 2 - CW_W / 2), (fh - .02) / 2, zF - LEAF_T - CW_D / 2 - .02, { shadow: studio })); }); }
     const pivot = new THREE.Group(); pivot.position.set(0, lh + .02, lz);
@@ -336,7 +341,7 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
 
   if (type === 'wing') {
     const zarge = (parent) => { const t = .07, d = .1, zc = -.088, top = .10, hv = dh - top + .01;
-      parent.add(box(t, hv, d, M.frame, -(dw / 2 - t / 2 + .01), hv / 2, zc, { shadow: false })); parent.add(box(t, hv, d, M.frame, (dw / 2 - t / 2 + .01), hv / 2, zc, { shadow: false })); parent.add(box(dw + .02, top, d, M.frame, 0, dh + .01 - top / 2, zc, { shadow: false })); };
+      parent.add(box(t, hv, d, M.door, -(dw / 2 - t / 2 + .01), hv / 2, zc, { shadow: false })); parent.add(box(t, hv, d, M.door, (dw / 2 - t / 2 + .01), hv / 2, zc, { shadow: false })); parent.add(box(dw + .02, top, d, M.door, 0, dh + .01 - top / 2, zc, { shadow: false, rot: true })); };
     zarge(snap);
     const h = dh - .11, lw = dw / 2 - .075, zL = -.06, pivots = [];
     [-1, 1].forEach(s => {
@@ -357,8 +362,9 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
       snap.add(box(tw, th, .06, M.frame, 0, dh + th / 2, zF - .03)); snap.add(box(tw - .12, th - .12, .012, M.glass, 0, dh + th / 2, zF - .01, { shadow: false }));
       const n = Math.max(1, Math.round(tw / .9)); for (let i = 1; i < n; i++) snap.add(box(.05, th - .1, .05, M.frame, -tw / 2 + tw * i / n, dh + th / 2, zF, { shadow: false }));
     } else {
-      snap.add(box(PILLAR, th, LEAF_T + .02, M.frame, -(tw / 2 - PILLAR / 2), dh + th / 2, zF - .01)); snap.add(box(PILLAR, th, LEAF_T + .02, M.frame, (tw / 2 - PILLAR / 2), dh + th / 2, zF - .01));
-      const p = makeLeaf(tw - 2 * PILLAR + .02, th - .02, state.model, M, { joints: false }); p.position.set(0, dh + th / 2, zF + .005); snap.add(p);
+      const P = pillarFor(state.w, state.h, state.pedestrian) / 1000, FM = type === 'secur' ? M.door : M.frame;
+      snap.add(box(P, th, LEAF_T + .02, FM, -(tw / 2 - P / 2), dh + th / 2, zF - .01)); snap.add(box(P, th, LEAF_T + .02, FM, (tw / 2 - P / 2), dh + th / 2, zF - .01));
+      const p = makeLeaf(tw - 2 * P + .02, th - .02, state.model, M, { joints: false }); p.position.set(0, dh + th / 2, zF + .005); snap.add(p);
     }
   }
   snap.traverse(o => { o.layers.enable(1); });

@@ -167,6 +167,12 @@
 .cfg-price-lines { list-style: none; margin: .6rem 0 0; padding: .5rem 0 0; border-top: 1px dashed var(--line-dark); font-size: .8rem; color: var(--text-soft); display: grid; gap: .2rem; }
 .cfg-price-lines li { display: flex; justify-content: space-between; gap: 1rem; }
 .cfg-price-lines li span:last-child { flex: none; color: var(--navy); }
+.cfg-price-range { margin: .7rem 0 0; padding: .6rem .8rem; background: #fff; border: 1px solid var(--line); display: grid; gap: .1rem; }
+.cfg-price-range span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-soft); font-weight: 600; }
+.cfg-price-range strong { font-family: var(--font-head); font-size: 1.05rem; color: var(--navy); }
+.cfg-price-range small { font-size: .74rem; color: var(--muted); }
+.cfg-price-warn { font-size: .78rem; color: var(--orange-dark); margin: .5rem 0 0; }
+.cfg-price-note a { color: var(--primary); }
 .cfg-price-note { font-size: .74rem; color: var(--muted); margin: .6rem 0 0; line-height: 1.4; }
 .cfg-summary-actions { display: grid; grid-template-columns: 1fr auto; gap: .6rem; }
 .cfg-note { font-size: .8rem; color: var(--text-soft); margin: .7rem 0 0; }

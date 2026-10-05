@@ -144,5 +144,12 @@ export function buildStudio({ mats, dims }) {
   const s = new THREE.Shape(); s.moveTo(-2.5, 0); s.lineTo(0, 0); s.absarc(0, 1.2, 1.2, -Math.PI / 2, 0, false); s.lineTo(1.2, 9); s.lineTo(1.6, 9); s.lineTo(1.6, -.4); s.lineTo(-2.5, -.4); s.closePath();
   const cyc = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: r * 2, bevelEnabled: false }), M.studioWall);
   cyc.rotation.y = Math.PI / 2; cyc.position.set(-r, -.002, -(dims.T + 1.6)); cyc.receiveShadow = true; g.add(cyc);
+  // soft contact shadow under the door (radial gradient sprite on the floor)
+  const c = document.createElement('canvas'); c.width = c.height = 256; const ctx = c.getContext('2d');
+  const grd = ctx.createRadialGradient(128, 128, 10, 128, 128, 128); grd.addColorStop(0, 'rgba(0,0,0,.42)'); grd.addColorStop(.55, 'rgba(0,0,0,.16)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grd; ctx.fillRect(0, 0, 256, 256);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const cs = new THREE.Mesh(new THREE.PlaneGeometry(dims.dw + 1.2, 1.6), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+  cs.rotation.x = -Math.PI / 2; cs.position.set(0, .004, -.12); cs.renderOrder = 1; g.add(cs);
   return g;
 }
