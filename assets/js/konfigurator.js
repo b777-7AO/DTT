@@ -7,6 +7,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import * as C from './cfg/catalog.js';
 import { createMaterials, TEX } from './cfg/materials.js';
 import { buildDoorRig, makeLeaf, ease } from './cfg/door.js';
@@ -20,7 +22,7 @@ const state = {
   type: 'secur', model: 'vip', essence: 'okoume', surface: 'paint', color: '7016', finish: 'matt',
   securplus: false, nonprotruding: false, pedestrian: false, windows: '', transom: '', grille: false, glazing: false,
   handle: 'std', drive: 'combimatic', sildomo: false, link: false, keypad: false, remote: false, blockmatic: false,
-  w: 3000, h: 2250, facade: 'weiss', roof: 'flat', mode: 'studio', view: 'studio',
+  w: 3000, h: 2250, facade: 'weiss', roof: 'flat', mode: 'house', view: 'street',
 };
 const BOOLS = ['securplus', 'nonprotruding', 'pedestrian', 'grille', 'glazing', 'sildomo', 'link', 'keypad', 'remote', 'blockmatic'];
 const HASH_KEYS = ['type', 'model', 'essence', 'surface', 'color', 'finish', 'windows', 'transom', 'handle', 'drive', 'w', 'h', 'facade', 'roof', 'mode', ...BOOLS];
@@ -72,9 +74,9 @@ readHash();
 const canvas = $('cfgCanvas'), wrap = $('canvasWrap');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
 const useAO = !q.has('noao') && window.matchMedia('(pointer: fine)').matches && Math.min(window.innerWidth, window.innerHeight) > 600;
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, useAO ? 1.5 : 1.75));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, useAO ? 1.75 : 2));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.04;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 let assetsReady = false;
 const manager = new THREE.LoadingManager(() => { assetsReady = true; finishLoading(); });
@@ -83,12 +85,13 @@ const { M, tx } = mats;
 
 const scene = new THREE.Scene();
 const sky = tx('sky.jpg', { srgb: true, wrap: false }); sky.mapping = THREE.EquirectangularReflectionMapping;
-scene.background = sky; scene.environment = sky; scene.environmentIntensity = .8; scene.backgroundIntensity = 1;
+let skyEnv = sky; new RGBELoader(manager).load(TEX + 'sky_1k.hdr', t => { t.mapping = THREE.EquirectangularReflectionMapping; skyEnv = t; if (state.mode === 'house') scene.environment = t; });
+scene.background = sky; scene.environment = sky; scene.environmentIntensity = .55; scene.backgroundIntensity = 1;
 const SUN_IN_SKY = new THREE.Vector3(.555, .742, .377), SKY_ROT = 1.95;
 const pmrem = new THREE.PMREMGenerator(renderer); const studioEnv = pmrem.fromScene(new RoomEnvironment(), .04).texture; pmrem.dispose();
 scene.backgroundRotation.set(0, SKY_ROT, 0); scene.environmentRotation.set(0, SKY_ROT, 0);
 const sunDir = SUN_IN_SKY.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -SKY_ROT).normalize();
-const camera = new THREE.PerspectiveCamera(40, 1, .2, 320);
+const camera = new THREE.PerspectiveCamera(36, 1, .2, 320);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = .08; controls.enablePan = false; controls.maxPolarAngle = Math.PI / 2 - .03;
 class AOPass extends GTAOPass { overrideVisibility() { super.overrideVisibility(); this.scene.traverse(o => { if (o.userData.cutout) o.visible = false; }); } }
@@ -97,16 +100,21 @@ if (useAO) {
   composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { samples: 4, type: THREE.HalfFloatType }));
   composer.addPass(new RenderPass(scene, camera));
   aoPass = new AOPass(scene, camera, 1, 1, {}, { radius: .34, distanceExponent: 1, thickness: 1, scale: 1, samples: 16, distanceFallOff: 1, screenSpaceRadius: false }, { lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 4, radiusExponent: 1, rings: 2, samples: 16 });
-  aoPass.output = GTAOPass.OUTPUT.Default; aoPass.blendIntensity = .85;
-  composer.addPass(aoPass); composer.addPass(new OutputPass());
+  aoPass.output = GTAOPass.OUTPUT.Default; aoPass.blendIntensity = .95;
+  composer.addPass(aoPass);
+  const lensPass = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uAmount: { value: .28 } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform sampler2D tDiffuse; uniform float uTime; uniform float uAmount; varying vec2 vUv; float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + uTime) * 43758.5453); } void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - .5; float v = 1.0 - uAmount * smoothstep(.25, 1.1, dot(d, d) * 2.2); float g = (hash(vUv * 1200.0) - .5) * .012; gl_FragColor = vec4(c.rgb * v + g, c.a); }' });
+  composer.addPass(lensPass); composer.addPass(new OutputPass());
+  window.__lens = lensPass;
 }
 function draw() { if (composer && aoOn) composer.render(); else renderer.render(scene, camera); }
-const sun = new THREE.DirectionalLight(0xfff3e0, 3.3);
+const sun = new THREE.DirectionalLight(0xfff1dc, 3.4);
 sun.position.copy(sunDir).multiplyScalar(45).add(new THREE.Vector3(3, 0, 0)); sun.target.position.set(3, 0, 0); scene.add(sun.target);
-sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
 Object.assign(sun.shadow.camera, { near: 5, far: 110, left: -24, right: 24, top: 24, bottom: -24 }); sun.shadow.camera.updateProjectionMatrix();
-sun.shadow.bias = -.0004; sun.shadow.normalBias = .035;
-const hemi = new THREE.HemisphereLight(0xdde8ff, 0x6f7a63, .12);
+sun.shadow.bias = -.0003; sun.shadow.normalBias = .03;
+const hemi = new THREE.HemisphereLight(0xdde8ff, 0x6f7a63, .06);
+const fill = new THREE.DirectionalLight(0xeaf2ff, .55); fill.position.set(-6, 5, 14); scene.add(fill); fill.layers.enable(1);
 scene.add(hemi, sun); hemi.layers.enable(1); sun.layers.enable(1);
 // studio key + fill (soft boxes), switched with the mode
 const studioKey = new THREE.DirectionalLight(0xffffff, 2.1); studioKey.position.set(-3.5, 9, 6); studioKey.castShadow = true; studioKey.shadow.mapSize.set(2048, 2048);
@@ -130,11 +138,11 @@ function buildWorld() {
   if (studioMode) { studio = buildStudio({ mats, dims }); world.add(studio); dispose(h.group); }
   else { house = h.group; world.add(house); }
   scene.background = studioMode ? new THREE.Color(0xe9eaec) : sky;
-  scene.environment = studioMode ? studioEnv : sky;
+  scene.environment = studioMode ? studioEnv : skyEnv;
   scene.fog = studioMode ? null : new THREE.Fog(0xc9d2da, 70, 220);
-  scene.environmentIntensity = studioMode ? .75 : .8;
-  sun.visible = !studioMode; hemi.visible = !studioMode; studioLights.visible = studioMode;
-  renderer.toneMappingExposure = studioMode ? 1.1 : 1.04;
+  scene.environmentIntensity = studioMode ? .75 : .55;
+  sun.visible = !studioMode; hemi.visible = !studioMode; fill.visible = !studioMode; studioLights.visible = studioMode;
+  renderer.toneMappingExposure = studioMode ? 1.1 : 1.0;
 }
 function buildDoor() {
   if (doorRig) { world.remove(doorRig.group); dispose(doorRig.group); }
@@ -230,6 +238,7 @@ function loop(now) {
   if (doorAnimStart !== null) { const k = Math.min(1, (now - doorAnimStart) / 2400); doorT = doorFrom + (doorTarget - doorFrom) * k; doorRig.animate(doorT); if (k >= 1) doorAnimStart = null; }
   if (doorRig) { const r = doorRig.group.rotation; const d = turnTarget - r.y; if (Math.abs(d) > .0005) r.y += d * .08; else r.y = turnTarget; }
   controls.autoRotate = autoRotate && state.mode === 'studio' && !camTween; controls.autoRotateSpeed = .9;
+  if (window.__lens) window.__lens.uniforms.uTime.value = (now % 1000) / 37;
   controls.update(); draw(); updateLabels();
   if (firstFrame) { firstFrame = false; window.__t = { frame: performance.now() }; }
   if (!overlayDone && (assetsReady || now - T0 > 7000)) finishLoading();
@@ -526,7 +535,7 @@ document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click'
 if (q.has('clean')) document.body.classList.add('cfg-clean');
 window.__cfg = { camera, controls, state, dims: () => dims, price, thumbs, update, setMode, goView, setDoor };
 buildWorld(); buildDoor(); renderUI();
-setMode(state.mode === 'photo' ? 'studio' : state.mode);
+setMode(state.mode === 'photo' ? 'house' : state.mode);
 goView(q.get('view') || (state.mode === 'house' ? 'street' : 'studio'), true);
 if (q.get('open') === '1') { doorT = 1; doorTarget = 1; doorRig.animate(1); $('toggleDoor').querySelector('span').textContent = 'Tor schließen'; }
 history.replaceState(null, '', location.pathname + location.search + hash());
