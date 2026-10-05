@@ -98,7 +98,9 @@ export function createMaterials(renderer, manager) {
     }
     // all grain textures run vertically; horizontal models (FOR, GEO, Multidoga, Bidoga) turn the grain by 90 degrees
     const horizontal = model.grain === 'h' || model.pattern === 'hboard' || (model.pattern === 'hgroove' && model.family !== 'linee') || model.horizontal;
-    [d.map, d.normalMap, d.roughnessMap].forEach(t => { if (!t) return; t.center.set(.5, .5); t.rotation = horizontal ? Math.PI / 2 : 0; });
+    // the larch photo runs horizontally (board wall), every other grain texture vertically
+    const base = (state.surface === 'stain' || state.surface === 'natural') && (ESSENCES.find(e => e.id === state.essence) || {}).base === 'larch' ? Math.PI / 2 : 0;
+    [d.map, d.normalMap, d.roughnessMap].forEach(t => { if (!t) return; t.center.set(.5, .5); t.rotation = (horizontal ? Math.PI / 2 : 0) + base; });
     M.doorDark.color.set(dark);
     if (had[0] !== !!d.map || had[1] !== !!d.normalMap || had[2] !== !!d.roughnessMap) d.needsUpdate = true;
     M.doorDark.needsUpdate = true;
