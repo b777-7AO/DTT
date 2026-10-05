@@ -165,7 +165,7 @@ function views() {
     studio: { pos: [sd * .42, 1.75 + th * .4, sd], tgt: [0, (dims.dh + th) / 2, 0], az: [-1.45, 1.45], dist: [2.4, 16], polar: .25 },
     detail: { pos: [-1.7, 1.05, 2.1], tgt: [-.55, 1.0, 0], az: [-1.45, 1.45], dist: [1.2, 16], polar: .25 },
     back: { pos: [-sd * .45, 1.9, sd * .95], tgt: [0, (dims.dh + th) / 2, 0], az: [-1.45, 1.45], dist: [2.4, 16], polar: .25, turn: Math.PI },
-    street: { pos: [dw * .55 + 8.6, 1.9, 23.5], tgt: [1.2, 1.5, 0], ...front },
+    street: { pos: [dw * .55 + 8.6, 2.6, 25.0], tgt: [1.2, 1.0, 0], ...front },
     front: { pos: [0, 1.7, 10.2], tgt: [0, 1.3, .5], ...front },
     close: { pos: [2.2, 1.5, 5.8], tgt: [0, 1.25, .45], ...front },
     inside: { pos: [Math.min(.6, halfIn * .4), 1.5, -4.2], tgt: [0, 1.15, -.4], az: [Math.PI - azIn, Math.PI + azIn], dist: [2.0, maxD], polar: polarIn },
@@ -533,7 +533,7 @@ document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click'
 
 /* ------------------------------------------------------------------ Go */
 if (q.has('clean')) document.body.classList.add('cfg-clean');
-window.__cfg = { camera, controls, state, dims: () => dims, price, thumbs, update, setMode, goView, setDoor };
+window.__cfg = { camera, controls, state, scene, world, dims: () => dims, price, thumbs, update, setMode, goView, setDoor, THREE };
 buildWorld(); buildDoor(); renderUI();
 setMode(state.mode === 'photo' ? 'house' : state.mode);
 goView(q.get('view') || (state.mode === 'house' ? 'street' : 'studio'), true);
