@@ -287,7 +287,8 @@ function goView(name, instant = false) {
   const all = views(), v0 = all[name] || all[state.mode === 'house' ? 'front' : 'studio'];
   state.view = name;
   turnTarget = v0.turn || 0;
-  const k = camera.aspect < 1 ? 1 + (1 - camera.aspect) * 1.1 : 1;
+  const portrait = camera.aspect < 1, k = portrait ? 1 + (1 - camera.aspect) * 1.1 : 1;
+  camera.fov = portrait && name === 'inside' ? 56 : 36; camera.updateProjectionMatrix();
   const v = { tgt: v0.tgt, pos: v0.tgt.map((t, i) => t + (v0.pos[i] - t) * k) };
   document.querySelectorAll('#cfgViews button').forEach(b => b.classList.toggle('is-active', b.dataset.view === name));
   setTrajVisible(name === 'inside' && state.mode === 'house');
@@ -320,7 +321,8 @@ new ResizeObserver(resize).observe(wrap); resize();
 const _v = new THREE.Vector3();
 function place(el, x, y, z, edge = 40) {
   _v.set(x, y, z).project(camera); const w = wrap.clientWidth, h = wrap.clientHeight;
-  const px = (_v.x + 1) / 2 * w, py = (1 - _v.y) / 2 * h, vis = _v.z < 1 && px > edge && px < w - edge && py > 60 && py < h - edge;
+  const top = window.matchMedia('(max-width: 900px)').matches ? 118 : 60;
+  const px = (_v.x + 1) / 2 * w, py = (1 - _v.y) / 2 * h, vis = _v.z < 1 && px > edge && px < w - edge && py > top && py < h - edge;
   el.hidden = !vis; if (vis) { el.style.left = px + 'px'; el.style.top = py + 'px'; }
 }
 let showDims = true;

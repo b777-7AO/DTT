@@ -300,3 +300,4 @@
 }
 .l-short { display: none; }
 @media (max-width: 900px) { .l-long { display: none; } .l-short { display: inline; } }
+@media (max-width: 900px) { .cfg-traj[data-k^="p"], .cfg-traj[data-k="a"], .cfg-traj[data-k="b"] { display: none !important; } .cfg-traj { max-width: 46vw; white-space: normal; text-align: center; line-height: 1.2; } }
