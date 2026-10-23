@@ -15,7 +15,7 @@
   <meta name="theme-color" content="#000e28">
   <link rel="stylesheet" href="assets/css/fonts.css">
   <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="stylesheet" href="assets/css/konfigurator.css?v=70">
+  <link rel="stylesheet" href="assets/css/konfigurator.css?v=72">
   <script type="importmap">
   { "imports": {
       "three": "./assets/vendor/three/three.module.js",
@@ -52,6 +52,8 @@
         <div class="cfg-measure cfg-measure-w" id="dimW" hidden></div>
         <div class="cfg-measure cfg-measure-h" id="dimH" hidden></div>
         <div class="cfg-measure cfg-measure-t" id="dimT" hidden></div>
+        <div class="cfg-traj-labels" id="trajLabels"></div>
+        <div class="cfg-traj-card" id="trajCard" hidden></div>
         <div class="cfg-hint-overlay" id="cfgHint" hidden>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V6a2 2 0 1 1 4 0v6"/><path d="M12 11a2 2 0 1 1 4 0v1a2 2 0 1 1 4 0v3a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L4.5 14a1.8 1.8 0 0 1 3-2l.5.8"/></svg>
           <span>Ziehen zum Drehen, Scrollen oder zwei Finger zum Zoomen</span>
@@ -93,7 +95,7 @@
             <button type="button" data-view="front" class="is-active">Haus</button>
             <button type="button" data-view="street">Straße</button>
             <button type="button" data-view="close">Nah</button>
-            <button type="button" data-view="inside">Garage innen</button>
+            <button type="button" data-view="inside">Garage innen · Öffnungsbahn</button>
           </div>
         </div>
         <div class="cfg-stage-actions" id="stageActions">
@@ -244,6 +246,6 @@
 
   <div data-include="partials/footer.html" data-root=""></div>
   <script src="assets/js/main.js"></script>
-  <script type="module" src="assets/js/konfigurator.js?v=86"></script>
+  <script type="module" src="assets/js/konfigurator.js?v=89"></script>
 </body>
 </html>

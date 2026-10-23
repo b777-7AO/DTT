@@ -194,6 +194,38 @@ export function sector(w, h) {
   if (h <= 2980) return band([2670, 3270, 3770, 4570, 5170, 5970], ['B', 'D', 'F', 'H', 'L', 'N']);
   return band([2670, 3270, 3770, 4570], ['X', 'P', 'V', 'R']);
 }
+
+/* Öffnungsbahn und Platzbedarf SECUR / SECUR PLUS (Preisliste 08/2026, S. 9 ausschwenkend, S. 10 nicht ausschwenkend).
+   H = Bestellhöhe Außenkante Rahmen. aOut/aIn = Ausschwenken außen/innen bei ½ H, bOut/bIn bei ¾ H, s = Überstand des offenen Torblatts
+   vor der Rahmenlinie, r = Platzbedarf nach innen ab Rahmenlinie, e = Durchfahrtshöhe bei offenem Tor. Alle Maße in mm. */
+const TR = (rows, keys) => rows.map(r => Object.fromEntries(keys.map((k, i) => [k, r[i]])));
+export const TRAJECTORY = {
+  protruding: TR([
+    [1980, 400, 990, 900, 1480, 190, 1700, 1750], [2030, 400, 1015, 900, 1520, 190, 1750, 1800], [2080, 400, 1040, 900, 1560, 240, 1750, 1840], [2130, 400, 1065, 900, 1600, 240, 1800, 1890],
+    [2180, 400, 1090, 900, 1640, 290, 1800, 1935], [2230, 400, 1115, 900, 1670, 290, 1850, 1985], [2280, 400, 1140, 900, 1710, 340, 1850, 2030], [2330, 400, 1165, 900, 1750, 340, 1900, 2080],
+    [2380, 400, 1190, 900, 1790, 390, 1900, 2125], [2430, 400, 1215, 900, 1820, 390, 1950, 2175], [2480, 400, 1240, 900, 1860, 440, 1950, 2220], [2530, 400, 1265, 900, 1900, 440, 2000, 2270],
+    [2580, 400, 1290, 900, 1940, 490, 2000, 2315], [2630, 400, 1315, 900, 1970, 490, 2050, 2365], [2680, 400, 1340, 900, 2010, 540, 2050, 2410], [2730, 400, 1365, 900, 2050, 540, 2100, 2460],
+    [2780, 400, 1390, 950, 2090, 590, 2100, 2505], [2830, 400, 1415, 950, 2120, 590, 2150, 2555], [2880, 400, 1440, 950, 2160, 640, 2150, 2600], [2930, 400, 1465, 950, 2200, 640, 2200, 2650],
+    [2980, 400, 1490, 950, 2230, 690, 2200, 2695], [3030, 400, 1515, 950, 2270, 690, 2250, 2745], [3080, 400, 1540, 950, 2310, 740, 2250, 2790], [3130, 400, 1565, 1000, 2350, 740, 2300, 2840],
+    [3180, 400, 1590, 1000, 2380, 790, 2300, 2885], [3230, 400, 1615, 1000, 2420, 790, 2350, 2935], [3280, 400, 1640, 1000, 2460, 840, 2350, 2980], [3330, 400, 1665, 1000, 2500, 840, 2400, 3030],
+    [3380, 400, 1690, 1000, 2530, 890, 2400, 3075], [3430, 400, 1715, 1000, 2570, 890, 2450, 3125], [3480, 400, 1740, 1000, 2610, 940, 2450, 3170],
+  ], ['h', 'aOut', 'aIn', 'bOut', 'bIn', 's', 'r', 'e']),
+  nonprotruding: TR([
+    [1980, 520, 990, 980, 1480, 1900, 1750], [2030, 530, 1015, 1005, 1520, 1950, 1800], [2080, 540, 1040, 1030, 1560, 2000, 1850], [2130, 550, 1065, 1055, 1600, 2050, 1900],
+    [2180, 560, 1090, 1080, 1640, 2100, 1950], [2230, 570, 1115, 1105, 1670, 2150, 2000], [2280, 580, 1140, 1130, 1710, 2200, 2050], [2330, 590, 1165, 1155, 1750, 2250, 2100],
+    [2380, 600, 1190, 1180, 1790, 2300, 2150], [2430, 610, 1215, 1205, 1820, 2350, 2200], [2480, 620, 1240, 1230, 1860, 2400, 2250], [2530, 630, 1265, 1255, 1900, 2450, 2300],
+    [2580, 640, 1290, 1280, 1940, 2500, 2350],
+  ], ['h', 'aOut', 'aIn', 'bOut', 'bIn', 'r', 'e']),
+  headroom: { frameHead: 110, lossOpen: '230/310', rearDrop: 150 },
+  options: { G31: { label: 'Vergrößerter Überstand 50/100/150 mm', price: 514 }, F01: { label: 'Nicht ausschwenkendes Torblatt', price: 651 }, F02: { label: 'Deckenführungen nach Vorgabe der Technik', price: 2259 }, G10: { label: 'Distanzleisten 25 mm zwischen Wand und Rahmen (Torblatt nicht über die Lichte hinaus)', price: 261 } },
+};
+/* row for an order height: the next listed height (table step 50 mm); null when the variant is not listed for this height */
+export function trajectoryFor(h, nonprotruding = false) {
+  const rows = nonprotruding ? TRAJECTORY.nonprotruding : TRAJECTORY.protruding;
+  const row = rows.find(r => r.h >= h) || null;
+  return row ? { ...row, exact: row.h === h, nonprotruding } : null;
+}
+
 /* Rahmenpfosten: 110 mm im inneren Bereich des Rasters, 135 mm (X-Felder) bei größeren Toren oder mit Schlupftür */
 export function pillarFor(w, h, pedestrian = false) {
   if (pedestrian) return 135;

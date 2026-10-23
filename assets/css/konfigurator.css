@@ -252,3 +252,17 @@
   .cfg-models { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 560px) { .cfg-models { grid-template-columns: repeat(2, 1fr); } .cfg-swatches { grid-template-columns: repeat(4, 1fr); } .cfg-summary-actions { grid-template-columns: 1fr; } .cfg-cards { grid-template-columns: repeat(3, 1fr); } .cfg-card span { font-size: .72rem; } .cfg-imgopts, .cfg-imgopts.cols-2 { grid-template-columns: repeat(2, 1fr); } .cfg-stage { height: 42vh; min-height: 260px; } }
+
+/* Öffnungsbahn (inside view): swept-volume labels and the dimension card */
+.cfg-traj { position: absolute; z-index: 4; transform: translate(-50%, -50%); background: #fff; color: var(--navy); font-family: var(--font-head); font-size: .72rem; font-weight: 600; padding: .28rem .55rem; border-radius: 2px; pointer-events: none; white-space: nowrap; box-shadow: 0 0 0 1px rgba(0,24,168,.35), 0 4px 12px -4px rgba(0,14,40,.35); }
+.cfg-traj::before { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 14px; background: var(--primary); }
+.cfg-traj-card { position: absolute; left: 16px; top: 76px; z-index: 5; max-width: 360px; background: #fff; border-radius: 3px; padding: .8rem .95rem .7rem; box-shadow: 0 6px 24px -10px rgba(0,14,40,.45), 0 0 0 1px rgba(0,14,40,.06); font-size: .8rem; color: var(--text-soft); }
+.cfg-traj-card strong { display: block; font-family: var(--font-head); color: var(--navy); font-size: .86rem; margin-bottom: .15rem; }
+.cfg-traj-card small { display: block; font-size: .72rem; color: var(--muted); line-height: 1.4; }
+.cfg-traj-card table { width: 100%; border-collapse: collapse; margin: .5rem 0 .45rem; font-variant-numeric: tabular-nums; }
+.cfg-traj-card th { text-align: left; font-family: var(--font-head); color: var(--primary); font-size: .76rem; padding: .22rem .5rem .22rem 0; white-space: nowrap; vertical-align: top; }
+.cfg-traj-card td { padding: .22rem 0; border-top: 1px solid var(--line); color: var(--text-soft); }
+.cfg-traj-card td:last-child { text-align: right; color: var(--navy); font-weight: 600; white-space: nowrap; padding-left: .6rem; }
+.cfg-traj-card tr:first-child td { border-top: 0; }
+@media (max-width: 900px) { .cfg-traj-card { top: 52px; left: 10px; right: 10px; max-width: none; padding: .55rem .7rem .5rem; font-size: .72rem; } .cfg-traj-card table { margin: .3rem 0; } .cfg-traj { font-size: .64rem; } }
+@media (max-width: 900px) { .cfg-traj-card tr:nth-child(n+4), .cfg-traj-card small:last-child { display: none; } .cfg-traj-card { font-size: .7rem; } }

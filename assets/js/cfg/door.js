@@ -2,7 +2,7 @@
    Maßhaltig nach Herstellerangaben (Torblatt 80 mm, Rahmenpfosten 110 mm, Gegengewichtskasten 370 mm tief, Fräsnut 9 × 5 mm).
    Jede Fräsung ist echte Geometrie: dunkle Rückplatte + erhabene Leisten/Kassetten, keine koplanaren Flächen. */
 import * as THREE from 'three';
-import { MODELS, HANDLES, pillarFor } from './catalog.js';
+import { MODELS, HANDLES, pillarFor, trajectoryFor } from './catalog.js';
 import { GRID_STD, GRID_EXT, HARDWARE, WINDOWS as ST_WINDOWS } from './catalog_guardy.js';
 
 /* number of panel sections of the steel door for a size, from the price grid rows */
@@ -445,7 +445,10 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
       // open position: leaf horizontal under the ceiling, front edge 10 cm outside the frame line (both trajectories end there);
       // protruding doors swing the lower edge out past the frame while opening, non-protruding doors retract first
       // final: leaf top just under the frame head (inside), front edge flush with the wall face; nothing above the opening
-      const up = Math.max(.04, fh - .05 - lh), back = lh - .07, kz = protruding ? e : Math.min(1, e * 1.7);
+      // open position from the price-list tables (S. 9/10): leaf top 150 mm under the frame-head line, front edge S (overhang) in front of the
+      // frame line for the protruding door, flush with the frame line for the non-protruding one; the rear end then lies about R inside
+      const tr = trajectoryFor(state.h, state.nonprotruding), sOut = tr && !state.nonprotruding ? tr.s / 1000 : 0;
+      const up = Math.max(.04, fh - .15 - lh), back = lz + lh - sOut, kz = protruding ? e : Math.min(1, e * 1.7);
       pivot.position.set(0, lh + .02 + up * e, lz - back * kz);
       pivot.rotation.x = -Math.PI / 2 * e;
       arms.forEach((a, i) => { a.position.set((i ? 1 : -1) * (lw / 2 - .02), -lh * .3 * (1 - e) - lh * .25, -lh * .2 * e); a.rotation.x = Math.PI / 2 * e * .5; });

@@ -174,8 +174,66 @@ function buildDoor() {
   world.add(doorRig.group);
   doorRig.animate(doorT);
   thumbs.invalidate();
+  buildTrajectory(); setTrajVisible(state.view === 'inside' && state.mode === 'house');
 }
 let surfaceLabel = '';
+
+/* ------------------------------------------------------------------ Öffnungsbahn (Preisliste S. 9/10): swept volume + dimensions, shown in the inside view */
+let traj = null, trajPts = {}, trajRow = null;
+const trajMat = new THREE.MeshBasicMaterial({ color: 0x0018a8, transparent: true, opacity: .09, side: THREE.DoubleSide, depthWrite: false });
+const trajLine = new THREE.LineBasicMaterial({ color: 0x0018a8, transparent: true, opacity: .75 });
+function buildTrajectory() {
+  if (traj) { world.remove(traj); dispose(traj); traj = null; }
+  trajRow = null; trajPts = {};
+  $('trajCard').hidden = true; $('trajLabels').innerHTML = '';
+  if (state.type !== 'secur' || photo.active) return;
+  const tr = C.trajectoryFor(state.h, state.nonprotruding); if (!tr) { renderTrajCard(null); return; }
+  trajRow = tr;
+  const H = state.h / 1000, dw = dims.dw, sOut = tr.nonprotruding ? 0 : tr.s / 1000, r = tr.r / 1000, e = tr.e / 1000;
+  const aOut = tr.aOut / 1000, aIn = tr.aIn / 1000, bOut = tr.bOut / 1000, bIn = tr.bIn / 1000;
+  // side profile in (z, y): z > 0 is outside the frame line, the closed leaf stands on z = 0
+  const sh = new THREE.Shape();
+  sh.moveTo(0, .02);
+  sh.splineThru([new THREE.Vector2(aOut, H / 2), new THREE.Vector2(bOut, H * .75), new THREE.Vector2(sOut + .02, H - .13)]);
+  sh.lineTo(-r, H - .15);
+  sh.splineThru([new THREE.Vector2(-bIn, H * .75), new THREE.Vector2(-aIn, H / 2), new THREE.Vector2(-.02, .02)]);
+  sh.closePath();
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: dw, bevelEnabled: false, curveSegments: 24 });
+  geo.rotateY(-Math.PI / 2); geo.translate(dw / 2, 0, 0);   // shape x -> world z, extrusion -> world -x, centred on the door
+  traj = new THREE.Group();
+  const m = new THREE.Mesh(geo, trajMat); m.renderOrder = 2; traj.add(m);
+  traj.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 12), trajLine));
+  traj.visible = false; world.add(traj);
+  trajPts = {
+    s: [dw / 2 - .15, H - .13, sOut], r: [dw / 2 - .15, H - .15, -r], e: [0, e, sOut * .5],
+    a: [-dw / 2 + .15, H / 2, -aIn], b: [-dw / 2 + .15, H * .75, -bIn],
+  };
+  const mm = v => v.toLocaleString('de-DE');
+  const L = { s: `S ${mm(tr.s || 0)} mm · Überstand außen`, r: `R ${mm(tr.r)} mm · Platzbedarf innen`, e: `E ${mm(tr.e)} mm · Durchfahrtshöhe offen`, a: `½ H · ${mm(tr.aOut)} mm außen / ${mm(tr.aIn)} mm innen`, b: `¾ H · ${mm(tr.bOut)} mm außen / ${mm(tr.bIn)} mm innen` };
+  if (tr.nonprotruding) delete L.s;
+  Object.entries(L).forEach(([k, t]) => { const d = el('div', 'cfg-traj', t); d.dataset.k = k; d.hidden = true; $('trajLabels').appendChild(d); });
+  renderTrajCard(tr);
+}
+function renderTrajCard(tr) {
+  const card = $('trajCard'), mm = v => v.toLocaleString('de-DE');
+  if (!tr) { card.innerHTML = `<strong>Öffnungsbahn</strong><p>Nicht ausschwenkend ist bis 2.580 mm Bestellhöhe gelistet. Für ${mm(state.h)} mm bitte anfragen.</p>`; return; }
+  const rows = [
+    !tr.nonprotruding ? ['S', 'Überstand außen, Tor offen', tr.s] : null,
+    ['R', 'Platzbedarf nach innen ab Rahmenlinie', tr.r],
+    ['E', 'Durchfahrtshöhe bei offenem Tor', tr.e],
+    ['½ H', 'Ausschwenken außen / innen', `${mm(tr.aOut)} / ${mm(tr.aIn)}`],
+    ['¾ H', 'Ausschwenken außen / innen', `${mm(tr.bOut)} / ${mm(tr.bIn)}`],
+  ].filter(Boolean);
+  card.innerHTML = `<strong>Öffnungsbahn ${tr.nonprotruding ? 'nicht ausschwenkend' : 'ausschwenkend (Standard)'}</strong>
+    <small>Bestellhöhe H ${mm(state.h)} mm${tr.exact ? '' : ` · Tabellenzeile ${mm(tr.h)} mm`} · Rahmenkopf 110 mm · Torblatt hinten 150 mm unter dem Sturz</small>
+    <table>${rows.map(([k, l, v]) => `<tr><th>${k}</th><td>${l}</td><td>${typeof v === 'number' ? mm(v) : v} mm</td></tr>`).join('')}</table>
+    <small>Preisliste 08/2026, Seite ${tr.nonprotruding ? '10' : '9'}. ${tr.nonprotruding ? 'Nicht ausschwenkendes Torblatt: Code F01, 651 €.' : 'Vergrößerter Überstand 50/100/150 mm: Code G31, 514 €.'}</small>`;
+}
+function setTrajVisible(on) {
+  if (traj) traj.visible = on;
+  $('trajCard').hidden = !on || !trajRow && state.type !== 'secur';
+  if (!on) $('trajLabels').querySelectorAll('.cfg-traj').forEach(d => { d.hidden = true; });
+}
 
 /* ------------------------------------------------------------------ Camera views */
 function views() {
@@ -191,7 +249,7 @@ function views() {
     street: { pos: [dw * .55 + 8.6, 2.6, 25.0], tgt: [1.2, 1.0, 0], ...front },
     front: { pos: [dw * .35 + 1.6, 1.65, 9.4], tgt: [.5, 1.25, .4], ...front },
     close: { pos: [2.2, 1.5, 5.8], tgt: [0, 1.25, .45], ...front },
-    inside: { pos: [Math.min(.6, halfIn * .4), 1.5, -4.2], tgt: [0, 1.15, -.4], az: [Math.PI - azIn, Math.PI + azIn], dist: [2.0, maxD], polar: polarIn },
+    inside: { pos: [-(halfIn - .35), Math.min(H - .3, dims.dh * .6 + .3), -(maxD - .05)], tgt: [.35, dims.dh * .55, -.7], az: [Math.PI - azIn, Math.PI + azIn], dist: [2.0, maxD], polar: polarIn },
   };
 }
 let pendingLimits = null;
@@ -203,6 +261,8 @@ function goView(name, instant = false) {
   const k = camera.aspect < 1 ? 1 + (1 - camera.aspect) * 1.1 : 1;
   const v = { tgt: v0.tgt, pos: v0.tgt.map((t, i) => t + (v0.pos[i] - t) * k) };
   document.querySelectorAll('#cfgViews button').forEach(b => b.classList.toggle('is-active', b.dataset.view === name));
+  setTrajVisible(name === 'inside' && state.mode === 'house');
+  if (name === 'inside' && state.mode === 'house' && state.type === 'secur' && doorTarget === 0 && !instant) setDoor(true);
   controls.minAzimuthAngle = -Infinity; controls.maxAzimuthAngle = Infinity; controls.minDistance = .5; controls.maxDistance = 60; controls.minPolarAngle = 0;
   if (instant) { camera.position.fromArray(v.pos); controls.target.fromArray(v.tgt); applyLimits(v0); controls.update(); return; }
   pendingLimits = v0;
@@ -238,7 +298,9 @@ let showDims = true;
 function updateLabels() {
   const studioMode = state.mode === 'studio' && !photo.active, th = transomH() / 1000;
   const dl = $('dimLabel');
+  if (traj && traj.visible) $('trajLabels').querySelectorAll('.cfg-traj').forEach(d => { const p = trajPts[d.dataset.k]; if (p) place(d, p[0], p[1], p[2], 10); });
   if (!studioMode || !showDims || turnTarget) { dl.hidden = true; $('dimW').hidden = $('dimH').hidden = $('dimT').hidden = true; if (!photo.active) { place(dl, 0, dims.dh + th + .32, 0); dl.hidden = dl.hidden || !showDims; } return; }
+  if (traj && traj.visible) $('trajLabels').querySelectorAll('.cfg-traj').forEach(d => { const p = trajPts[d.dataset.k]; if (p) place(d, p[0], p[1], p[2], 10); });
   dl.hidden = true;
   place($('dimW'), 0, -.22, .35); place($('dimH'), dims.dw / 2 + .3, (dims.dh + th) / 2, 0); place($('dimT'), 0, dims.dh + th + .3, 0, 10);
 }
