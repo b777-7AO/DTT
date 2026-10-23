@@ -433,31 +433,26 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
     gL.add(box(lw, .012, T + .006, M.seal, 0, L - gap / 2, -T / 2, { shadow: false }));
     const levers = [-1, 1].map(sg => { const a = new THREE.Group(); a.add(box(.03, 1, .05, M.darkMetal, 0, .5, 0, { shadow: false })); a.position.set(sg * (lw / 2 - .02), 0, 0); g.add(a); return a; });
     snap.add(gL, gU);
-    /* Two stackable panels (price list p. 3) with the inward envelope of p. 4: phase 1 the hinge M rises from mid height to the
-       lintel line while moving inward along the table values, bottom edge B in the uprights, top edge T on its guide; phase 2 the
-       hinge travels on to R and both panels slide in horizontally, the lower panel folded back under the upper one (stacked). */
+    /* Two stackable panels (price list p. 3): phase 1 the hinge rises from mid height to the lintel line and stays at the frame
+       (a few cm proud, within the 70 mm frame face), the top edge slides inward along the lintel, the lower panel hangs vertical in
+       the uprights; phase 2 the lower panel claps up onto the upper one while the pair slides in to R (stacked under the ceiling). */
     const tr = foldTrajectoryFor(state.h), yTop = fh - .25 + .02, Rd = tr ? tr.r / 1000 : L + .3;
-    const envPts = [[L, 0], ...(tr ? tr.pts.map(([y, v]) => [y / 1000, v / 1000]) : [[1.4, .22], [1.8, .55]]).filter(([y]) => y > L + .12 && y < yTop - .08), [yTop, L]];
-    const envAt = y => { for (let i = 1; i < envPts.length; i++) if (y <= envPts[i][0]) { const [y0, z0] = envPts[i - 1], [y1, z1] = envPts[i], k = Math.max(0, Math.min(1, (y - y0) / (y1 - y0))), kk = k * k * (3 - 2 * k); return z0 + (z1 - z0) * kk; } return envPts[envPts.length - 1][1]; };
-    const SPLIT = .78, gapS = T + .012;
+    const SPLIT = .6, gapS = T + .012, OUT = .06;
     animate = t => {
       const e = ease(t);
       let ym, zm, yb, zb, yt, zt;
       if (e <= SPLIT) {
-        const k = e / SPLIT;
-        ym = L + (yTop - L) * k; zm = -Math.min(L, envAt(ym));
-        yb = ym - Math.sqrt(Math.max(0, L * L - zm * zm)); zb = 0;
-        const P0 = [0, 2 * L + .02], P1 = [-.0, yTop], dz = P1[0] - P0[0], dy = P1[1] - P0[1];
-        const fz = P0[0] - zm, fy = P0[1] - ym, A = dz * dz + dy * dy, Bq = 2 * (fz * dz + fy * dy), Cq = fz * fz + fy * fy - L * L, disc = Bq * Bq - 4 * A * Cq;
-        const u = disc >= 0 ? Math.max(0, Math.min(1, (-Bq + Math.sqrt(disc)) / (2 * A))) : k;
-        zt = P0[0] + dz * u; yt = P0[1] + dy * u;
-        // close to the split the top edge may need to leave the frame line slightly so the chord stays L
-        const dT = Math.hypot(zt - zm, yt - ym); if (Math.abs(dT - L) > .002) { const ang = Math.atan2(yt - ym, zt - zm); zt = zm + L * Math.cos(ang); yt = ym + L * Math.sin(ang); }
+        const k = e / SPLIT, kk = k * k * (3 - 2 * k);
+        ym = L + (yTop - L) * kk; zm = OUT * Math.sin(Math.PI * Math.min(1, k * 1.15));
+        yb = ym - Math.sqrt(Math.max(0, L * L - zm * zm)); zb = 0;                       // lower panel hangs in the uprights
+        const yGuide = 2 * L + .02 + (yTop - 2 * L - .02) * kk;                            // top edge descends to the lintel line
+        const dy = Math.min(L, Math.max(0, yGuide - ym)); yt = ym + dy; zt = zm - Math.sqrt(Math.max(0, L * L - dy * dy));
       } else {
         const k = (e - SPLIT) / (1 - SPLIT), kk = k * k * (3 - 2 * k);
-        ym = yTop; zm = -L - (Rd - L) * kk;
-        yt = yTop; zt = zm + L;                       // upper panel horizontal, from the hinge back towards the frame
-        yb = yTop - gapS; zb = zm + L;                // lower panel folded back under it, stacked
+        ym = yTop; zm = OUT - (Rd - L + OUT) * kk;                                        // hinge slides in to R − L
+        yt = yTop; zt = zm - L;                                                           // upper panel horizontal, inward
+        const phi = Math.PI / 2 * kk;                                                     // clap: lower panel swings up onto the upper one
+        zb = zm - L * Math.sin(phi); yb = ym - L * Math.cos(phi) + gapS * Math.sin(phi);
       }
       gL.position.set(0, yb, lz + zb); gL.rotation.x = Math.atan2(zm - zb, ym - yb);
       gU.position.set(0, ym, lz + zm); gU.rotation.x = Math.atan2(zt - zm, yt - ym);
