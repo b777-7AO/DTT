@@ -10,8 +10,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import * as C from './cfg/catalog.js';
+import * as G from './cfg/catalog_guardy.js';
 import { createMaterials, TEX } from './cfg/materials.js';
-import { buildDoorRig, makeLeaf, ease } from './cfg/door.js';
+import { buildDoorRig, makeLeaf, ease, steelSections } from './cfg/door.js';
 import { buildHouse, buildStudio, dispose, updateImpostors } from './cfg/house.js';
 
 const q = new URLSearchParams(location.search);
@@ -23,9 +24,14 @@ const state = {
   securplus: false, nonprotruding: false, pedestrian: false, windows: '', transom: '', grille: false, glazing: false,
   handle: 'std', drive: 'combimatic', sildomo: false, link: false, keypad: false, remote: false, blockmatic: false,
   w: 3000, h: 2250, facade: 'weiss', roof: 'flat', mode: 'house', view: 'street',
+  // Stahl-Sektionaltor
+  hardware: 'LHF-C', springs: '20000', fve: false, fveType: 'doppelt-pmma', thermal: false, stwindow: '', sthandle: '466', stdrive: '', stgrille: false,
 };
-const BOOLS = ['securplus', 'nonprotruding', 'pedestrian', 'grille', 'glazing', 'sildomo', 'link', 'keypad', 'remote', 'blockmatic'];
-const HASH_KEYS = ['type', 'model', 'essence', 'surface', 'color', 'finish', 'windows', 'transom', 'handle', 'drive', 'w', 'h', 'facade', 'roof', 'mode', ...BOOLS];
+const BOOLS = ['securplus', 'nonprotruding', 'pedestrian', 'grille', 'glazing', 'sildomo', 'link', 'keypad', 'remote', 'blockmatic', 'fve', 'thermal', 'stgrille'];
+const HASH_KEYS = ['type', 'model', 'essence', 'surface', 'color', 'finish', 'windows', 'transom', 'handle', 'drive', 'w', 'h', 'facade', 'roof', 'mode', 'hardware', 'springs', 'fveType', 'stwindow', 'sthandle', 'stdrive', ...BOOLS];
+const STEEL_LIMITS = { w: [2000, 5500], h: [1875, 3000] };
+const limitsFor = type => type === 'steel' ? STEEL_LIMITS : C.LIMITS;
+const isSteel = () => state.type === 'steel';
 function hash() { return '#' + HASH_KEYS.map(k => `${k}=${typeof state[k] === 'boolean' ? (state[k] ? 1 : 0) : state[k]}`).join('&'); }
 function readHash() {
   if (!location.hash) return;
@@ -33,7 +39,7 @@ function readHash() {
   HASH_KEYS.forEach(k => { if (!p.has(k)) return; const v = p.get(k); state[k] = BOOLS.includes(k) ? v === '1' : (k === 'w' || k === 'h' ? parseInt(v, 10) : v); });
   if (!C.TYPES[state.type]) state.type = 'secur';
   if (!C.MODELS[state.model]) state.model = 'vip';
-  state.w = clamp(state.w, C.LIMITS.w); state.h = clamp(state.h, C.LIMITS.h);
+  state.w = clamp(state.w, limitsFor(state.type).w); state.h = clamp(state.h, limitsFor(state.type).h);
   normalise();
 }
 const clamp = (v, [a, b]) => Math.min(b, Math.max(a, Number.isFinite(v) ? v : a));
@@ -41,6 +47,7 @@ const clamp = (v, [a, b]) => Math.min(b, Math.max(a, Number.isFinite(v) ? v : a)
 /* Which coverings are allowed for the chosen model (price list columns) */
 function essencesFor(modelId) {
   const m = C.MODELS[modelId];
+  if (m.family === 'steel') return [];
   if (m.family === 'basculap') return C.ESSENCES.filter(e => e.id === 'okoume');
   if (!m.table) return C.ESSENCES.filter(e => ['okoume', 'oak', 'oak_br', 'larch_br', 'fir'].includes(e.id));
   const cols = Object.keys(C.PRICES[m.table].A0);
@@ -48,7 +55,7 @@ function essencesFor(modelId) {
 }
 function surfacesFor(modelId, essenceId) {
   const m = C.MODELS[modelId];
-  if (m.family === 'materia' || m.family === 'japan') return [];
+  if (m.family === 'materia' || m.family === 'japan' || m.family === 'steel') return [];
   if (m.lacquerOnly || m.family === 'basculap') return ['paint'];
   if (essenceId === 'okoume') return m.metalskin ? ['paint', 'stain', 'metal'] : ['paint', 'stain'];
   return ['natural', 'stain'];
@@ -58,12 +65,28 @@ function normalise() {
   if (!models.includes(state.model)) state.model = models[0];
   const ess = essencesFor(state.model); if (!ess.some(e => e.id === state.essence)) state.essence = ess[0] ? ess[0].id : 'okoume';
   const surf = surfacesFor(state.model, state.essence);
+  if (state.type === 'steel') {
+    if (!['std', 'paint', 'db703'].includes(state.surface)) state.surface = 'std';
+    if (state.surface === 'paint' && !C.RAL.some(r => r.id === state.color)) state.color = '7016';
+    if (!G.HARDWARE.some(h => h.id === state.hardware)) state.hardware = 'LHF-C';
+    if (!G.SURCHARGES.springs[state.springs]) state.springs = '20000';
+    if (!G.GLAZING.some(g => g.id === state.fveType)) state.fveType = 'doppelt-pmma';
+    if (state.stwindow && !G.WINDOWS.some(w => w.code === state.stwindow)) state.stwindow = '';
+    if (!G.HANDLES.some(h => h.code === state.sthandle)) state.sthandle = '466';
+    if (state.stdrive && !G.DRIVES.some(d => d.id === state.stdrive)) state.stdrive = '';
+    state.w = clamp(Math.round(state.w / 5) * 5, STEEL_LIMITS.w); state.h = clamp(Math.round(state.h / 5) * 5, STEEL_LIMITS.h);
+    state.windows = ''; state.transom = ''; state.grille = false;
+  } else {
+    if (['std', 'db703'].includes(state.surface)) state.surface = 'paint';
+    state.fve = false; state.thermal = false; state.stgrille = false; state.stwindow = ''; state.stdrive = '';
+    state.w = clamp(state.w, C.LIMITS.w); state.h = clamp(state.h, C.LIMITS.h);
+  }
   if (surf.length && !surf.includes(state.surface)) state.surface = surf[0];
   if (state.surface === 'paint' && !C.RAL.some(r => r.id === state.color)) state.color = '7016';
   if (state.surface === 'stain' && !C.STAINS.some(s => s.id === state.color)) state.color = 'noce';
   if (state.surface === 'metal' && !C.METAL.some(s => s.id === state.color)) state.color = 'ms_steel';
   if (state.surface === 'natural') state.color = state.essence;
-  if (state.type !== 'secur') { state.securplus = false; state.nonprotruding = false; state.pedestrian = false; state.transom = ''; state.grille = false; }
+  if (state.type !== 'secur') { state.securplus = false; state.nonprotruding = false; state.transom = ''; state.grille = false; if (state.type !== 'steel') state.pedestrian = false; }
   if (state.type !== 'sr') state.glazing = false;
   if (!C.HANDLES.some(h => h.id === state.handle)) state.handle = 'std';
   if (!t.kind) state.mode = 'studio';
@@ -166,7 +189,7 @@ function views() {
     detail: { pos: [-1.7, 1.05, 2.1], tgt: [-.55, 1.0, 0], az: [-1.45, 1.45], dist: [1.2, 16], polar: .25 },
     back: { pos: [-sd * .45, 1.9, sd * .95], tgt: [0, (dims.dh + th) / 2, 0], az: [-1.45, 1.45], dist: [2.4, 16], polar: .25, turn: Math.PI },
     street: { pos: [dw * .55 + 8.6, 2.6, 25.0], tgt: [1.2, 1.0, 0], ...front },
-    front: { pos: [0, 1.7, 10.2], tgt: [0, 1.3, .5], ...front },
+    front: { pos: [dw * .35 + 1.6, 1.65, 9.4], tgt: [.5, 1.25, .4], ...front },
     close: { pos: [2.2, 1.5, 5.8], tgt: [0, 1.25, .45], ...front },
     inside: { pos: [Math.min(.6, halfIn * .4), 1.5, -4.2], tgt: [0, 1.15, -.4], az: [Math.PI - azIn, Math.PI + azIn], dist: [2.0, maxD], polar: polarIn },
   };
@@ -174,7 +197,7 @@ function views() {
 let pendingLimits = null;
 function applyLimits(v) { controls.minAzimuthAngle = v.az[0]; controls.maxAzimuthAngle = v.az[1]; controls.minDistance = v.dist[0]; controls.maxDistance = v.dist[1]; controls.minPolarAngle = v.polar; }
 function goView(name, instant = false) {
-  const all = views(), v0 = all[name] || all[state.mode === 'house' ? 'street' : 'studio'];
+  const all = views(), v0 = all[name] || all[state.mode === 'house' ? 'front' : 'studio'];
   state.view = name;
   turnTarget = v0.turn || 0;
   const k = camera.aspect < 1 ? 1 + (1 - camera.aspect) * 1.1 : 1;
@@ -197,7 +220,7 @@ function setMode(mode) {
   $('viewsStudio').hidden = mode !== 'studio'; $('viewsHouse').hidden = mode !== 'house';
   $('toggleDoor').hidden = photo.active; $('autoRotate').hidden = mode !== 'studio'; $('dimToggle').hidden = mode !== 'studio';
   $('houseGroup').hidden = mode === 'studio';
-  if (!photo.active) { buildWorld(); buildDoor(); goView(mode === 'house' ? 'street' : 'studio', true); }
+  if (!photo.active) { buildWorld(); buildDoor(); goView(mode === 'house' ? 'front' : 'studio', true); }
   else if (!photo.img.hidden) { renderDoorSnapshot(); applyOverlay(); }
   history.replaceState(null, '', hash());
 }
@@ -280,7 +303,38 @@ const thumbs = (() => {
 })();
 
 /* ------------------------------------------------------------------ Price indication (manufacturer list prices 08/2026) */
+/* list price of the steel sectional door (price list Rev. 2635, valid from 14.09.2026) */
+function steelCell(w, h, hardware) {
+  const hw = G.HARDWARE.find(x => x.id === hardware) || G.HARDWARE[2], grid = hw.grid === 'ext' ? G.GRID_EXT : G.GRID_STD;
+  const wi = grid.widths.find(x => x >= w), rows = [...grid.rows].sort((a, b) => a.h - b.h), row = rows.find(r => r.h >= h);
+  return { hw, grid: hw.grid, w: wi, h: row ? row.h : null, sections: row ? row.sections : null };
+}
+function steelPrice(st) {
+  const m = C.MODELS[st.model], lines = [], warn = [], cell = steelCell(st.w, st.h, st.hardware);
+  const base = G.gridPrice(cell.grid, st.w, st.h);
+  if (!base) return { lines, total: null, note: 'Dieses Maß liegt außerhalb des Preisrasters für den gewählten Beschlag: Preis und Machbarkeit auf Anfrage', warn };
+  lines.push([`Stahl-Sektionaltor, Beschlag ${cell.hw.id}, Raster ${cell.w} × ${cell.h} mm, ${cell.sections} Sektionen`, base]);
+  let total = base;
+  const add = (label, p) => { if (p) { lines.push([label, p]); total += p; } };
+  if (cell.hw.surcharge) add(`Beschlagstyp ${cell.hw.id}`, cell.hw.surcharge);
+  if (m.woodlook) add('Paneel mit Holzimitation (+15 %)', Math.round(base * G.SURCHARGES.panelWoodLook));
+  if (st.surface === 'db703') add('Paneel DB 703 (+5 %)', Math.round(base * G.SURCHARGES.panelDB703));
+  if (st.surface === 'paint') { const rate = ['9006', '9007'].includes(st.color) ? G.SURCHARGES.paintRal9006_9007PerM2 : G.SURCHARGES.paintRalPerM2PerSide; add(`Lackierung RAL ${st.color} außen (${rate} €/m²)`, G.paintPrice(st.w, st.h, rate, 1)); }
+  if (st.springs !== '20000') add(`Torsionsfedern ${Number(st.springs).toLocaleString('de-DE')} Zyklen`, G.SURCHARGES.springs[st.springs]);
+  if (st.fve) { const gp = G.glazingPrice(st.fveType, st.w, st.thermal); const gl = G.GLAZING.find(g => g.id === st.fveType); if (gp) add(`Lichtsektion: ${gl.label}${st.thermal ? ', thermisch getrennt' : ''}`, gp); else warn.push('Diese Verglasung ist für die gewählte Breite oder mit thermischer Trennung nicht gelistet, Preis auf Anfrage'); }
+  if (st.stwindow) { const wd = G.WINDOWS.find(x => x.code === st.stwindow), cnt = st.w > 4200 ? 4 : st.w > 3100 ? 3 : 2; add(`${cnt} × Fenster ${wd.code} ${wd.label}`, wd.price * cnt); }
+  if (st.pedestrian) add('Schlupftür mit Türschließer und Schloss', G.SURCHARGES.pedestrianDoor);
+  if (st.stgrille) add('Lüftungsgitter, verschließbar', G.SURCHARGES.ventGrillePlastic);
+  const hd = G.HANDLES.find(x => x.code === st.sthandle); if (hd && hd.code !== '466') add(`Handgriff ${hd.code} ${hd.label}`, hd.price);
+  const dr = st.stdrive ? G.DRIVES.find(d => d.id === st.stdrive) : null; if (dr) { add(dr.label, dr.price); if (dr.maxH && st.h > dr.maxH) warn.push(`${dr.label}: maximale Torhöhe ${dr.maxH} mm, für dieses Maß bitte längere Schiene anfragen`); }
+  const fam = dr ? (dr.id.startsWith('CUBE') ? 'cube' : dr.id.startsWith('COMFORT') ? 'marantec' : 'tormatic') : 'tormatic';
+  const accIds = { tormatic: ['tm-digicode', 'tm-handsender'], cube: ['cube-codetaster', 'cube-handsender'], marantec: ['mar-codetaster-526', 'mar-handsender-564'] }[fam];
+  if (st.keypad) { const a = G.ACCESSORIES.find(x => x.id === accIds[0]); add(a.label, a.price); }
+  if (st.remote) { const a = G.ACCESSORIES.find(x => x.id === accIds[1]); add(a.label, a.price); }
+  return { lines, total, cell, note: '', warn, steel: true };
+}
 function priceFor(st) {
+  if (st.type === 'steel') return steelPrice(st);
   const t = C.TYPES[st.type], m = C.MODELS[st.model], lines = [], warn = [];
   if (!t.priced || !m.table) return { lines, total: null, note: 'Preis auf Anfrage', warn };
   const sec = C.sector(st.w, st.h);
@@ -308,7 +362,7 @@ function priceFor(st) {
 }
 /* Range for the chosen model and size: cheapest to most expensive covering, each with the chosen options */
 function priceRange() {
-  const m = C.MODELS[state.model]; if (!m.table) return null;
+  const m = C.MODELS[state.model]; if (!m.table || isSteel()) return null;
   const ess = essencesFor(state.model), totals = [];
   const cands = (m.family === 'materia' || m.family === 'japan') ? [state.essence] : ess.map(e => e.id);
   cands.forEach(id => { const st = { ...state, essence: id }; if (st.surface === 'metal' && id !== 'okoume') st.surface = 'natural'; const p = priceFor(st); if (p.total != null) totals.push(p.total); });
@@ -401,11 +455,15 @@ const ICONS = {
   sl: '<svg viewBox="0 0 46 34" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="40" height="28" rx="1"/><path d="M11 3v28M19 3v28M27 3v28M35 3v28"/><path d="M8 17H4m0 0 3-3M4 17l3 3" stroke-width="1.4"/></svg>',
   basculap: '<svg viewBox="0 0 46 34" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="40" height="28" rx="1"/><path d="M3 12h40M3 22h40"/><path d="M23 27V8M18 13l5-5 5 5"/></svg>',
   wing: '<svg viewBox="0 0 46 34" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="40" height="28" rx="1"/><path d="M23 3v28M19 17h2M25 17h2"/></svg>',
+  steel: '<svg viewBox="0 0 46 34" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="40" height="28" rx="1"/><path d="M3 10h40M3 17h40M3 24h40"/><path d="M20 27h6" stroke-width="2.4"/></svg>',
 };
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const chip = (c, id, label, on, title) => { const b = el('button', 'cfg-chip', label); b.type = 'button'; b.dataset.id = id; b.setAttribute('aria-pressed', String(on)); if (title) b.title = title; c.appendChild(b); return b; };
 const swatch = (c, id, label, css, on) => { const b = el('button', 'cfg-swatch', `<span class="dot" style="background:${css}"></span><small>${label}</small>`); b.type = 'button'; b.dataset.id = id; b.setAttribute('aria-pressed', String(on)); c.appendChild(b); return b; };
 const swCss = sw => `url(${TEX}swatch/${sw}.jpg) center/cover`;
+const CAT = 'assets/img/catalog/';
+const imgopt = (c, id, label, sub, img, on) => { const b = el('button', 'cfg-imgopt', `<span class="pic">${img ? `<img src="${CAT}${img}" alt="" loading="lazy">` : ''}</span><span class="txt"><strong>${label}</strong>${sub ? `<small>${sub}</small>` : ''}</span>`); b.type = 'button'; b.dataset.id = id; b.setAttribute('aria-pressed', String(on)); c.appendChild(b); return b; };
+const sw = (id, key, label, sub, on) => `<label class="cfg-switch"><input type="checkbox" id="${id}" data-key="${key}"${on ? ' checked' : ''}><span class="track"></span><span class="text"><strong>${label}</strong>${sub ? `<small>${sub}</small>` : ''}</span></label>`;
 let familyTab = null;
 
 function renderUI() {
@@ -425,9 +483,21 @@ function renderUI() {
     b.type = 'button'; b.dataset.id = id; b.setAttribute('aria-pressed', String(state.model === id)); mc.appendChild(b); thumbs.request(id, b.querySelector('img'));
   });
   // 3 Oberfläche
+  const steel = isSteel();
   const ess = essencesFor(state.model), surfs = surfacesFor(state.model, state.essence);
-  const fixed = !surfs.length;
-  $('surfFixed').hidden = !fixed; $('surfChoice').hidden = fixed;
+  const fixed = !surfs.length && !steel;
+  $('surfFixed').hidden = !fixed; $('surfChoice').hidden = fixed || steel; $('steelSurface').hidden = !steel;
+  if (steel) {
+    const ss = $('optSteelSurface'); ss.innerHTML = '';
+    if (model.woodlook) { ss.hidden = true; $('optSteelColor').innerHTML = ''; $('optSteelColor').className = 'cfg-swatches is-empty'; $('steelPaintNote').textContent = 'Holzimitation: Paneel mit Holzdekor, Aufpreis 15 % auf den Torpreis. Für eine lackierte Fläche wählen Sie das glatte Paneel.'; }
+    else {
+      ss.hidden = false;
+      [['std', 'Standardpaneel'], ['paint', 'Lackiert in RAL'], ['db703', 'DB 703 Eisenglimmer']].forEach(([id, l]) => chip(ss, id, l, state.surface === id));
+      const sc = $('optSteelColor'); sc.innerHTML = ''; sc.className = 'cfg-swatches' + (state.surface === 'paint' ? '' : ' is-empty');
+      if (state.surface === 'paint') C.RAL.forEach(c => swatch(sc, c.id, `RAL ${c.id}<br>${c.name}`, c.hex, state.color === c.id));
+      $('steelPaintNote').textContent = state.surface === 'paint' ? `Lackierung außen ${['9006', '9007'].includes(state.color) ? '43' : '38'} € je m² Torfläche, auch in NCS oder beidseitig auf Anfrage.` : state.surface === 'db703' ? 'DB 703 Eisenglimmer-Paneel, Aufpreis 5 % auf den Torpreis.' : 'Paneel laut aktuellem Paneelangebot, ohne Lackierung.';
+    }
+  }
   if (fixed) $('surfFixed').innerHTML = `<strong>${surfaceLabel}</strong><p>${model.family === 'materia' ? 'Sandstein-Matte auf Okoumé-Meeresholz, Innenseite glattes Okoumé in Honigton.' : 'Nordische Fichtenbretter, Innenseite glattes Okoumé in Honigton.'}</p>`;
   const es = $('optEssence'); es.innerHTML = ''; ess.forEach(e => swatch(es, e.id, e.name, swCss(e.sw), state.essence === e.id));
   const st = $('optSurface'); st.innerHTML = '';
@@ -442,23 +512,71 @@ function renderUI() {
   const fi = $('optFinish'); fi.innerHTML = ''; Object.entries(C.PAINT_FINISH).forEach(([id, l]) => chip(fi, id, l, state.finish === id)); $('finishRow').hidden = state.surface !== 'paint';
   // 4 Ausstattung
   const isSecur = state.type === 'secur';
-  $('securOptions').hidden = !isSecur; $('srOptions').hidden = state.type !== 'sr';
+  $('securOptions').hidden = !isSecur; $('srOptions').hidden = state.type !== 'sr'; $('woodOptions').hidden = steel; $('steelOptions').hidden = !steel;
+  if (steel) renderSteelOptions();
   ['securplus', 'nonprotruding', 'pedestrian', 'grille', 'glazing', 'sildomo', 'link', 'keypad', 'remote', 'blockmatic'].forEach(k => { const i = $('opt_' + k); if (i) i.checked = !!state[k]; });
   const wi = $('optWindows'); wi.innerHTML = ''; [['', 'Keine'], ['s', '2 × 400 × 300 mm'], ['l', '2 × 800 × 300 mm']].forEach(([id, l]) => chip(wi, id || 'none', l, state.windows === id));
   const tr = $('optTransom'); tr.innerHTML = ''; [['', 'Kein Oberlicht'], ['blind', 'Blind, im Tordesign'], ['glass', 'Verglast']].forEach(([id, l]) => chip(tr, id || 'none', l, state.transom === id));
   const ha = $('optHandle'); ha.innerHTML = ''; C.HANDLES.forEach(h => swatch(ha, h.id, h.name + (h.price ? `<br>+ ${eur(h.price)}` : ''), h.hex || M.door.color.getStyle(), state.handle === h.id));
   const dr = $('optDrive'); dr.innerHTML = ''; C.DRIVES.forEach(d => chip(dr, d.id, d.name, state.drive === d.id, d.note));
   // 5 Maße & Haus
+  const lim = limitsFor(state.type); $('inpW').min = lim.w[0]; $('inpW').max = lim.w[1]; $('inpH').min = lim.h[0]; $('inpH').max = lim.h[1];
   $('inpW').value = state.w; $('inpH').value = state.h;
   const sp = $('optSize'); sp.innerHTML = ''; C.SIZE_PRESETS.forEach((v, i) => chip(sp, 'size' + i, `${v.label} ${v.w} × ${v.h}`, state.w === v.w && state.h === v.h));
-  const sec = C.sector(state.w, state.h); $('sectorNote').textContent = isSecur ? (sec ? `Preissektor ${sec}, Rahmenpfosten ${C.pillarFor(state.w, state.h, state.pedestrian)} mm, Bestellmaß Außenkante Rahmen.${state.h > 2980 ? ' ' + C.SECTOR_NOTES.certified : ''}` : 'Außerhalb des Standard-Rasters: Preis und Machbarkeit auf Anfrage.') : 'Bestellmaß = lichte Öffnung.';
+  const sec = C.sector(state.w, state.h); $('sectorNote').textContent = steel ? (() => { const c = steelCell(state.w, state.h, state.hardware); return c.w && c.h ? `Preisraster bis ${c.w} × ${c.h} mm, ${c.sections} Sektionen, Beschlag ${c.hw.id}. Bestellmaß = lichte Öffnung.` : 'Außerhalb des Preisrasters für diesen Beschlag: Preis und Machbarkeit auf Anfrage.'; })() : isSecur ? (sec ? `Preissektor ${sec}, Rahmenpfosten ${C.pillarFor(state.w, state.h, state.pedestrian)} mm, Bestellmaß Außenkante Rahmen.${state.h > 2980 ? ' ' + C.SECTOR_NOTES.certified : ''}` : 'Außerhalb des Standard-Rasters: Preis und Machbarkeit auf Anfrage.') : 'Bestellmaß = lichte Öffnung.';
   const fa = $('optFacade'); fa.innerHTML = ''; C.FACADE.forEach(c => swatch(fa, c.id, c.name, c.hex, state.facade === c.id));
   const ro = $('optRoof'); ro.innerHTML = ''; Object.entries(C.ROOF).forEach(([id, l]) => chip(ro, id, l, state.roof === id));
   const pr = $('optPreset'); pr.innerHTML = ''; C.PRESETS.forEach(v => chip(pr, v.id, v.label, Object.entries(v.patch).every(([k, val]) => state[k] === val)));
   renderSummary();
 }
+function renderSteelOptions() {
+  const root = $('steelOptions');
+  root.innerHTML = `
+    <div class="cfg-subhead">Beschlag und Federn</div>
+    <div class="cfg-chips" id="optHardware"></div>
+    <p class="cfg-help" id="hardwareNote"></p>
+    <div class="cfg-chips" id="optSprings"></div>
+    <div class="cfg-subhead">Lichtsektion</div>
+    ${sw('opt_fve', 'fve', 'Verglaste obere Sektion', 'Alurahmen-Sektion mit Verglasung oder Lüftungsfüllung', state.fve)}
+    <div id="fveGroup"${state.fve ? '' : ' hidden'}>
+      <div class="cfg-imgopts cols-2" id="optFve"></div>
+      ${sw('opt_thermal', 'thermal', 'Thermisch getrennt', 'Alurahmen mit thermischer Trennung', state.thermal)}
+    </div>
+    <div class="cfg-subhead">Fenster</div>
+    <div class="cfg-imgopts" id="optStWindow"></div>
+    <div class="cfg-subhead">Weitere Ausstattung</div>
+    ${sw('opt_pedestrian_s', 'pedestrian', 'Schlupftür', 'Mit Türschließer, Schloss und Drücker beidseitig', state.pedestrian)}
+    ${sw('opt_stgrille', 'stgrille', 'Lüftungsgitter', 'Kunststoff, verschließbar', state.stgrille)}
+    <div class="cfg-subhead">Handgriff</div>
+    <div class="cfg-imgopts" id="optStHandle"></div>
+    <div class="cfg-subhead">Antrieb</div>
+    <div class="cfg-imgopts cols-2" id="optStDrive"></div>
+    <div class="cfg-subhead">Zubehör</div>
+    ${sw('opt_keypad_s', 'keypad', 'Funk-Codetaster', 'Passend zum gewählten Antrieb', state.keypad)}
+    ${sw('opt_remote_s', 'remote', 'Zusätzlicher Handsender', 'Passend zum gewählten Antrieb', state.remote)}`;
+  const hw = $('optHardware'); G.HARDWARE.forEach(h => chip(hw, h.id, h.id, state.hardware === h.id, h.label));
+  const cur = G.HARDWARE.find(h => h.id === state.hardware); $('hardwareNote').textContent = `${cur.label}. Sturz ${cur.headroom}, seitlicher Anschlag ${cur.sideRoom}.${cur.surcharge ? ' Aufpreis ' + eur(cur.surcharge) + '.' : ''}`;
+  const sp = $('optSprings'); Object.keys(G.SURCHARGES.springs).forEach(k => chip(sp, k, `${Number(k).toLocaleString('de-DE')} Zyklen${G.SURCHARGES.springs[k] ? ' + ' + eur(G.SURCHARGES.springs[k]) : ''}`, state.springs === k));
+  const fv = $('optFve'); const fveImg = { 'einfach-pmma': 'guardy-fve-1.png', 'einfach-polycarbonat': 'guardy-fve-1.png', 'einfach-glas': 'guardy-fve-1.png', 'doppelt-pmma': 'guardy-fve-2.png', 'doppelt-pmma-kratzfest-1x': 'guardy-fve-2.png', 'doppelt-pmma-kratzfest-2x': 'guardy-fve-2.png', 'doppelt-pmma-farbe': 'guardy-fve-2.png', 'doppelt-polycarbonat': 'guardy-fve-2.png', 'alu-stucco': 'guardy-fve-3.png', 'streckgitter-16-8': 'guardy-fve-mesh-16-8.png', 'streckgitter-22-12': 'guardy-fve-mesh-22-12.png', 'lochblech-10-10': 'guardy-fve-perforated-10-10.png' };
+  G.GLAZING.forEach(g => { const pr = G.glazingPrice(g.id, state.w, state.thermal); imgopt(fv, g.id, g.label, pr ? '+ ' + eur(pr) : 'auf Anfrage', fveImg[g.id], state.fveType === g.id); });
+  const wi = $('optStWindow'); imgopt(wi, 'none', 'Ohne Fenster', '', null, !state.stwindow);
+  G.WINDOWS.forEach(w => imgopt(wi, w.code, `${w.code} ${w.label}`, `${w.outer[0]} × ${w.outer[1]} mm · + ${eur(w.price)} je Stück`, w.img, state.stwindow === w.code));
+  const ha = $('optStHandle'); G.HANDLES.forEach(h => imgopt(ha, h.code, `${h.code} ${h.label}`, h.code === '466' ? 'Serie' : '+ ' + eur(h.price), h.img, state.sthandle === h.code));
+  const dr = $('optStDrive'); imgopt(dr, 'none', 'Ohne Antrieb', 'Handbedienung', null, !state.stdrive);
+  G.DRIVES.forEach(d => imgopt(dr, d.id, d.label, `${d.force ? d.force + ' N' : ''}${d.maxH ? ' · bis ' + d.maxH + ' mm Höhe' : ''} · + ${eur(d.price)}`, d.img, state.stdrive === d.id));
+}
 function summaryLines() {
   const t = C.TYPES[state.type], m = C.MODELS[state.model], th = transomH();
+  if (isSteel()) {
+    const cell = steelCell(state.w, state.h, state.hardware), extras = [];
+    if (state.pedestrian) extras.push('Schlupftür'); if (state.stgrille) extras.push('Lüftungsgitter'); if (state.springs !== '20000') extras.push(`Federn ${Number(state.springs).toLocaleString('de-DE')} Zyklen`);
+    const wd = state.stwindow ? G.WINDOWS.find(x => x.code === state.stwindow) : null, dr = state.stdrive ? G.DRIVES.find(d => d.id === state.stdrive) : null, gl = G.GLAZING.find(g => g.id === state.fveType);
+    const acc = [state.keypad ? 'Funk-Codetaster' : '', state.remote ? 'Handsender' : ''].filter(Boolean);
+    return [['Tortyp', t.label], ['Paneel', `${m.label}, 40 mm PUR`], ['Oberfläche', surfaceLabel], ['Beschlag', `${state.hardware}${cell.sections ? `, ${cell.sections} Sektionen` : ''}`],
+      ['Lichtsektion', state.fve ? gl.label + (state.thermal ? ', thermisch getrennt' : '') : 'keine'], ['Fenster', wd ? `${wd.code} ${wd.label}` : 'keine'],
+      ['Handgriff', `${state.sthandle} ${G.HANDLES.find(h => h.code === state.sthandle).label}`], ['Antrieb', dr ? dr.label : 'ohne Antrieb'], ['Ausstattung', extras.length ? extras.join(', ') : 'Serie'], ['Zubehör', acc.length ? acc.join(', ') : 'keins'],
+      ['Bestellmaß (B × H)', `${state.w} × ${state.h} mm`]];
+  }
   const extras = [];
   if (state.securplus) extras.push('SECUR PLUS Klasse 3'); if (state.nonprotruding) extras.push('nicht ausschwenkend'); if (state.pedestrian) extras.push('Schlupftür');
   if (state.windows) extras.push(state.windows === 'l' ? 'Fenster 800 × 300' : 'Fenster 400 × 300'); if (state.transom) extras.push(state.transom === 'glass' ? 'Oberlicht verglast' : 'Oberlicht blind'); if (state.grille) extras.push('Lüftungsgitter'); if (state.glazing) extras.push('Lichtausschnitte');
@@ -473,17 +591,23 @@ function renderSummary() {
   const r = priceRange();
   if (p.total != null) {
     const range = r && r.max > r.min ? `<p class="cfg-price-range"><span>Preisspanne ${C.MODELS[state.model].label} in ${state.w} × ${state.h} mm</span><strong>${eur(r.min)} bis ${eur(r.max)}</strong><small>je nach Holzart, mit den gewählten Optionen</small></p>` : '';
-    box.innerHTML = `<div class="cfg-price-total"><span>Preisindikation Listenpreis</span><strong>${eur(p.total)}</strong></div><ul class="cfg-price-lines">${p.lines.map(([l, v]) => `<li><span>${l}</span><span>${eur(v)}</span></li>`).join('')}</ul>${range}${p.warn.map(w => `<p class="cfg-price-warn">${w}</p>`).join('')}<p class="cfg-price-note">Listenpreis 08/2026 netto ab Werk, ohne MwSt., Lieferung, Montage und Aufmaß. ${p.note} <a href="pages/preise.html">Alle Listenpreise</a></p>`;
+    const basis = p.steel ? 'Listenpreis laut Preisliste Stahl-Sektionaltore, gültig ab 14.09.2026, vor Rabatt, ohne MwSt., Lieferung, Montage und Aufmaß.' : 'Listenpreis 08/2026 netto ab Werk, ohne MwSt., Lieferung, Montage und Aufmaß.';
+    box.innerHTML = `<div class="cfg-price-total"><span>Preisindikation Listenpreis</span><strong>${eur(p.total)}</strong></div><ul class="cfg-price-lines">${p.lines.map(([l, v]) => `<li><span>${l}</span><span>${eur(v)}</span></li>`).join('')}</ul>${range}${p.warn.map(w => `<p class="cfg-price-warn">${w}</p>`).join('')}<p class="cfg-price-note">${basis} ${p.note} <a href="pages/preise.html">Alle Listenpreise</a></p>`;
   } else box.innerHTML = `<div class="cfg-price-total"><span>Preis</span><strong>auf Anfrage</strong></div><p class="cfg-price-note">${p.note}. Wir melden uns innerhalb eines Werktags mit Aufmaß-Termin und Angebot. ${C.TYPES[state.type].priced ? '' : 'Zur Orientierung: <a href="pages/preise.html">Listenpreise SECUR</a>.'}</p>`;
   const text = summaryLines().map(([k, v]) => `${k}: ${v}`).join('\n') + (p.total != null ? `\nPreisindikation: ${eur(p.total)} (Listenpreis netto)` : '') + `\nLink: ${location.href.split('#')[0].split('?')[0]}${hash()}`;
   const href = `pages/kontakt.html?konfiguration=${encodeURIComponent(text)}`;
   $('requestBtn').href = href; $('stickyRequest').href = href;
-  $('dimText').textContent = `${state.w} × ${state.h} mm`; $('dimW').textContent = `${state.w} mm`; $('dimH').textContent = `${state.h + transomH()} mm`; $('dimT').textContent = `Torblatt 80 mm · Rahmen ${C.pillarFor(state.w, state.h, state.pedestrian)} mm`;
+  $('dimText').textContent = `${state.w} × ${state.h} mm`; $('dimW').textContent = `${state.w} mm`; $('dimH').textContent = `${state.h + transomH()} mm`; $('dimT').textContent = isSteel() ? `Paneel 40 mm · ${steelSections(state.w, state.h, state.hardware)} Sektionen` : `Torblatt 80 mm · Rahmen ${C.pillarFor(state.w, state.h, state.pedestrian)} mm`;
   $('stickySummary').textContent = `${C.MODELS[state.model].label} · ${surfaceLabel} · ${state.w} × ${state.h}`;
   $('stickyPrice').textContent = p.total != null ? eur(p.total) : 'auf Anfrage';
-  const wood = state.surface === 'paint' ? (C.RAL.find(c => c.id === state.color) || {}).hex : null;
-  $('stickyDot').style.background = wood || M.door.color.getStyle();
-  $('stageModel').textContent = `${C.TYPES[state.type].short} ${C.MODELS[state.model].label}`; $('stageSurface').textContent = surfaceLabel;
+  const mdl = C.MODELS[state.model];
+  const wood = mdl.family === 'materia' ? C.STONES[mdl.stone].hex : mdl.family === 'japan' ? C.SPECIAL_WOOD[mdl.wood].hex : mdl.woodlook ? '#c9a06a'
+    : state.surface === 'paint' ? (C.RAL.find(c => c.id === state.color) || {}).hex : state.surface === 'stain' ? (C.STAINS.find(c => c.id === state.color) || {}).hex : state.surface === 'metal' ? (C.METAL.find(c => c.id === state.color) || {}).hex
+    : state.surface === 'std' ? '#f1f0ec' : state.surface === 'db703' ? '#4b4d50' : (C.ESSENCES.find(e => e.id === state.essence) || {}).hex;
+  $('stickyDot').style.background = wood || '#383e42';
+  $('stageModel').textContent = `${C.TYPES[state.type].short} ${C.MODELS[state.model].label}`; $('stageSurface').textContent = surfaceLabel; $('stageDot').style.background = wood || '#383e42';
+  $('selType').textContent = C.TYPES[state.type].short; $('selModel').textContent = C.MODELS[state.model].label; $('selSize').textContent = `${state.w} × ${state.h} mm`;
+  const optLine = summaryLines().find(l => l[0] === 'Ausstattung'); $('selOptions').textContent = optLine ? optLine[1] : '';
 }
 function update(patch, { world: rebuild = false } = {}) {
   Object.assign(state, patch); normalise();
@@ -495,7 +619,7 @@ function update(patch, { world: rebuild = false } = {}) {
 document.addEventListener('click', e => {
   const b = e.target.closest('button[data-id]'); if (!b) return;
   const id = b.dataset.id, box = b.parentElement.id;
-  if (box === 'optType') { update({ type: id }); familyTab = null; renderUI(); }
+  if (box === 'optType') { update(id === 'steel' ? { type: id, surface: state.surface === 'paint' ? 'paint' : 'std' } : { type: id }); familyTab = null; renderUI(); }
   else if (box === 'optFamily') { familyTab = id; renderUI(); }
   else if (box === 'optModel') update({ model: id });
   else if (box === 'optEssence') update({ essence: id, surface: id === 'okoume' ? (state.surface === 'natural' ? 'paint' : state.surface) : (state.surface === 'paint' || state.surface === 'metal' ? 'natural' : state.surface) });
@@ -510,10 +634,19 @@ document.addEventListener('click', e => {
   else if (box === 'optPreset') update(C.PRESETS.find(v => v.id === id).patch);
   else if (box === 'optFacade') update({ facade: id }, { world: true });
   else if (box === 'optRoof') update({ roof: id }, { world: true });
+  else if (box === 'optSteelSurface') update({ surface: id });
+  else if (box === 'optSteelColor') update({ color: id });
+  else if (box === 'optHardware') update({ hardware: id });
+  else if (box === 'optSprings') update({ springs: id });
+  else if (box === 'optFve') update({ fveType: id });
+  else if (box === 'optStWindow') update({ stwindow: id === 'none' ? '' : id });
+  else if (box === 'optStHandle') update({ sthandle: id });
+  else if (box === 'optStDrive') update({ stdrive: id === 'none' ? '' : id });
 });
+$('steelOptions').addEventListener('change', e => { const k = e.target.dataset.key; if (k) update({ [k]: e.target.checked }); });
 BOOLS.forEach(k => { const i = $('opt_' + k); if (i) i.addEventListener('change', e => update({ [k]: e.target.checked })); });
 function sizeInput(id, key, lim) {
-  const e = $(id); const commit = () => { let v = parseInt(e.value, 10); if (!Number.isFinite(v)) v = state[key]; v = clamp(Math.round(v / 5) * 5, lim); e.value = v; if (v !== state[key]) update({ [key]: v }, { world: true }); };
+  const e = $(id); const commit = () => { let v = parseInt(e.value, 10); if (!Number.isFinite(v)) v = state[key]; v = clamp(Math.round(v / 5) * 5, limitsFor(state.type)[key]); e.value = v; if (v !== state[key]) update({ [key]: v }, { world: true }); };
   e.addEventListener('change', commit); e.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); commit(); } });
 }
 sizeInput('inpW', 'w', C.LIMITS.w); sizeInput('inpH', 'h', C.LIMITS.h);
@@ -525,18 +658,22 @@ document.querySelectorAll('.cfg-views button').forEach(b => b.addEventListener('
 $('shareBtn').addEventListener('click', async () => { const url = location.href.split('#')[0].split('?')[0] + hash(); try { await navigator.clipboard.writeText(url); } catch (err) { prompt('Link zum Kopieren:', url); } $('shareNote').hidden = false; setTimeout(() => { $('shareNote').hidden = true; }, 3500); });
 $('saveImage').addEventListener('click', () => {
   let url; if (photo.active && !photo.img.hidden) url = exportPhoto(); else { draw(); url = renderer.domElement.toDataURL('image/jpeg', .92); }
-  const a = document.createElement('a'); a.href = url; a.download = `DTT-${C.MODELS[state.model].label}-${state.color}.jpg`; a.click();
+  const a = document.createElement('a'); a.href = url; a.download = `DTT-${C.MODELS[state.model].label}-${state.surface === 'paint' ? state.color : state.surface}.jpg`; a.click();
 });
 document.querySelectorAll('.cfg-tab').forEach(tab => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
 document.querySelectorAll('.cfg-step-head').forEach(h => h.addEventListener('click', () => { const s = h.parentElement; s.classList.toggle('is-collapsed'); }));
 document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => { const s = $(b.dataset.jump); s.classList.remove('is-collapsed'); s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
+document.querySelectorAll('.cfg-stepnav a').forEach(a => a.addEventListener('click', e => { e.preventDefault(); const s = $(a.dataset.step); s.classList.remove('is-collapsed'); s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
+(() => { const panel = document.querySelector('.cfg-panel'), links = [...document.querySelectorAll('.cfg-stepnav a')]; if (!panel) return;
+  const io = new IntersectionObserver(entries => { entries.forEach(en => { if (en.isIntersecting) links.forEach(l => l.classList.toggle('is-active', l.dataset.step === en.target.id)); }); }, { root: window.matchMedia('(max-width: 900px)').matches ? null : panel, rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+  ['step1', 'step2', 'step3', 'step4', 'step5'].forEach(id => io.observe($(id))); })();
 
 /* ------------------------------------------------------------------ Go */
 if (q.has('clean')) document.body.classList.add('cfg-clean');
 window.__cfg = { camera, controls, state, scene, world, dims: () => dims, price, thumbs, update, setMode, goView, setDoor, THREE };
 buildWorld(); buildDoor(); renderUI();
 setMode(state.mode === 'photo' ? 'house' : state.mode);
-goView(q.get('view') || (state.mode === 'house' ? 'street' : 'studio'), true);
+goView(q.get('view') || (state.mode === 'house' ? 'front' : 'studio'), true);
 if (q.get('open') === '1') { doorT = 1; doorTarget = 1; doorRig.animate(1); $('toggleDoor').querySelector('span').textContent = 'Tor schließen'; }
 history.replaceState(null, '', location.pathname + location.search + hash());
 (async () => { try { await renderer.compileAsync(scene, camera); } catch (e) { /* lazy compile */ } loop(performance.now()); })();

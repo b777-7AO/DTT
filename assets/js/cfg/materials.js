@@ -56,7 +56,7 @@ export function createMaterials(renderer, manager) {
     pavers: std({ ...pbr('pavers', 2.0, { mirror: true }), roughness: 1, lightMap: noiseTex(.8, 1.0, 9), lightMapIntensity: 1 }),
     concrete: std({ ...pbr('concrete', 2.0), roughness: 1 }),
     asphalt: std({ ...pbr('asphalt', 4), roughness: 1 }),
-    lawn: std({ map: tx('lawn_d.jpg', { srgb: true, tile: 2.6, mirror: true }), normalMap: tx('lawn_n.jpg', { tile: 2.6, mirror: true }), normalScale: new THREE.Vector2(.5, .5), roughness: 1, lightMap: noiseTex(.62, 1.0, 18), lightMapIntensity: 1 }),
+    lawn: std({ map: tx('lawn_d.jpg', { srgb: true, tile: 2.6, mirror: true }), normalMap: tx('lawn_n.jpg', { tile: 2.6, mirror: true }), normalScale: new THREE.Vector2(.5, .5), roughness: 1, color: 0xd9dccc, lightMap: noiseTex(.58, .96, 18), lightMapIntensity: 1 }),
     hedge: std({ map: tx('hedge_d.jpg', { srgb: true, tile: 1.1 }), normalMap: tx('hedge_n.jpg', { tile: 1.1 }), normalScale: new THREE.Vector2(.8, .8), roughness: 1 }),
     cladding: std({ ...pbr('wood_clad', 1.25), roughness: 1, color: 0xd9c0a0 }),
     kerb: std({ color: 0xb4b1aa, roughness: .9 }),
@@ -68,6 +68,7 @@ export function createMaterials(renderer, manager) {
     trunk: std({ color: 0x5b4636, roughness: 1 }),
     studioFloor: std({ color: 0xe4e5e7, roughness: .32, metalness: 0, envMapIntensity: .6 }),
     studioWall: std({ color: 0xe9eaec, roughness: .95 }),
+    winWhite: std({ color: 0xf2f2ee, roughness: .55, metalness: .05 }),
   };
   [M.cladding.map, M.cladding.normalMap, M.cladding.roughnessMap].forEach(t => { t.center.set(.5, .5); t.rotation = Math.PI / 2; });
   let matBrick = null, matTiles = null;
@@ -93,6 +94,17 @@ export function createMaterials(renderer, manager) {
     const had = [!!d.map, !!d.normalMap, !!d.roughnessMap];
     d.map = null; d.normalMap = null; d.roughnessMap = null; d.metalness = 0; d.clearcoat = 0; d.color.set(0xffffff); d.normalScale.set(1, 1);
     let dark = '#1a1a1a', label = '';
+    if (model.family === 'steel') {
+      // steel sectional panel: smooth painted skin, wood-look foil or DB 703 micaceous iron
+      d.roughnessMap = paintRough; d.roughness = .46; d.metalness = .08; d.clearcoat = .08; d.clearcoatRoughness = .5;
+      if (model.woodlook) { Object.assign(d, woodSet('oak')); d.roughnessMap = null; d.color.setRGB(1.05, .92, .78); d.roughness = .62; d.metalness = .02; d.normalScale.set(.5, .5); dark = '#4a3523'; label = 'Holzimitation'; }
+      else if (state.surface === 'db703') { d.color.set('#4b4d50'); d.normalMap = fineStructure; d.normalScale.set(.3, .3); d.metalness = .32; d.roughness = .5; dark = '#1c1d1f'; label = 'DB 703 Eisenglimmer'; }
+      else if (state.surface === 'paint') { const ral = RAL.find(r => r.id === state.color) || RAL[0]; d.color.set(ral.hex); d.normalMap = fineStructure; d.normalScale.set(.12, .12); dark = new THREE.Color(ral.hex).multiplyScalar(.42).getStyle(); label = `RAL ${ral.id} ${ral.name}`; }
+      else { d.color.set('#f1f0ec'); d.normalMap = fineStructure; d.normalScale.set(.1, .1); dark = '#8a8a86'; label = 'Standardpaneel'; }
+      [d.map, d.normalMap, d.roughnessMap].forEach(t => { if (!t) return; t.center.set(.5, .5); t.rotation = model.woodlook ? Math.PI / 2 : 0; });
+      M.doorDark.color.set(dark); d.needsUpdate = true; M.doorDark.needsUpdate = true;
+      return label;
+    }
     if (model.family === 'materia') {
       const st = STONES[model.stone]; Object.assign(d, specialSet(st.tex, 1.0)); d.roughness = 1; d.normalScale.set(.9, .9); dark = '#2a2826'; label = 'Sandstein ' + st.name;
     } else if (model.family === 'japan') {

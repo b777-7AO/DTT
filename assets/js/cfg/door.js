@@ -3,6 +3,15 @@
    Jede Fräsung ist echte Geometrie: dunkle Rückplatte + erhabene Leisten/Kassetten, keine koplanaren Flächen. */
 import * as THREE from 'three';
 import { MODELS, HANDLES, pillarFor } from './catalog.js';
+import { GRID_STD, GRID_EXT, HARDWARE, WINDOWS as ST_WINDOWS } from './catalog_guardy.js';
+
+/* number of panel sections of the steel door for a size, from the price grid rows */
+export function steelSections(w, h, hardware) {
+  const hw = HARDWARE.find(x => x.id === hardware) || HARDWARE[2];
+  const rows = [...(hw.grid === 'ext' ? GRID_EXT : GRID_STD).rows].sort((a, b) => a.h - b.h);
+  const row = rows.find(r => r.h >= h) || rows[rows.length - 1];
+  return row.sections || (h > 2460 ? 5 : 4);
+}
 
 const LEAF_T = .08;        // Torblattstärke 80 mm
 const GROOVE_W = .009;     // Nutbreite 9 mm (Fig. 9)
@@ -72,8 +81,8 @@ function prism(poly, depth) {   // extruded polygon, front at z = depth, back at
   const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) { /* ExtrudeGeometry already uses world xy as uv */ }
   return g;
 }
-function arcShape(w, h, r, depth) {   // rectangle with a semicircular top: width w, straight height h, radius r
-  const s = new THREE.Shape(); s.moveTo(-w / 2, 0); s.lineTo(w / 2, 0); s.lineTo(w / 2, h); s.absarc(0, h, w / 2, 0, Math.PI, false); s.lineTo(-w / 2, 0);
+function arcShape(w, h, rise, depth) {   // rectangle with a segmental (elliptical) arched top: width w, straight height h, arch rise
+  const s = new THREE.Shape(); s.moveTo(-w / 2, 0); s.lineTo(w / 2, 0); s.lineTo(w / 2, h); s.absellipse(0, h, w / 2, rise, 0, Math.PI, false, 0); s.lineTo(-w / 2, 0);
   return new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false });
 }
 
@@ -82,7 +91,7 @@ export function makeLeaf(w, h, modelId, M, { depth = LEAF_T, band = null, joints
   const model = MODELS[modelId] || MODELS.vip, pat = model.pattern;
   const g = new THREE.Group();
   const m = joints ? .003 : 0;
-  const raise = ['vgroove', 'hgroove', 'chevron', 'ribs', 'flat'].includes(pat) ? GROOVE_D : (pat === 'hboard' || pat === 'slab' ? .008 : .018);
+  const raise = pat === 'steel' ? .004 : ['vgroove', 'hgroove', 'chevron', 'ribs', 'flat', 'boards', 'geo'].includes(pat) ? GROOVE_D : (pat === 'hboard' || pat === 'slab' ? .008 : .018);
   const yR = [-h / 2 + m, h / 2 - m], xR = [-w / 2 + m, w / 2 - m];
   const RAIL = .05, ex = band ? [band[0] - RAIL, band[1] + RAIL] : null;
   const face = new Merger(), dark = new Merger();
@@ -96,50 +105,66 @@ export function makeLeaf(w, h, modelId, M, { depth = LEAF_T, band = null, joints
   const vStrip = (x0, x1, y0, y1, r = raise) => face.box(x1 - x0, y1 - y0, r, (x0 + x1) / 2, (y0 + y1) / 2, r / 2);
   const cassette = (x, y, cw, ch, r = .014) => { dark.box(cw + .05, ch + .05, .003, x, y, raise + .0015); face.box(cw, ch, r, x, y, raise + .003 + r / 2, { rot: true }); };
 
+  if (pat === 'steel') {
+    // steel sectional panel: one smooth skin per section, the section joint is the dark core
+    clipY([yR]).forEach(([a, b]) => vStrip(xR[0], xR[1], a, b, raise));
+  }
+  /* ---- reference: design drawings of the price list 08/2026 (MOD workbook), door ≈ 2.5 × 2.1 m ---- */
+  const fieldsOf = () => (model.fields && w > 1.3 ? model.fields : 1);
+  const fieldRanges = (gap = GROOVE_W) => { const n = fieldsOf(), fw = (xR[1] - xR[0] - (n - 1) * gap) / n; return Array.from({ length: n }, (_, i) => [xR[0] + i * (fw + gap), xR[0] + i * (fw + gap) + fw]); };
   if (pat === 'flat') {
-    // three vertical fields with 9 mm joints (FLAT, Piana, Liscio)
-    const n = w > 1.6 ? 3 : 1, fw = (xR[1] - xR[0] - (n - 1) * GROOVE_W) / n;
-    clipY([yR]).forEach(([a, b]) => { for (let i = 0; i < n; i++) vStrip(xR[0] + i * (fw + GROOVE_W), xR[0] + i * (fw + GROOVE_W) + fw, a, b); });
+    // FLAT, Piana, Liscio: three vertical fields with 9 mm joints
+    clipY([yR]).forEach(([a, b]) => fieldRanges().forEach(([x0, x1]) => vStrip(x0, x1, a, b)));
   }
   if (pat === 'vgroove' || pat === 'ribs') {
-    const pitch = model.pitch || .1, gw = pat === 'ribs' ? pitch * .35 : GROOVE_W;
-    const n = Math.max(2, Math.round((xR[1] - xR[0]) / pitch)), sw = (xR[1] - xR[0]) / n;
-    const horizontal = model.horizontal;
+    // VIP (≈220 mm), DOC (≈110 mm), Madeira; MILLERIGHE ribs 12 mm on a 22 mm pitch with a centre joint
+    const pitch = model.pitch || .1, gw = pat === 'ribs' ? (model.gap || pitch * .35) : GROOVE_W, horizontal = model.horizontal;
     clipY([yR]).forEach(([a, b]) => {
-      if (!horizontal) for (let i = 0; i < n; i++) vStrip(xR[0] + i * sw + (i ? gw / 2 : 0), xR[0] + (i + 1) * sw - (i < n - 1 ? gw / 2 : 0), a, b);
-      else { const nh = Math.max(2, Math.round((b - a) / pitch)), sh = (b - a) / nh; for (let i = 0; i < nh; i++) hStrip(a + i * sh + (i ? gw / 2 : 0), a + (i + 1) * sh - (i < nh - 1 ? gw / 2 : 0)); }
-    });
-  }
-  if (pat === 'hgroove' || pat === 'hboard') {
-    const pitch = model.pitch || .25, gw = pat === 'hboard' ? JOINT : GROOVE_W;
-    clipY([yR]).forEach(([a, b]) => { const n = Math.max(2, Math.round((b - a) / pitch)), sh = (b - a) / n; for (let i = 0; i < n; i++) hStrip(a + i * sh + (i ? gw / 2 : 0), a + (i + 1) * sh - (i < n - 1 ? gw / 2 : 0)); });
-  }
-  if (pat === 'vboard') {
-    const pitch = model.pitch || .14, n = Math.max(2, Math.round((xR[1] - xR[0]) / pitch)), sw = (xR[1] - xR[0]) / n;
-    clipY([yR]).forEach(([a, b]) => { for (let i = 0; i < n; i++) vStrip(xR[0] + i * sw + (i ? JOINT / 2 : 0), xR[0] + (i + 1) * sw - (i < n - 1 ? JOINT / 2 : 0), a, b, .006); });
-  }
-  if (pat === 'chevron') {
-    // SPI: herringbone, grooves at 45 degrees meeting on the centre line
-    const pitch = model.pitch || .11;
-    clipY([yR]).forEach(([a, b]) => {
-      [[xR[0], 0, 1], [0, xR[1], -1]].forEach(([x0, x1, s]) => {
-        const rect = [x0, a, x1, b], span = (b - a) + (x1 - x0);
-        for (let c = -span; c < span; c += pitch) {
-          const bw = pitch - GROOVE_W;
-          // band between the lines y = s*x + c and y = s*x + c + bw (parallelogram far larger than the rect, then clipped)
-          const L = 20, poly = [[-L, s * -L + c], [L, s * L + c], [L, s * L + c + bw], [-L, s * -L + c + bw]];
-          const pg = prism(clipPoly(poly, rect), raise); if (pg) face.geometry(pg, 0, 0, 0);
-        }
+      if (horizontal) { const nh = Math.max(2, Math.round((b - a) / pitch)), sh = (b - a) / nh; for (let i = 0; i < nh; i++) hStrip(a + i * sh + (i ? gw / 2 : 0), a + (i + 1) * sh - (i < nh - 1 ? gw / 2 : 0)); return; }
+      fieldRanges(model.centreJoint ? GROOVE_W : 0).forEach(([x0, x1]) => {
+        const n = Math.max(2, Math.round((x1 - x0) / pitch)), sw = (x1 - x0) / n;
+        for (let i = 0; i < n; i++) vStrip(x0 + i * sw + (i ? gw / 2 : 0), x0 + (i + 1) * sw - (i < n - 1 ? gw / 2 : 0), a, b);
       });
     });
   }
-  if (pat === 'grid') {
-    // BIG / Cassettata: raised cassettes in a regular grid
+  if (pat === 'boards') {
+    // NEWMAN: vertical boards of varying width, 9 mm grooves, sequence from the drawing
+    const seq = model.widths || [.25, .2, .12, .38, .18, .28, .14, .36, .14, .22];
     clipY([yR]).forEach(([a, b]) => {
-      const ah = b - a, cols = Math.max(2, Math.round((xR[1] - xR[0]) / .5)), rows = Math.max(1, Math.round(ah / .45));
-      const cw = (xR[1] - xR[0]) / cols, ch = ah / rows;
+      let x = xR[0], k = 0; const ws = [];
+      while (x < xR[1] - .05) { const bw = Math.min(seq[k++ % seq.length], xR[1] - x); ws.push(bw); x += bw; }
+      const scale = (xR[1] - xR[0] - (ws.length - 1) * GROOVE_W) / ws.reduce((p, q) => p + q, 0); x = xR[0];
+      ws.forEach((bw, i) => { vStrip(x, x + bw * scale, a, b); x += bw * scale + GROOVE_W; });
+    });
+  }
+  if (pat === 'hgroove' || pat === 'hboard') {
+    // FOR (175 mm), OLD (210 mm), GEO rows, Bidoga, Multidoga: horizontal boards, optionally in three vertical fields
+    const pitch = model.pitch || .25, gw = pat === 'hboard' ? (model.groove || JOINT) : GROOVE_W;
+    clipY([yR]).forEach(([a, b]) => {
+      const n = Math.max(2, Math.round((b - a) / pitch)), sh = (b - a) / n;
+      fieldRanges().forEach(([x0, x1]) => { for (let i = 0; i < n; i++) hStrip(a + i * sh + (i ? gw / 2 : 0), a + (i + 1) * sh - (i < n - 1 ? gw / 2 : 0), x0, x1); });
+    });
+  }
+  if (pat === 'geo') {
+    // GEO: raised border ring, six horizontal rows, vertical joints in a staggered bond (3 per row, offset every second row)
+    const ring = .1;
+    clipY([yR]).forEach(([a, b]) => {
+      hStrip(b - ring, b, xR[0], xR[1]); hStrip(a, a + ring, xR[0], xR[1]); vStrip(xR[0], xR[0] + ring, a + ring, b - ring); vStrip(xR[1] - ring, xR[1], a + ring, b - ring);
+      const ix0 = xR[0] + ring + GROOVE_W, ix1 = xR[1] - ring - GROOVE_W, iy0 = a + ring + GROOVE_W, iy1 = b - ring - GROOVE_W;
+      const rows = Math.max(3, Math.round((iy1 - iy0) / .33)), rh = (iy1 - iy0) / rows, iw = ix1 - ix0;
+      for (let r = 0; r < rows; r++) {
+        const y0 = iy0 + r * rh + (r ? GROOVE_W / 2 : 0), y1 = iy0 + (r + 1) * rh - (r < rows - 1 ? GROOVE_W / 2 : 0);
+        const cuts = (r % 2 ? [.125, .375, .625, .875] : [.25, .5, .75]).map(f => ix0 + iw * f);
+        let x = ix0; [...cuts, ix1].forEach(c => { vStrip(x, c - (c < ix1 ? GROOVE_W / 2 : 0), y0, y1); x = c + GROOVE_W / 2; });
+      }
+    });
+  }
+  if (pat === 'grid') {
+    // BIG / Cassettata: three columns, a tall upper and a short lower cassette per column
+    clipY([yR]).forEach(([a, b]) => {
+      const ah = b - a, cols = w > 1.3 ? 3 : 1, cw = (xR[1] - xR[0]) / cols, rowsH = model.rows || [.62, .38];
       hStrip(a, b);
-      for (let r = 0; r < rows; r++) for (let i = 0; i < cols; i++) cassette(xR[0] + cw * (i + .5), a + ch * (r + .5), cw - .07, ch - .07);
+      for (let i = 0; i < cols; i++) { let y = b; rowsH.forEach(f => { const ch = ah * f; cassette(xR[0] + cw * (i + .5), y - ch / 2, cw - .11, ch - .1); y -= ch; }); }
     });
   }
   if (pat === 'old' || pat === 'ego' || pat === 'arc') {
@@ -149,62 +174,117 @@ export function makeLeaf(w, h, modelId, M, { depth = LEAF_T, band = null, joints
       for (let i = 0; i < cols; i++) {
         const x = xR[0] + cw * (i + .5), fw = cw - .11, ah = b - a;
         if (pat === 'old') { const th = Math.min(.42, ah * .28); cassette(x, b - .06 - th / 2, fw, th); cassette(x, a + .06 + (ah - .18 - th) / 2, fw, ah - .18 - th); }
-        if (pat === 'ego') { const bandY = a + ah * .33; cassette(x, (bandY + .05 + b - .06) / 2, fw, b - .06 - bandY - .05); cassette(x, (a + .06 + bandY - .05) / 2, fw, bandY - .05 - a - .06, .006); }
+        if (pat === 'ego') {
+          // EGO: tall upper cassette, narrow middle band, lower cassette
+          const g = .06, hTop = ah * .5, hMid = ah * .11, hBot = ah - hTop - hMid - 4 * g;
+          cassette(x, b - g - hTop / 2, fw, hTop); cassette(x, b - 2 * g - hTop - hMid / 2, fw, hMid, .008); cassette(x, a + g + hBot / 2, fw, hBot);
+        }
         if (pat === 'arc') {
-          const ph = ah - .12 - fw / 2; if (ph > .2) { const gg = arcShape(fw, ph, fw / 2, .014); face.geometry(gg, x, a + .06, raise + .003); const gd = arcShape(fw + .05, ph + .025, fw / 2 + .025, .003); dark.geometry(gd, x, a + .035, raise); }
+          // ARC: arched upper cassette, curved middle band, lower cassette
+          const g = .06, hBot = ah * .2, hMid = ah * .09, rise = fw * .22, ph = ah - hBot - hMid - 4 * g - rise;
+          cassette(x, a + g + hBot / 2, fw, hBot);
+          cassette(x, a + 2 * g + hBot + hMid / 2, fw, hMid, .008);
+          if (ph > .2) { const y0 = a + 3 * g + hBot + hMid; const gg = arcShape(fw, ph, rise, .014); face.geometry(gg, x, y0, raise + .003); const gd = arcShape(fw + .05, ph + .025, rise + .02, .003); dark.geometry(gd, x, y0 - .025, raise); }
         }
       }
     });
   }
-  if (pat === 'slot' || pat === 'layer') {
-    // rails top and bottom, three fields of vertical slats
-    const rail = .12, fields = w > 1.3 ? 3 : 1, fw = (xR[1] - xR[0]) / fields;
+  if (pat === 'slot') {
+    // SLOT: frame, three columns of 70 mm slats (4.5 mm step), a mid-height band where the slats shift by half a pitch
+    const rail = .1, fields = w > 1.3 ? 3 : 1, fw = (xR[1] - xR[0]) / fields, sw = .07, gap = .09, pitch = sw + gap;
     clipY([yR]).forEach(([a, b]) => {
+      vStrip(xR[0], xR[1], a, b, .0015);
       hStrip(b - rail, b, xR[0], xR[1], .012); hStrip(a, a + rail, xR[0], xR[1], .012);
+      const by0 = a + (b - a) * .42, by1 = a + (b - a) * .6;
       for (let f = 0; f < fields; f++) {
-        const x0 = xR[0] + f * fw + .03, x1 = xR[0] + (f + 1) * fw - .03;
-        if (f) vStrip(x0 - .03, x0 + .03, a + rail, b - rail, .012);
-        if (pat === 'slot') { const n = Math.max(3, Math.round((x1 - x0) / .06)), sw = (x1 - x0) / n; for (let i = 0; i < n; i++) vStrip(x0 + i * sw + .006, x0 + (i + 1) * sw - .006, a + rail + .02, b - rail - .02, .018); }
-        else { let x = x0; const ws = [.09, .04, .13, .06]; let k = f; while (x < x1 - .02) { const sw = Math.min(ws[k++ % 4], x1 - x - .012); vStrip(x, x + sw, a + rail + .02, b - rail - .02, .012 + (k % 2) * .008); x += sw + .012; } }
+        const x0 = xR[0] + f * fw + .04, x1 = xR[0] + (f + 1) * fw - .04;
+        if (f) vStrip(x0 - .04, x0 + .04, a + rail, b - rail, .012);
+        const n = Math.max(2, Math.floor((x1 - x0 + gap) / pitch)), off = (x1 - x0 - n * pitch + gap) / 2;
+        for (let i = 0; i < n; i++) {
+          const sx = x0 + off + i * pitch; vStrip(sx, sx + sw, a + rail, by0 - .01, .012); vStrip(sx, sx + sw, by1 + .01, b - rail, .012);
+          const bx = sx + pitch / 2; if (bx + sw <= x1 + .001) vStrip(bx, bx + sw, by0, by1, .012);
+        }
       }
+    });
+  }
+  if (pat === 'layer') {
+    // LAYER: frame, 250 mm vertical boards, each stepped (10 mm over 4.5 mm) along one edge
+    const rail = .1;
+    clipY([yR]).forEach(([a, b]) => {
+      hStrip(b - rail, b, xR[0], xR[1], .012); hStrip(a, a + rail, xR[0], xR[1], .012); vStrip(xR[0], xR[0] + rail, a + rail, b - rail, .012); vStrip(xR[1] - rail, xR[1], a + rail, b - rail, .012);
+      const x0 = xR[0] + rail + .004, x1 = xR[1] - rail - .004, n = Math.max(2, Math.round((x1 - x0) / .25)), bw = (x1 - x0) / n;
+      for (let i = 0; i < n; i++) { const bx = x0 + i * bw; vStrip(bx + .002, bx + bw - .002, a + rail + .004, b - rail - .004, .0045); vStrip(bx + .002, bx + bw * .55, a + rail + .004, b - rail - .004, .01); }
     });
   }
   if (pat === 'matrix') {
-    // staggered short vertical slats
+    // MATRIX: three horizontal bands of fine vertical ribs (25 mm on a 50 mm pitch, 4.5 mm deep), each band shifted by half a pitch
     clipY([yR]).forEach(([a, b]) => {
-      const rows = Math.max(3, Math.round((b - a) / .3)), rh = (b - a) / rows, n = Math.max(6, Math.round((xR[1] - xR[0]) / .05)), sw = (xR[1] - xR[0]) / n;
-      for (let r = 0; r < rows; r++) for (let i = 0; i < n; i++) { if ((i + r) % 2) continue; vStrip(xR[0] + i * sw + .004, xR[0] + (i + 1) * sw - .004, a + r * rh + .006, a + (r + 1) * rh - .006, .012); }
+      vStrip(xR[0], xR[1], a, b, .0015);
+      const rows = 3, rh = (b - a) / rows, pitch = .05, rw = .025;
+      for (let r = 0; r < rows; r++) {
+        const y0 = a + r * rh + .005, y1 = a + (r + 1) * rh - .005, off = (r % 2) * pitch / 2;
+        for (let x = xR[0] + off; x + rw <= xR[1]; x += pitch) vStrip(x, x + rw, y0, y1, .009);
+      }
     });
   }
   if (pat === 'wave') {
-    // ONDULÉ: horizontal half-round ribs, radius 10 mm, pitch 20 mm
+    // ONDULÉ: vertical half-round ribs, radius 10 mm, pitch 20 mm, centre joint
     clipY([yR]).forEach(([a, b]) => {
-      const n = Math.floor((b - a) / .02), geo = new THREE.CylinderGeometry(.01, .01, xR[1] - xR[0], 10, 1, false, 0, Math.PI); geo.rotateZ(Math.PI / 2); geo.rotateX(Math.PI / 2);
-      for (let i = 0; i < n; i++) face.geometry(geo, 0, a + .01 + i * .02, 0);
-      geo.dispose();
+      fieldRanges().forEach(([x0, x1]) => {
+        const n = Math.floor((x1 - x0) / .02), geo = new THREE.CylinderGeometry(.01, .01, b - a, 10, 1, false, 0, Math.PI); geo.rotateY(-Math.PI / 2);
+        for (let i = 0; i < n; i++) face.geometry(geo, x0 + .01 + i * .02, (a + b) / 2, 0);
+        geo.dispose();
+      });
     });
   }
   if (pat === 'plisse') {
-    // vertical pleats: triangular prisms, pitch 60 mm
+    // PLISSÉ: frame, three fields of fine vertical pleats (30 mm pitch); the outer fields are notched at the top outer corner
+    const rail = .1, fields = w > 1.3 ? 3 : 1, fw = (xR[1] - xR[0]) / fields, pitch = .03;
     clipY([yR]).forEach(([a, b]) => {
-      const n = Math.max(4, Math.round((xR[1] - xR[0]) / .06)), sw = (xR[1] - xR[0]) / n;
-      const tri = new THREE.Shape([new THREE.Vector2(-sw / 2, 0), new THREE.Vector2(sw / 2, 0), new THREE.Vector2(sw / 6, .016)]);
-      const geo = new THREE.ExtrudeGeometry(tri, { depth: b - a, bevelEnabled: false }); geo.rotateX(-Math.PI / 2);
-      for (let i = 0; i < n; i++) face.geometry(geo, xR[0] + sw * (i + .5), a, 0);
-      geo.dispose();
+      vStrip(xR[0], xR[1], a, b, .0015);
+      hStrip(b - rail, b, xR[0], xR[1], .012); hStrip(a, a + rail, xR[0], xR[1], .012); vStrip(xR[0], xR[0] + .05, a + rail, b - rail, .012); vStrip(xR[1] - .05, xR[1], a + rail, b - rail, .012);
+      const tri = new THREE.Shape([new THREE.Vector2(-pitch / 2, 0), new THREE.Vector2(pitch / 2, 0), new THREE.Vector2(pitch / 6, .016)]);
+      for (let f = 0; f < fields; f++) {
+        const x0 = xR[0] + f * fw + .06, x1 = xR[0] + (f + 1) * fw - .06; if (f) vStrip(x0 - .06, x0 + .06, a + rail, b - rail, .012);
+        const n = Math.max(4, Math.floor((x1 - x0) / pitch)), top = b - rail - .02, bot = a + rail + .02;
+        for (let i = 0; i < n; i++) {
+          const cx = x0 + pitch * (i + .5), outer = fields === 3 && ((f === 0 && i < n / 3) || (f === 2 && i >= n * 2 / 3));
+          const y1 = outer ? bot + (top - bot) * .72 : top;
+          const geo = new THREE.ExtrudeGeometry(tri, { depth: y1 - bot, bevelEnabled: false }); geo.rotateX(-Math.PI / 2); face.geometry(geo, cx, bot, 0); geo.dispose();
+        }
+      }
     });
   }
   if (pat === 'weave') {
-    // INTRECCIO: basket weave of 150 mm squares, three slats each, alternating direction
+    // INTRECCIO: frame, vertical blocks 70 × 180 mm in a staggered bond, split into two groups by a plain centre rail
+    const rail = .1, bw = .07, bh = .18, gx = .012, gy = .012, groups = w > 1.3 ? 2 : 1;
     clipY([yR]).forEach(([a, b]) => {
-      const sq = .15, cols = Math.max(2, Math.round((xR[1] - xR[0]) / sq)), rows = Math.max(2, Math.round((b - a) / sq)), cw = (xR[1] - xR[0]) / cols, ch = (b - a) / rows;
-      for (let r = 0; r < rows; r++) for (let i = 0; i < cols; i++) {
-        const x0 = xR[0] + i * cw, y0 = a + r * ch, vert = (i + r) % 2 === 0;
-        for (let k = 0; k < 3; k++) {
-          if (vert) vStrip(x0 + cw * k / 3 + .004, x0 + cw * (k + 1) / 3 - .004, y0 + .004, y0 + ch - .004, .012);
-          else hStrip(y0 + ch * k / 3 + .004, y0 + ch * (k + 1) / 3 - .004, x0 + .004, x0 + cw - .004, .012);
-        }
+      hStrip(b - rail, b, xR[0], xR[1], .012); hStrip(a, a + rail, xR[0], xR[1], .012); vStrip(xR[0], xR[0] + .05, a + rail, b - rail, .012); vStrip(xR[1] - .05, xR[1], a + rail, b - rail, .012);
+      vStrip(xR[0], xR[1], a, b, .0015);
+      const gw = (xR[1] - xR[0] - .1) / groups;
+      for (let g = 0; g < groups; g++) {
+        const x0 = xR[0] + .05 + g * gw + (g ? .04 : .01), x1 = xR[0] + .05 + (g + 1) * gw - (g < groups - 1 ? .04 : .01); if (g) vStrip(x0 - .04, x0 - .0, a + rail, b - rail, .012);
+        const cols = Math.floor((x1 - x0 + gx) / (bw + gx)), off = (x1 - x0 - cols * (bw + gx) + gx) / 2, y0 = a + rail + .01, y1 = b - rail - .01;
+        for (let c = 0; c < cols; c++) { const x = x0 + off + c * (bw + gx); for (let y = y0 - (c % 2 ? bh / 2 : 0); y < y1; y += bh + gy) { const ya = Math.max(y, y0), yb = Math.min(y + bh, y1); if (yb - ya > .03) vStrip(x, x + bw, ya, yb, .012); } }
       }
+    });
+  }
+  if (pat === 'vboard') {
+    // SUGI / WABI SABI: vertical boards 140 mm with narrow joints
+    const pitch = model.pitch || .14, n = Math.max(2, Math.round((xR[1] - xR[0]) / pitch)), sw = (xR[1] - xR[0]) / n;
+    clipY([yR]).forEach(([a, b]) => { for (let i = 0; i < n; i++) vStrip(xR[0] + i * sw + (i ? JOINT / 2 : 0), xR[0] + (i + 1) * sw - (i < n - 1 ? JOINT / 2 : 0), a, b, .006); });
+  }
+  if (pat === 'chevron') {
+    // SPI: herringbone, grooves at 45 degrees meeting on the centre joint
+    const pitch = model.pitch || .13;
+    clipY([yR]).forEach(([a, b]) => {
+      [[xR[0], -GROOVE_W / 2, 1], [GROOVE_W / 2, xR[1], -1]].forEach(([x0, x1, sgn]) => {
+        const rect = [x0, a, x1, b], span = (b - a) + (x1 - x0);
+        for (let c = -span; c < span; c += pitch) {
+          const bw = pitch - GROOVE_W, L = 20, poly = [[-L, sgn * -L + c], [L, sgn * L + c], [L, sgn * L + c + bw], [-L, sgn * -L + c + bw]];
+          const pg = prism(clipPoly(poly, rect), raise); if (pg) face.geometry(pg, 0, 0, 0);
+        }
+      });
     });
   }
   if (pat === 'slab') {
@@ -221,11 +301,19 @@ export function makeLeaf(w, h, modelId, M, { depth = LEAF_T, band = null, joints
     g.add(box(w - .02, bh - .01, .012, M.glass, 0, yc, -.02, { shadow: false }));
   }
   // built-in windows (Option D02): wooden spacers in the door colour, safety glass
-  if (windows) windows.forEach(([x, y, ww, wh]) => {
-    g.add(box(ww + .06, wh + .06, raise + .03, M.doorDark, x, y, (raise + .03) / 2 - .012, { shadow: false }));
-    g.add(box(ww + .02, wh + .02, .03, M.door, x, y, raise + .006, { shadow: false, rot: true }));
+  if (windows) windows.forEach(([x, y, ww, wh, shape, frameMat]) => {
+    const FM = frameMat || M.door;
+    if (shape === 'round' || shape === 'oval') {
+      const r = Math.max(ww, wh) / 2, sy = wh / Math.max(ww, wh);
+      const disc = (rad, t, mat, z) => { const geo = new THREE.CylinderGeometry(rad, rad, t, 48); geo.rotateX(Math.PI / 2); geo.scale(1, sy, 1); const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); };
+      disc(r + .02, raise + .03, FM, (raise + .03) / 2 - .012);
+      disc(r - .012, .012, M.glass, raise + .02);
+      return;
+    }
+    g.add(box(ww + .06, wh + .06, raise + .03, frameMat ? FM : M.doorDark, x, y, (raise + .03) / 2 - .012, { shadow: false }));
+    g.add(box(ww + .02, wh + .02, .03, FM, x, y, raise + .006, { shadow: false, rot: true }));
     g.add(box(ww, wh, .012, M.glass, x, y, raise + .018, { shadow: false }));
-    if (ww > .5) g.add(box(.03, wh, .02, M.door, x, y, raise + .02, { shadow: false }));
+    if (ww > .5 && !frameMat) g.add(box(.03, wh, .02, M.door, x, y, raise + .02, { shadow: false }));
   });
   const fm = face.mesh(M.door), dm = dark.mesh(M.doorDark);
   if (dm) g.add(dm); if (fm) g.add(fm);
@@ -243,6 +331,15 @@ function shellHandle(parent, x, y, z, M, handleId, color) {
   parent.add(box(.096, .096, .003, mat, x, y, z + .0015, { shadow: false }));
   parent.add(box(.064, .014, .014, mat, x, y + .022, z - .006, { shadow: false }));
   parent.add(box(.014, .05, .006, mat, x, y - .012, z - .02, { shadow: false }));
+}
+/* steel door handles: a plain black plastic grip (466/467 rounded, 460/463 flush, 468 oval, 469B round aluminium) */
+function steelHandle(parent, x, y, z, M, code) {
+  const mat = code === '469B' ? M.handle : M.seal;
+  if (code === '468') { const m = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .016, 24), mat); m.rotation.x = Math.PI / 2; m.scale.x = 1.6; m.position.set(x, y, z + .008); parent.add(m); return; }
+  if (code === '469B') { const m = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, .018, 24), mat); m.rotation.x = Math.PI / 2; m.position.set(x, y, z + .009); parent.add(m); return; }
+  if (code === '463') { parent.add(box(.09, .09, .014, mat, x, y, z + .007, { shadow: false })); parent.add(box(.06, .03, .01, M.doorDark, x, y - .01, z + .015, { shadow: false })); return; }
+  parent.add(box(.14, .03, .025, mat, x, y, z + .012, { shadow: false }));
+  parent.add(box(.02, .02, .02, mat, x - .05, y, z + .005, { shadow: false })); parent.add(box(.02, .02, .02, mat, x + .05, y, z + .005, { shadow: false }));
 }
 function bottomTrim(parent, w, y, z, M, color) { const mat = M.handle.clone(); mat.color.set(color || '#3a3d40'); parent.add(box(w, .06, .006, mat, 0, y + .03, z + .003, { shadow: false })); }
 function seal(parent, w, y, z, M) { parent.add(box(w, .03, .03, M.seal, 0, y - .015, z, { shadow: false })); }
@@ -263,16 +360,30 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
   let animate = () => {};
   const transomH = state.transom ? .45 : 0;
 
-  if (type === 'sr') {
-    const n = dh > 2.4 ? 5 : 4, ph = dh / n, w = dw + .08, R = .36, Ht = dh + .12, zL = -T - .035, parts = [];
+  if (type === 'sr' || type === 'steel') {
+    const steel = type === 'steel';
+    const n = steel ? steelSections(state.w, state.h, state.hardware) : (dh > 2.4 ? 5 : 4), ph = dh / n, w = dw + .08, R = .36, Ht = dh + .12, zL = -T - .035, parts = [];
+    const depth = steel ? .04 : LEAF_T, glazed = steel ? state.fve : state.glazing;
+    const steelWindows = () => {
+      if (!steel || !state.stwindow) return null;
+      const def = ST_WINDOWS.find(x => x.code === state.stwindow); if (!def) return null;
+      const ww = def.outer[0] / 1000, wh = def.outer[1] / 1000, cnt = dw > 4.2 ? 4 : dw > 3.1 ? 3 : 2, pitch = (dw - .3) / cnt;
+      const fm = /Edelstahl/.test(def.label) ? M.chrome : /silbern/.test(def.frame || '') ? M.sill : /wei/.test(def.frame || '') ? M.winWhite : M.darkMetal;
+      return Array.from({ length: cnt }, (_, k) => [-(dw - .3) / 2 + pitch * (k + .5), 0, ww, wh, def.shape || '', fm]);
+    };
     for (let i = 0; i < n; i++) {
-      const top = i === n - 1, band = state.glazing && top ? [-ph / 2 + .1, ph / 2 - .1] : null;
-      const leaf = makeLeaf(w, ph, state.model, M, { band, windows: i === n - 2 && !state.glazing ? windows()?.map(v => [v[0], 0, v[2], Math.min(v[3], ph - .16)]) : null });
-      if (i === 0) { shellHandle(leaf, 0, 0, leaf.userData.raise, M, state.handle, handleColor); seal(leaf, w, -ph / 2, -.02, M); }
+      const top = i === n - 1, band = glazed && top ? [-ph / 2 + (steel ? .07 : .1), ph / 2 - (steel ? .07 : .1)] : null;
+      const winRow = steel ? (glazed ? n - 2 : n - 1) : n - 2;
+      const wins = i === winRow && !band ? (steel ? steelWindows() : windows()?.map(v => [v[0], 0, v[2], Math.min(v[3], ph - .16)])) : null;
+      const leaf = makeLeaf(w, ph, state.model, M, { depth, band, windows: wins });
+      if (i === 0) { if (steel) steelHandle(leaf, 0, Math.min(.0, ph / 2 - .2), leaf.userData.raise, M, state.sthandle); else shellHandle(leaf, 0, 0, leaf.userData.raise, M, state.handle, handleColor); seal(leaf, w, -ph / 2, -.02, M); }
       const y0 = ph * i + ph / 2; leaf.position.set(0, y0, zL); snap.add(leaf); parts.push({ p: leaf, y0 });
     }
     [-1, 1].forEach(s => { g.add(box(.05, Ht + .3, .06, M.metal, s * (w / 2 + .05), (Ht + .3) / 2, zL - .06, { shadow: false })); g.add(box(.05, .06, 3.0, M.metal, s * (w / 2 + .05), Ht + R + .02, zL - R - 1.5, { shadow: false })); });
-    if (state.drive !== 'manual') { g.add(box(.06, .08, 3.4, M.drive, 0, H - .07, zL - 1.85, { shadow: false })); g.add(box(.3, .17, .44, M.drive, 0, H - .12, zL - 3.7, { shadow: false })); }
+    const hasDrive = steel ? !!state.stdrive : state.drive !== 'manual';
+    if (hasDrive) { g.add(box(.06, .08, 3.4, M.drive, 0, H - .07, zL - 1.85, { shadow: false })); g.add(box(.3, .17, .44, M.drive, 0, H - .12, zL - 3.7, { shadow: false })); }
+    if (steel && state.stgrille) { const leaf0 = parts[0].p; leaf0.add(box(.3, .15, .01, M.winWhite, -dw / 2 + .45, 0, leaf0.userData.raise + .004, { shadow: false })); for (let k = 0; k < 5; k++) leaf0.add(box(.26, .006, .005, M.darkMetal, -dw / 2 + .45, -.055 + k * .028, leaf0.userData.raise + .01, { shadow: false })); }
+    if (steel && state.pedestrian) { const px = dw / 2 - .55, pw = .9; parts.forEach(({ p }, i) => { if (i === n - 1 && glazed) return; p.add(box(.006, ph, depth + .02, M.doorDark, px - pw / 2, 0, -depth / 2 + .01, { shadow: false })); p.add(box(.006, ph, depth + .02, M.doorDark, px + pw / 2, 0, -depth / 2 + .01, { shadow: false })); }); const p0 = parts[0].p; p0.add(box(.025, .11, .02, M.darkMetal, px - pw / 2 + .08, .25, p0.userData.raise + .012, { shadow: false })); }
     const smax = (Ht - parts[0].y0) + R * Math.PI / 2 + .12;
     animate = t => { const s = ease(t) * smax; parts.forEach(({ p, y0 }) => { const d1 = Ht - y0;
       if (s < d1) { p.position.set(0, y0 + s, zL); p.rotation.x = 0; }

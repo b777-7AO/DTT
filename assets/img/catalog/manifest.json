@@ -1,0 +1,839 @@
+[
+ {
+  "file": "model-flat.png",
+  "source": "secur.pdf",
+  "page": 18,
+  "label": "FLAT milling design",
+  "kind": "icon",
+  "width": 437,
+  "height": 335
+ },
+ {
+  "file": "model-newman.png",
+  "source": "secur.pdf",
+  "page": 18,
+  "label": "NEWMAN milling design",
+  "kind": "icon",
+  "width": 435,
+  "height": 319
+ },
+ {
+  "file": "model-vip.png",
+  "source": "secur.pdf",
+  "page": 18,
+  "label": "VIP milling design",
+  "kind": "icon",
+  "width": 432,
+  "height": 334
+ },
+ {
+  "file": "model-doc.png",
+  "source": "secur.pdf",
+  "page": 18,
+  "label": "DOC milling design",
+  "kind": "icon",
+  "width": 467,
+  "height": 341
+ },
+ {
+  "file": "model-spi.png",
+  "source": "secur.pdf",
+  "page": 18,
+  "label": "SPI milling design",
+  "kind": "icon",
+  "width": 450,
+  "height": 344
+ },
+ {
+  "file": "model-for.png",
+  "source": "secur.pdf",
+  "page": 18,
+  "label": "FOR milling design",
+  "kind": "icon",
+  "width": 432,
+  "height": 334
+ },
+ {
+  "file": "model-geo.png",
+  "source": "secur.pdf",
+  "page": 18,
+  "label": "GEO milling design",
+  "kind": "icon",
+  "width": 441,
+  "height": 336
+ },
+ {
+  "file": "model-big.png",
+  "source": "secur.pdf",
+  "page": 19,
+  "label": "BIG milling design",
+  "kind": "icon",
+  "width": 445,
+  "height": 338
+ },
+ {
+  "file": "model-old.png",
+  "source": "secur.pdf",
+  "page": 19,
+  "label": "OLD milling design",
+  "kind": "icon",
+  "width": 455,
+  "height": 330
+ },
+ {
+  "file": "model-ego.png",
+  "source": "secur.pdf",
+  "page": 19,
+  "label": "EGO milling design",
+  "kind": "icon",
+  "width": 453,
+  "height": 348
+ },
+ {
+  "file": "model-arc.png",
+  "source": "secur.pdf",
+  "page": 19,
+  "label": "ARC milling design",
+  "kind": "icon",
+  "width": 447,
+  "height": 344
+ },
+ {
+  "file": "model-slot.png",
+  "source": "secur.pdf",
+  "page": 20,
+  "label": "SLOT milling design",
+  "kind": "icon",
+  "width": 408,
+  "height": 301
+ },
+ {
+  "file": "model-layer.png",
+  "source": "secur.pdf",
+  "page": 20,
+  "label": "LAYER milling design",
+  "kind": "icon",
+  "width": 419,
+  "height": 306
+ },
+ {
+  "file": "model-matrix.png",
+  "source": "secur.pdf",
+  "page": 21,
+  "label": "MATRIX milling design",
+  "kind": "icon",
+  "width": 448,
+  "height": 327
+ },
+ {
+  "file": "model-millerighe.png",
+  "source": "secur.pdf",
+  "page": 21,
+  "label": "MILLERIGHE milling design",
+  "kind": "icon",
+  "width": 421,
+  "height": 304
+ },
+ {
+  "file": "model-ondule.png",
+  "source": "secur.pdf",
+  "page": 21,
+  "label": "ONDULE milling design",
+  "kind": "icon",
+  "width": 410,
+  "height": 299
+ },
+ {
+  "file": "model-plisse.png",
+  "source": "secur.pdf",
+  "page": 21,
+  "label": "PLISSE milling design",
+  "kind": "icon",
+  "width": 417,
+  "height": 319
+ },
+ {
+  "file": "model-intreccio.png",
+  "source": "secur.pdf",
+  "page": 21,
+  "label": "INTRECCIO milling design",
+  "kind": "icon",
+  "width": 453,
+  "height": 320
+ },
+ {
+  "file": "model-belgium.jpg",
+  "source": "secur.pdf",
+  "page": 22,
+  "label": "BELGIUM milling design",
+  "kind": "photo",
+  "width": 429,
+  "height": 355
+ },
+ {
+  "file": "model-greece.jpg",
+  "source": "secur.pdf",
+  "page": 22,
+  "label": "GREECE milling design",
+  "kind": "photo",
+  "width": 431,
+  "height": 355
+ },
+ {
+  "file": "model-india.jpg",
+  "source": "secur.pdf",
+  "page": 22,
+  "label": "INDIA milling design",
+  "kind": "photo",
+  "width": 430,
+  "height": 355
+ },
+ {
+  "file": "model-southafrica.jpg",
+  "source": "secur.pdf",
+  "page": 22,
+  "label": "SOUTHAFRICA milling design",
+  "kind": "photo",
+  "width": 431,
+  "height": 355
+ },
+ {
+  "file": "model-sugi.jpg",
+  "source": "secur.pdf",
+  "page": 23,
+  "label": "SUGI milling design",
+  "kind": "photo",
+  "width": 397,
+  "height": 355
+ },
+ {
+  "file": "model-wabisabi.jpg",
+  "source": "secur.pdf",
+  "page": 23,
+  "label": "WABISABI milling design",
+  "kind": "photo",
+  "width": 398,
+  "height": 355
+ },
+ {
+  "file": "cover-secur.jpg",
+  "source": "secur.pdf",
+  "page": 1,
+  "label": "SECUR cover photo",
+  "kind": "photo",
+  "width": 2126,
+  "height": 1567
+ },
+ {
+  "file": "swatch-ms-pewter-steel.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin pewter effect: steel",
+  "kind": "photo",
+  "width": 198,
+  "height": 198
+ },
+ {
+  "file": "swatch-ms-pewter-bronze.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin pewter effect: bronze",
+  "kind": "photo",
+  "width": 198,
+  "height": 198
+ },
+ {
+  "file": "swatch-ms-pewter-iron.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin pewter effect: iron",
+  "kind": "photo",
+  "width": 198,
+  "height": 196
+ },
+ {
+  "file": "swatch-ms-pewter-rosegold.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin pewter effect: rosegold",
+  "kind": "photo",
+  "width": 198,
+  "height": 198
+ },
+ {
+  "file": "swatch-ms-pewter-brass.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin pewter effect: brass",
+  "kind": "photo",
+  "width": 198,
+  "height": 198
+ },
+ {
+  "file": "swatch-ms-patinated-steel.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin patinated effect: steel",
+  "kind": "photo",
+  "width": 198,
+  "height": 197
+ },
+ {
+  "file": "swatch-ms-patinated-bronze.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin patinated effect: bronze",
+  "kind": "photo",
+  "width": 198,
+  "height": 198
+ },
+ {
+  "file": "swatch-ms-patinated-iron.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin patinated effect: iron",
+  "kind": "photo",
+  "width": 198,
+  "height": 198
+ },
+ {
+  "file": "swatch-ms-patinated-rosegold.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin patinated effect: rosegold",
+  "kind": "photo",
+  "width": 198,
+  "height": 199
+ },
+ {
+  "file": "swatch-ms-patinated-brass.jpg",
+  "source": "secur.pdf",
+  "page": 15,
+  "label": "Metal skin patinated effect: brass",
+  "kind": "photo",
+  "width": 198,
+  "height": 201
+ },
+ {
+  "file": "option-window.png",
+  "source": "secur.pdf",
+  "page": 12,
+  "label": "Built-in window SC-P044",
+  "kind": "drawing",
+  "width": 1193,
+  "height": 685
+ },
+ {
+  "file": "option-grille-1.jpg",
+  "source": "secur.pdf",
+  "page": 26,
+  "label": "Ventilation grille E01 internal view",
+  "kind": "photo",
+  "width": 250,
+  "height": 313
+ },
+ {
+  "file": "option-grille-2.jpg",
+  "source": "secur.pdf",
+  "page": 26,
+  "label": "Ventilation grille E01 external view",
+  "kind": "photo",
+  "width": 262,
+  "height": 327
+ },
+ {
+  "file": "option-grille-3.jpg",
+  "source": "secur.pdf",
+  "page": 26,
+  "label": "Ventilation grille E02",
+  "kind": "photo",
+  "width": 286,
+  "height": 302
+ },
+ {
+  "file": "option-remote-mt0191.png",
+  "source": "secur.pdf",
+  "page": 30,
+  "label": "Remote MT0191",
+  "kind": "photo",
+  "width": 212,
+  "height": 355
+ },
+ {
+  "file": "option-keypad-mt0192.png",
+  "source": "secur.pdf",
+  "page": 30,
+  "label": "Keypad MT0192",
+  "kind": "photo",
+  "width": 358,
+  "height": 355
+ },
+ {
+  "file": "option-switch-mt0208.png",
+  "source": "secur.pdf",
+  "page": 30,
+  "label": "Wall switch MT0208",
+  "kind": "photo",
+  "width": 357,
+  "height": 355
+ },
+ {
+  "file": "option-receiver-mt0194.png",
+  "source": "secur.pdf",
+  "page": 30,
+  "label": "Receiver MT0194/MT0195",
+  "kind": "photo",
+  "width": 369,
+  "height": 355
+ },
+ {
+  "file": "cover-guardy.jpg",
+  "source": "guardy.pdf",
+  "page": 1,
+  "label": "GUARDY cover photo (native image, without overlay)",
+  "kind": "photo",
+  "width": 2339,
+  "height": 1296
+ },
+ {
+  "file": "guardy-fve-1.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Einfache Verglasung",
+  "kind": "photo",
+  "width": 593,
+  "height": 365
+ },
+ {
+  "file": "guardy-fve-2.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Doppelte Verglasung",
+  "kind": "photo",
+  "width": 593,
+  "height": 365
+ },
+ {
+  "file": "guardy-fve-3.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Isolierte Aluminium Füllungen",
+  "kind": "photo",
+  "width": 594,
+  "height": 354
+ },
+ {
+  "file": "guardy-fve-4.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Lüftungsfüllungen",
+  "kind": "photo",
+  "width": 593,
+  "height": 364
+ },
+ {
+  "file": "guardy-fve-1-section.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Einfache Verglasung (Profilschnitt)",
+  "kind": "photo",
+  "width": 359,
+  "height": 365
+ },
+ {
+  "file": "guardy-fve-2-section.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Doppelte Verglasung (Profilschnitt)",
+  "kind": "photo",
+  "width": 358,
+  "height": 365
+ },
+ {
+  "file": "guardy-fve-3-section.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Isolierte Aluminium Füllungen (Profilschnitt)",
+  "kind": "photo",
+  "width": 362,
+  "height": 360
+ },
+ {
+  "file": "guardy-fve-4-section.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Lüftungsfüllungen (Profilschnitt)",
+  "kind": "photo",
+  "width": 361,
+  "height": 359
+ },
+ {
+  "file": "guardy-fve-section-thermal.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "FVE mit thermischer Trennung",
+  "kind": "photo",
+  "width": 305,
+  "height": 299
+ },
+ {
+  "file": "guardy-fve-section-nothermal.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "FVE ohne thermische Trennung",
+  "kind": "photo",
+  "width": 305,
+  "height": 297
+ },
+ {
+  "file": "guardy-fve-mesh-16-8.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Streckgitter 16/8",
+  "kind": "photo",
+  "width": 297,
+  "height": 285
+ },
+ {
+  "file": "guardy-fve-mesh-22-12.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Streckgitter 22/12",
+  "kind": "photo",
+  "width": 297,
+  "height": 277
+ },
+ {
+  "file": "guardy-fve-perforated-10-10.png",
+  "source": "guardy.pdf",
+  "page": 5,
+  "label": "Lochblech 10/10",
+  "kind": "photo",
+  "width": 310,
+  "height": 286
+ },
+ {
+  "file": "guardy-window-203-oval.png",
+  "source": "guardy.pdf",
+  "page": 13,
+  "label": "Fenster 203-oval",
+  "kind": "photo",
+  "width": 442,
+  "height": 313
+ },
+ {
+  "file": "guardy-window-204.png",
+  "source": "guardy.pdf",
+  "page": 13,
+  "label": "Fenster 204",
+  "kind": "photo",
+  "width": 407,
+  "height": 274
+ },
+ {
+  "file": "guardy-window-205.png",
+  "source": "guardy.pdf",
+  "page": 13,
+  "label": "Fenster 205",
+  "kind": "photo",
+  "width": 401,
+  "height": 324
+ },
+ {
+  "file": "guardy-window-206.png",
+  "source": "guardy.pdf",
+  "page": 13,
+  "label": "Fenster 206",
+  "kind": "photo",
+  "width": 412,
+  "height": 273
+ },
+ {
+  "file": "guardy-window-207.png",
+  "source": "guardy.pdf",
+  "page": 13,
+  "label": "Fenster 207",
+  "kind": "photo",
+  "width": 459,
+  "height": 135
+ },
+ {
+  "file": "guardy-window-208.png",
+  "source": "guardy.pdf",
+  "page": 13,
+  "label": "Fenster 208",
+  "kind": "photo",
+  "width": 414,
+  "height": 276
+ },
+ {
+  "file": "guardy-window-210.png",
+  "source": "guardy.pdf",
+  "page": 14,
+  "label": "Fenster 210",
+  "kind": "photo",
+  "width": 470,
+  "height": 323
+ },
+ {
+  "file": "guardy-window-216.png",
+  "source": "guardy.pdf",
+  "page": 14,
+  "label": "Fenster 216",
+  "kind": "photo",
+  "width": 461,
+  "height": 262
+ },
+ {
+  "file": "guardy-window-215.png",
+  "source": "guardy.pdf",
+  "page": 14,
+  "label": "Fenster 215",
+  "kind": "photo",
+  "width": 285,
+  "height": 325
+ },
+ {
+  "file": "guardy-window-217.png",
+  "source": "guardy.pdf",
+  "page": 14,
+  "label": "Fenster 217",
+  "kind": "photo",
+  "width": 266,
+  "height": 316
+ },
+ {
+  "file": "guardy-window-218.png",
+  "source": "guardy.pdf",
+  "page": 14,
+  "label": "Fenster 218",
+  "kind": "photo",
+  "width": 288,
+  "height": 301
+ },
+ {
+  "file": "guardy-window-219.png",
+  "source": "guardy.pdf",
+  "page": 14,
+  "label": "Fenster 219",
+  "kind": "photo",
+  "width": 259,
+  "height": 335
+ },
+ {
+  "file": "guardy-handle-460.png",
+  "source": "guardy.pdf",
+  "page": 19,
+  "label": "Handgriff 460",
+  "kind": "photo",
+  "width": 422,
+  "height": 313
+ },
+ {
+  "file": "guardy-handle-463.png",
+  "source": "guardy.pdf",
+  "page": 19,
+  "label": "Handgriff 463",
+  "kind": "photo",
+  "width": 382,
+  "height": 311
+ },
+ {
+  "file": "guardy-handle-466.png",
+  "source": "guardy.pdf",
+  "page": 19,
+  "label": "Handgriff 466",
+  "kind": "photo",
+  "width": 386,
+  "height": 236
+ },
+ {
+  "file": "guardy-handle-467.png",
+  "source": "guardy.pdf",
+  "page": 19,
+  "label": "Handgriff 467",
+  "kind": "photo",
+  "width": 418,
+  "height": 237
+ },
+ {
+  "file": "guardy-handle-468.png",
+  "source": "guardy.pdf",
+  "page": 19,
+  "label": "Handgriff 468",
+  "kind": "photo",
+  "width": 420,
+  "height": 249
+ },
+ {
+  "file": "guardy-handle-469b.png",
+  "source": "guardy.pdf",
+  "page": 19,
+  "label": "Handgriff 469b",
+  "kind": "photo",
+  "width": 520,
+  "height": 317
+ },
+ {
+  "file": "guardy-drive-wb800.png",
+  "source": "guardy.pdf",
+  "page": 20,
+  "label": "Tormatic WB800",
+  "kind": "photo",
+  "width": 432,
+  "height": 215
+ },
+ {
+  "file": "guardy-drive-black1200.png",
+  "source": "guardy.pdf",
+  "page": 20,
+  "label": "Tormatic BLACK1200",
+  "kind": "photo",
+  "width": 435,
+  "height": 255
+ },
+ {
+  "file": "guardy-drive-cube-1100n.png",
+  "source": "guardy.pdf",
+  "page": 24,
+  "label": "Cube 1100N",
+  "kind": "photo",
+  "width": 597,
+  "height": 377
+ },
+ {
+  "file": "guardy-drive-comfort-260.png",
+  "source": "guardy.pdf",
+  "page": 26,
+  "label": "Marantec Comfort 260 (same photo for all three)",
+  "kind": "photo",
+  "width": 508,
+  "height": 170
+ },
+ {
+  "file": "guardy-drive-comfort-270.png",
+  "source": "guardy.pdf",
+  "page": 26,
+  "label": "Marantec Comfort 270 (same photo for all three)",
+  "kind": "photo",
+  "width": 508,
+  "height": 170
+ },
+ {
+  "file": "guardy-drive-comfort-280.png",
+  "source": "guardy.pdf",
+  "page": 26,
+  "label": "Marantec Comfort 280 (same photo for all three)",
+  "kind": "photo",
+  "width": 508,
+  "height": 170
+ },
+ {
+  "file": "guardy-rail-sz11.png",
+  "source": "guardy.pdf",
+  "page": 26,
+  "label": "Fuehrungsschiene mit Zahnriemen SZ11",
+  "kind": "photo",
+  "width": 630,
+  "height": 218
+ },
+ {
+  "file": "guardy-rail-sz12.png",
+  "source": "guardy.pdf",
+  "page": 26,
+  "label": "Fuehrungsschiene mit Zahnriemen SZ12",
+  "kind": "photo",
+  "width": 631,
+  "height": 218
+ },
+ {
+  "file": "guardy-rail-sz13.png",
+  "source": "guardy.pdf",
+  "page": 26,
+  "label": "Fuehrungsschiene mit Zahnriemen SZ13",
+  "kind": "photo",
+  "width": 630,
+  "height": 218
+ },
+ {
+  "file": "guardy-acc-digicode.png",
+  "source": "guardy.pdf",
+  "page": 21,
+  "label": "Funk-Codetaster DigiCode",
+  "kind": "photo",
+  "width": 426,
+  "height": 401
+ },
+ {
+  "file": "guardy-acc-duocontrol.png",
+  "source": "guardy.pdf",
+  "page": 21,
+  "label": "Funk-Codetaster DuoControl",
+  "kind": "photo",
+  "width": 452,
+  "height": 416
+ },
+ {
+  "file": "guardy-acc-handsender-tormatic.png",
+  "source": "guardy.pdf",
+  "page": 22,
+  "label": "Handsender Tormatic",
+  "kind": "photo",
+  "width": 486,
+  "height": 357
+ },
+ {
+  "file": "guardy-acc-handsender-cube.png",
+  "source": "guardy.pdf",
+  "page": 24,
+  "label": "Handsender Cube",
+  "kind": "photo",
+  "width": 256,
+  "height": 414
+ },
+ {
+  "file": "guardy-acc-funkwandtaster-cube.png",
+  "source": "guardy.pdf",
+  "page": 24,
+  "label": "Funkwandtaster 3-Kanal Cube",
+  "kind": "photo",
+  "width": 296,
+  "height": 342
+ },
+ {
+  "file": "guardy-acc-codetaster-cube.png",
+  "source": "guardy.pdf",
+  "page": 24,
+  "label": "Funk-Codetaster Cube",
+  "kind": "photo",
+  "width": 387,
+  "height": 291
+ },
+ {
+  "file": "guardy-acc-handsender-digital-564.png",
+  "source": "guardy.pdf",
+  "page": 27,
+  "label": "Marantec Handsender Digital 564",
+  "kind": "photo",
+  "width": 163,
+  "height": 310
+ },
+ {
+  "file": "guardy-acc-codetaster-digital-526.png",
+  "source": "guardy.pdf",
+  "page": 27,
+  "label": "Marantec Codetaster Digital 526",
+  "kind": "photo",
+  "width": 167,
+  "height": 401
+ },
+ {
+  "file": "guardy-acc-empfaenger-digital-992.png",
+  "source": "guardy.pdf",
+  "page": 27,
+  "label": "Marantec Extern-Empfaenger Digital 992",
+  "kind": "photo",
+  "width": 214,
+  "height": 269
+ }
+]

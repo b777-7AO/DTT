@@ -1,5 +1,6 @@
-/* DTT · Preise: Tabellen aus dem Katalog (Hersteller-Preisliste 08/2026) */
+/* DTT · Preise: Tabellen aus dem Katalog (Preisliste Echtholz 08/2026, Stahl-Sektionaltore Rev. 2635) */
 import * as C from './cfg/catalog.js';
+import * as G from './cfg/catalog_guardy.js';
 const $ = id => document.getElementById(id);
 const eur = n => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const COLS = { okoume: 'Okoumé', fir: 'Nordische Fichte', oak: 'Eiche', brushed: 'Eiche / Lärche gebürstet', stone: 'Sandstein', wood: 'Fichte' };
@@ -24,7 +25,7 @@ function sectorTable() {
   $('sectorText').innerHTML = `<strong>Sektor ${sec}</strong> für ${w} × ${h} mm Außenmaß Rahmen, Rahmenpfosten ${C.pillarFor(w, h)} mm.`;
   const rows = FAM.map(f => { const t = C.PRICES[f.table][sec]; return `<tr><th scope="row">${f.label}<small>${f.models}</small></th>${['okoume', 'fir', 'oak', 'brushed', 'stone', 'wood'].map(c => `<td>${t[c] ? eur(t[c]) : '<span class="na">–</span>'}</td>`).join('')}</tr>`; });
   $('sectorTable').innerHTML = `<thead><tr><th>Familie</th>${['okoume', 'fir', 'oak', 'brushed', 'stone', 'wood'].map(c => `<th>${COLS[c]}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody>`;
-  $('sectorNotes').textContent = [C.SECTOR_NOTES.certified, C.SECTOR_NOTES.tall, C.SECTOR_NOTES.plus, 'PLISSÉ und INTRECCIO nur in den Sektoren A0 und A, Materia bis 2830 mm Höhe.'].join(' ');
+  $('sectorNotes').textContent = [C.SECTOR_NOTES.certified, C.SECTOR_NOTES.tall, C.SECTOR_NOTES.plus, 'ONDULÉ nur in den Sektoren A0 und A, PLISSÉ und INTRECCIO nur lackiert, Materia bis 2830 mm Höhe.'].join(' ');
 }
 function options() {
   const rows = [];
@@ -34,5 +35,10 @@ function options() {
   rows.push(['Sonderfarbe außerhalb der RAL-Palette', eur(C.SURCHARGES.ral_special), '']);
   $('optionTable').innerHTML = `<thead><tr><th>Option</th><th>Aufpreis</th><th>Hinweis</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody>`;
 }
-cards(); sectorTable(); options();
+function steelTable() {
+  const t = $('steelTable'); if (!t) return;
+  const g = G.GRID_STD, rows = [...g.rows].sort((a, b) => a.h - b.h);
+  t.innerHTML = `<thead><tr><th>Höhe bis</th>${g.widths.map(w => `<th>${w.toLocaleString('de-DE')}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr><th scope="row">${r.h.toLocaleString('de-DE')} mm<small>${r.sections} Sektionen</small></th>${r.prices.map(p => `<td>${p == null ? '<span class="na">–</span>' : eur(p)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+}
+cards(); sectorTable(); options(); steelTable();
 ['pw', 'ph'].forEach(id => $(id).addEventListener('input', sectorTable));

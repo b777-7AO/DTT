@@ -1,5 +1,5 @@
-/* DTT Tor-Studio · Produktkatalog
-   Quelle: Hersteller-Preisliste SECUR / SECURPLUS 08/2026 (Rev. 00), Hersteller-Produktseiten (Garagentore: Secur, Secur Plus,
+/* DTT Tor-Studio · Produktkatalog Echtholz
+   Quelle: Preisliste SECUR / SECURPLUS 08/2026 (Rev. 00), geprüft gegen die Sektorentabelle 08/2026 (xlsx), Produktseiten (Garagentore: Secur, Secur Plus,
    Sektionaltore SR, Seitensektionaltore SL, Basculap, Flügeltore). Alle Preise = Listenpreise netto ab Werk in EUR. */
 
 export const TYPES = {
@@ -27,6 +27,12 @@ export const TYPES = {
     facts: ['Einteiliges Torblatt', 'Lackiert in RAL', 'Vier Ästhetiken: glatt, Multidoga, Bidoga, Veneziana'],
     families: ['basculap'], priced: false, kind: 'tilt',
   },
+  steel: {
+    label: 'Stahl-Sektionaltor', short: 'Stahl-Sektionaltor',
+    desc: 'Sektionaltor aus Stahl mit 40 mm PUR-Paneel. Läuft unter die Decke, lackiert in jeder RAL- oder NCS-Farbe, mit Listenpreis nach Breite und Höhe.',
+    facts: ['40 mm Paneel, beidseitig verzinkt, PUR-ausgeschäumt', 'Federbruchsicherung serienmäßig', 'Torsionsfedern 20.000 Zyklen, bis 100.000 möglich', 'Lackierung RAL oder NCS, Holzoptik, Fenster, Schlupftür'],
+    families: ['steel'], priced: true, kind: 'sectional', steel: true,
+  },
   wing: {
     label: 'Flügeltor', short: 'Flügeltor',
     desc: 'Zweiflügeliges Echtholz-Tor, öffnet nach außen. Klassisch oder modern, mit denselben Oberflächen wie das SECUR.',
@@ -45,30 +51,31 @@ export const FAMILIES = {
   sr:       { label: 'SR Designs',    desc: 'Lamellenbilder des Sektionaltors.' },
   sl:       { label: 'SL Designs',    desc: 'Lamellenbilder des Seitensektionaltors.' },
   basculap: { label: 'Basculap',      desc: 'Ästhetiken des Kipptors.' },
+  steel:    { label: 'Stahl',         desc: 'Paneeloptik des Stahl-Sektionaltors.' },
 };
 
 export const MODELS = {
   // ---- Linee (Preisliste S. 18)
   flat:   { family: 'linee', label: 'FLAT',   pattern: 'flat',    grain: 'v', desc: 'Glatte Fläche, zwei vertikale Fugen.', table: 'linee', metalskin: true, maxH: 3180 },
-  newman: { family: 'linee', label: 'NEWMAN', pattern: 'vgroove', pitch: .05, grain: 'v', desc: 'Feine vertikale Linien im Abstand 50 mm.', table: 'linee', metalskin: true },
-  vip:    { family: 'linee', label: 'VIP',    pattern: 'vgroove', pitch: .10, grain: 'v', desc: 'Vertikale Nuten 9 × 5 mm, Raster 100 mm.', table: 'linee', metalskin: true, maxH: 3180 },
-  doc:    { family: 'linee', label: 'DOC',    pattern: 'hgroove', pitch: .14, grain: 'v', desc: 'Horizontale Nuten, Raster 140 mm.', table: 'linee', metalskin: true },
-  spi:    { family: 'linee', label: 'SPI',    pattern: 'chevron', pitch: .11, grain: 'd', desc: 'Fischgrät: Nuten im 45°-Winkel.', table: 'linee', metalskin: true },
-  for:    { family: 'linee', label: 'FOR',    pattern: 'hboard',  pitch: .07, grain: 'h', desc: 'Horizontale Bretter 70 mm.', table: 'linee', metalskin: true },
-  geo:    { family: 'linee', label: 'GEO',    pattern: 'hgroove', pitch: .25, grain: 'h', desc: 'Horizontale Nuten, Raster 250 mm.', table: 'linee', metalskin: true, maxH: 3180 },
+  newman: { family: 'linee', label: 'NEWMAN', pattern: 'boards', grain: 'v', desc: 'Vertikale Bretter in wechselnden Breiten.', table: 'linee', metalskin: true },
+  vip:    { family: 'linee', label: 'VIP',    pattern: 'vgroove', pitch: .2, grain: 'v', desc: 'Vertikale Nuten 9 × 5 mm, Raster etwa 200 mm.', table: 'linee', metalskin: true, maxH: 3180 },
+  doc:    { family: 'linee', label: 'DOC',    pattern: 'vgroove', pitch: .11, grain: 'v', desc: 'Feine vertikale Nuten, Raster etwa 110 mm.', table: 'linee', metalskin: true },
+  spi:    { family: 'linee', label: 'SPI',    pattern: 'chevron', pitch: .13, grain: 'd', desc: 'Fischgrät: Nuten im 45°-Winkel zur Mitte.', table: 'linee', metalskin: true },
+  for:    { family: 'linee', label: 'FOR',    pattern: 'hboard',  pitch: .175, fields: 3, groove: .009, grain: 'h', desc: 'Horizontale Bretter in drei Feldern.', table: 'linee', metalskin: true },
+  geo:    { family: 'linee', label: 'GEO',    pattern: 'geo', grain: 'h', desc: 'Geometrisches Fugenbild im Verband, mit Rahmen.', table: 'linee', metalskin: true, maxH: 3180 },
   // ---- Bugne (S. 19)
-  big:    { family: 'bugne', label: 'BIG', pattern: 'grid',  desc: 'Großes Kassettenraster über die ganze Fläche.', table: 'bugne' },
-  old:    { family: 'bugne', label: 'OLD', pattern: 'old',   desc: 'Drei Felder mit klassischen Kassetten.', table: 'bugne', brushedOk: true },
-  ego:    { family: 'bugne', label: 'EGO', pattern: 'ego',   desc: 'Drei Felder mit horizontalem Band.', table: 'bugne' },
-  arc:    { family: 'bugne', label: 'ARC', pattern: 'arc',   desc: 'Drei Felder mit Bogenkassetten.', table: 'bugne' },
+  big:    { family: 'bugne', label: 'BIG', pattern: 'grid',  desc: 'Drei Felder, je eine große und eine kleine Kassette.', table: 'bugne' },
+  old:    { family: 'bugne', label: 'OLD', pattern: 'hboard', pitch: .21, fields: 3, groove: .009, grain: 'h', desc: 'Horizontale Bretter in drei Feldern, rustikal.', table: 'bugne', brushedOk: true },
+  ego:    { family: 'bugne', label: 'EGO', pattern: 'ego',   desc: 'Drei Felder mit hoher Kassette, Band und Sockelkassette.', table: 'bugne' },
+  arc:    { family: 'bugne', label: 'ARC', pattern: 'arc',   desc: 'Drei Felder mit Bogenkassetten und Sockel.', table: 'bugne' },
   // ---- Design (S. 20–21)
-  slot:       { family: 'design', label: 'SLOT',       pattern: 'slot',   desc: 'Vertikale Lamellen zwischen Rahmenprofilen.', table: 'design1' },
-  layer:      { family: 'design', label: 'LAYER',      pattern: 'layer',  desc: 'Versetzte Lamellen in drei Feldern.', table: 'design1', maxH: 3180 },
-  matrix:     { family: 'design', label: 'MATRIX',     pattern: 'matrix', desc: 'Gerasterte Lamellenstruktur.', table: 'design2' },
-  millerighe: { family: 'design', label: 'MILLERIGHE', pattern: 'ribs',   pitch: .012, desc: 'Feinste Rillen, 12 mm.', table: 'design2' },
-  ondule:     { family: 'design', label: 'ONDULÉ',     pattern: 'wave',   desc: 'Gewellte Oberfläche, Radius 10 mm.', table: 'design2' },
-  plisse:     { family: 'design', label: 'PLISSÉ',     pattern: 'plisse', desc: 'Plissee-Falten, nur lackiert.', table: 'design2', lacquerOnly: true, sectors: ['A0', 'A'] },
-  intreccio:  { family: 'design', label: 'INTRECCIO',  pattern: 'weave',  desc: 'Geflochtene Struktur, nur lackiert.', table: 'design2', lacquerOnly: true, sectors: ['A0', 'A'] },
+  slot:       { family: 'design', label: 'SLOT',       pattern: 'slot',   desc: 'Vertikale Leisten 70 mm, in der Mitte versetzt.', table: 'design1' },
+  layer:      { family: 'design', label: 'LAYER',      pattern: 'layer',  desc: 'Vertikale Bretter 250 mm mit gestufter Kante.', table: 'design1', maxH: 3180 },
+  matrix:     { family: 'design', label: 'MATRIX',     pattern: 'matrix', desc: 'Drei Bänder feiner vertikaler Rippen.', table: 'design2' },
+  millerighe: { family: 'design', label: 'MILLERIGHE', pattern: 'ribs',   pitch: .022, gap: .01, fields: 2, centreJoint: true, desc: 'Rippen 12 mm im Raster 22 mm, Mittelfuge.', table: 'design2' },
+  ondule:     { family: 'design', label: 'ONDULÉ',     pattern: 'wave',   fields: 2, desc: 'Vertikale Wellen, Radius 10 mm. Nur Sektoren A0 und A.', table: 'design2', sectors: ['A0', 'A'] },
+  plisse:     { family: 'design', label: 'PLISSÉ',     pattern: 'plisse', desc: 'Feine Falten in drei Feldern, nur lackiert.', table: 'design2', lacquerOnly: true },
+  intreccio:  { family: 'design', label: 'INTRECCIO',  pattern: 'weave',  desc: 'Versetzte Klötze im Verband, nur lackiert.', table: 'design2', lacquerOnly: true },
   // ---- Materia (S. 22): Sandstein-Matte auf Meeresholz
   belgium:     { family: 'materia', label: 'BELGIUM',      pattern: 'slab', stone: 'belgium',     desc: 'Sandstein, hellgrau.', table: 'materia', maxH: 2830 },
   greece:      { family: 'materia', label: 'GREECE',       pattern: 'slab', stone: 'greece',      desc: 'Sandstein, anthrazit.', table: 'materia', maxH: 2830 },
@@ -93,6 +100,9 @@ export const MODELS = {
   b_multidoga: { family: 'basculap', label: 'Multidoga', pattern: 'hboard',  pitch: .07, desc: 'Horizontale Bretteroptik.' },
   b_bidoga:    { family: 'basculap', label: 'Bidoga',    pattern: 'hgroove', pitch: .25, desc: 'Zweiteilige Felder.' },
   b_veneziana: { family: 'basculap', label: 'Veneziana', pattern: 'ribs',    pitch: .03, desc: 'Feine horizontale Lamellen.', horizontal: true },
+  // ---- Stahl-Sektionaltor (Preisliste Stahl-Sektionaltore Rev. 2635): 40 mm Paneel, Sektionen laut Preisraster
+  st_glatt:   { family: 'steel', label: 'Glatt',          pattern: 'steel',  desc: 'Glatte Sektionen, lackiert.' },
+  st_wood:    { family: 'steel', label: 'Holzoptik',      pattern: 'steel',  woodlook: true, desc: 'Paneel mit Holzimitation (+15 %).' },
 };
 export const modelsOf = (type) => Object.entries(MODELS).filter(([, m]) => TYPES[type].families.includes(m.family)).map(([id]) => id);
 
@@ -175,7 +185,7 @@ export const PRICES = {
   materia: tbl(['stone'], [[10282], [11074], [11550], [11960], [12674], [12992], [13864], [14258], [15050], [16476], [17632], [18124], [19282], [13990], [16398], [15210], [12992]]),
   japan: tbl(['wood'], [[8260], [9316], [10950], [11538], [12930], [12902], [14524], [14526], [16196], [15780], [17710], [19012], [21044], [14746], [18208], [16456], [12718]]),
 };
-export const SURCHARGES = { metalskin_m2: 254, ral_special: 399, wallconcept_m2: { linee: 712, design: 712, japan: 1476, metal: 1313 } };
+export const SURCHARGES = { metalskin_m2: 254, ral_special: 399, sample_colour: 628, wallconcept_m2: { linee: 712, design: 712, japan: 1476, metal: 1313 } };
 
 /* Sektor aus Außenmaß Rahmen (Preisliste S. 16, ausschwenkend, Standard). Breitenbänder je Höhenband wie im Raster;
    das schwarze Treppenfeld rechts oben (nicht lieferbar) und die ausgesparte Ecke rechts unten sind als Grenzen hinterlegt. */
@@ -215,4 +225,5 @@ export const PRESETS = [
   { id: 'sugi', label: 'SUGI schwarz', patch: { type: 'secur', model: 'sugi' } },
   { id: 'greece', label: 'Materia Greece', patch: { type: 'secur', model: 'greece' } },
   { id: 'srwhite', label: 'SR Piana Weiß', patch: { type: 'sr', model: 'sr_piana', essence: 'okoume', surface: 'paint', color: '9016' } },
+  { id: 'steel7016', label: 'Stahl Anthrazit', patch: { type: 'steel', model: 'st_glatt', surface: 'paint', color: '7016' } },
 ];
