@@ -445,12 +445,17 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
       // open position: leaf horizontal under the ceiling, front edge 10 cm outside the frame line (both trajectories end there);
       // protruding doors swing the lower edge out past the frame while opening, non-protruding doors retract first
       // final: leaf top just under the frame head (inside), front edge flush with the wall face; nothing above the opening
-      // open position from the price-list tables (S. 9/10): leaf top 150 mm under the frame-head line, front edge S (overhang) in front of the
-      // frame line for the protruding door, flush with the frame line for the non-protruding one; the rear end then lies about R inside
-      const tr = trajectoryFor(state.h, state.nonprotruding), sOut = tr && !state.nonprotruding ? tr.s / 1000 : 0;
-      const up = Math.max(.04, fh - .15 - lh), back = lz + lh - sOut, kz = protruding ? e : Math.min(1, e * 1.7);
-      pivot.position.set(0, lh + .02 + up * e, lz - back * kz);
-      pivot.rotation.x = -Math.PI / 2 * e;
+      // Kinematics from the price-list trajectory tables (S. 9 / S. 10) and the manufacturer's film of the Basculap:
+      // the lower edge of the leaf is the outermost point and follows the envelope 0 → A(½H) → B(¾H) → S(top); the upper edge
+      // rises from the frame head to 150 mm under the lintel and slides back into the garage, the leaf length stays constant.
+      const tr = trajectoryFor(state.h, state.nonprotruding), H = state.h / 1000;
+      const env = tr ? [[0, 0], [H / 2, tr.aOut / 1000], [H * .75, tr.bOut / 1000], [fh - .13, (tr.nonprotruding ? 0 : tr.s) / 1000]] : [[0, 0], [H / 2, .4], [H * .75, .9], [fh - .13, .34]];
+      const outAt = y => { for (let i = 1; i < env.length; i++) if (y <= env[i][0]) { const [y0, z0] = env[i - 1], [y1, z1] = env[i], k = (y - y0) / (y1 - y0), kk = k * k * (3 - 2 * k); return z0 + (z1 - z0) * kk; } return env[env.length - 1][1]; };
+      const theta = Math.PI / 2 * (1 - Math.pow(1 - e, 1.25));
+      const yTop = (lh + .02) * (1 - e) + (fh - .15) * e, yBot = yTop - lh * Math.cos(theta);
+      const zBot = lz + outAt(Math.max(0, yBot)), zTop = zBot - lh * Math.sin(theta);
+      pivot.position.set(0, yTop, Math.min(lz, zTop));
+      pivot.rotation.x = -theta;
       arms.forEach((a, i) => { a.position.set((i ? 1 : -1) * (lw / 2 - .02), -lh * .3 * (1 - e) - lh * .25, -lh * .2 * e); a.rotation.x = Math.PI / 2 * e * .5; });
     };
     if (state.drive !== 'manual' && !studio) { g.add(box(.5, .14, .22, M.drive, lw / 2 - .4, fh + .12, -T - .16, { shadow: false })); }

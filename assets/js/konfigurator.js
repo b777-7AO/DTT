@@ -781,7 +781,7 @@ document.querySelectorAll('.cfg-stepnav a').forEach(a => a.addEventListener('cli
 
 /* ------------------------------------------------------------------ Go */
 if (q.has('clean')) document.body.classList.add('cfg-clean');
-window.__cfg = { camera, controls, state, scene, world, dims: () => dims, price, thumbs, update, setMode, goView, setDoor, THREE };
+window.__cfg = { camera, controls, state, scene, world, dims: () => dims, price, thumbs, update, setMode, goView, setDoor, doorAt: t => { doorAnimStart = null; doorT = t; doorTarget = t >= 1 ? 1 : 0; doorRig.animate(t); }, THREE };
 buildWorld(); buildDoor(); renderUI();
 setMode(state.mode === 'photo' ? 'house' : state.mode);
 goView(q.get('view') || (state.mode === 'house' ? 'front' : 'studio'), true);
