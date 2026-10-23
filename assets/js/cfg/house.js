@@ -115,8 +115,11 @@ export function buildHouse({ mats, state, openH }) {
   house.add(plane(400, 400, M.lawn, 0, 0, 0));
   house.add(plane(dw + 2.2, 17.2, M.pavers, 0, .02, 8.6));
   [-1, 1].forEach(s => house.add(box(.12, .07, 17.2, M.kerb, s * (dw / 2 + 1.16), .035, 8.6, { shadow: false })));
-  house.add(plane(1.4, 1.6, M.concrete, x0 + doorOp.x + .55, .025, zf + 1.9));
-  house.add(plane(x0 + doorOp.x + .55 - dw / 2 + 1.4, 1.4, M.concrete, (x0 + doorOp.x + .55 + dw / 2 - .8) / 2, .04, 1.9));
+  // entrance pad in front of the house door, then a 1.2 m walkway beside the driveway kerb down to the pavement (never across the paving)
+  const padX = x0 + doorOp.x + .55, walkX = dw / 2 + 1.16 + .06 + .6, walkZ0 = zf + 2.7, walkZ1 = 17.2;
+  house.add(plane(1.6, 1.6, M.concrete, padX, .025, zf + 1.9));
+  house.add(plane(1.2, walkZ1 - walkZ0, M.concrete, walkX, .025, (walkZ0 + walkZ1) / 2));
+  house.add(box(.08, .05, walkZ1 - walkZ0, M.kerb, walkX + .64, .025, (walkZ0 + walkZ1) / 2, { shadow: false }));
   // street: sidewalk, kerb, 6.5 m asphalt road with a worn centre, kerb and sidewalk on the far side
   house.add(plane(400, 2.0, M.concrete, 0, .03, 18.2));
   house.add(box(400, .12, .16, M.kerb, 0, .06, 19.28, { shadow: false }));
