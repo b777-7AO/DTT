@@ -7,8 +7,7 @@ const COLS = { okoume: 'Okoumé', fir: 'Nordische Fichte', oak: 'Eiche', brushed
 const FAM = [
   { id: 'linee', table: 'linee', label: 'Linee', models: 'FLAT, NEWMAN, VIP, DOC, SPI, FOR, GEO', col: 'okoume', desc: 'Gefräste Linien, Okoumé lackiert in RAL oder imprägniert' },
   { id: 'bugne', table: 'bugne', label: 'Bugne', models: 'BIG, OLD, EGO, ARC', col: 'okoume', desc: 'Kassetten, Okoumé lackiert' },
-  { id: 'design1', table: 'design1', label: 'Design', models: 'SLOT, LAYER', col: 'okoume', desc: 'Lamellen, Okoumé lackiert' },
-  { id: 'design2', table: 'design2', label: 'Design', models: 'MATRIX, MILLERIGHE, ONDULÉ, PLISSÉ, INTRECCIO', col: 'okoume', desc: 'Strukturen, Okoumé lackiert' },
+  { id: 'design1', table: 'design1', label: 'Design', models: 'SLOT, LAYER', col: 'okoume', desc: 'Lamellenbilder, Okoumé lackiert' },
   { id: 'materia', table: 'materia', label: 'Materia', models: 'BELGIUM, GREECE, INDIA, SOUTH AFRICA', col: 'stone', desc: 'Sandstein-Matte auf Meeresholz' },
   { id: 'japan', table: 'japan', label: 'Japanese Mood', models: 'SUGI, WABI SABI', col: 'wood', desc: 'Verkohlte oder gealterte Fichtenbretter' },
 ];
@@ -25,7 +24,7 @@ function sectorTable() {
   $('sectorText').innerHTML = `<strong>Sektor ${sec}</strong> für ${w} × ${h} mm Außenmaß Rahmen, Rahmenpfosten ${C.pillarFor(w, h)} mm.`;
   const rows = FAM.map(f => { const t = C.PRICES[f.table][sec]; return `<tr><th scope="row">${f.label}<small>${f.models}</small></th>${['okoume', 'fir', 'oak', 'brushed', 'stone', 'wood'].map(c => `<td>${t[c] ? eur(t[c]) : '<span class="na">–</span>'}</td>`).join('')}</tr>`; });
   $('sectorTable').innerHTML = `<thead><tr><th>Familie</th>${['okoume', 'fir', 'oak', 'brushed', 'stone', 'wood'].map(c => `<th>${COLS[c]}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody>`;
-  $('sectorNotes').textContent = [C.SECTOR_NOTES.certified, C.SECTOR_NOTES.tall, C.SECTOR_NOTES.plus, 'ONDULÉ nur in den Sektoren A0 und A, PLISSÉ und INTRECCIO nur lackiert, Materia bis 2830 mm Höhe.'].join(' ');
+  $('sectorNotes').textContent = [C.SECTOR_NOTES.certified, C.SECTOR_NOTES.tall, C.SECTOR_NOTES.plus, 'Materia bis 2830 mm Höhe.'].join(' ');
 }
 function options() {
   const rows = [];

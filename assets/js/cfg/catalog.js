@@ -45,7 +45,7 @@ export const TYPES = {
 export const FAMILIES = {
   linee:    { label: 'Linee',         desc: 'Gefräste Linien in Holz: von fein bis markant.' },
   bugne:    { label: 'Bugne',         desc: 'Klassische Kassetten und Füllungen.' },
-  design:   { label: 'Design',        desc: 'Lamellen, Wellen und Flechtstrukturen.' },
+  design:   { label: 'Design',        desc: 'Lamellenbilder zwischen Rahmenprofilen.' },
   materia:  { label: 'Materia',       desc: 'Sandstein-Oberfläche auf Meeresholz.' },
   japan:    { label: 'Japanese Mood', desc: 'Verkohlte oder gealterte Fichtenbretter.' },
   sr:       { label: 'SR Designs',    desc: 'Lamellenbilder des Sektionaltors.' },
@@ -71,11 +71,6 @@ export const MODELS = {
   // ---- Design (S. 20–21)
   slot:       { family: 'design', label: 'SLOT',       pattern: 'slot',   desc: 'Vertikale Leisten 70 mm, in der Mitte versetzt.', table: 'design1' },
   layer:      { family: 'design', label: 'LAYER',      pattern: 'layer',  desc: 'Vertikale Bretter 250 mm mit gestufter Kante.', table: 'design1', maxH: 3180 },
-  matrix:     { family: 'design', label: 'MATRIX',     pattern: 'matrix', desc: 'Drei Bänder feiner vertikaler Rippen.', table: 'design2' },
-  millerighe: { family: 'design', label: 'MILLERIGHE', pattern: 'ribs',   pitch: .022, gap: .01, fields: 2, centreJoint: true, desc: 'Rippen 12 mm im Raster 22 mm, Mittelfuge.', table: 'design2' },
-  ondule:     { family: 'design', label: 'ONDULÉ',     pattern: 'wave',   fields: 2, desc: 'Vertikale Wellen, Radius 10 mm. Nur Sektoren A0 und A.', table: 'design2', sectors: ['A0', 'A'] },
-  plisse:     { family: 'design', label: 'PLISSÉ',     pattern: 'plisse', desc: 'Feine Falten in drei Feldern, nur lackiert.', table: 'design2', lacquerOnly: true },
-  intreccio:  { family: 'design', label: 'INTRECCIO',  pattern: 'weave',  desc: 'Versetzte Klötze im Verband, nur lackiert.', table: 'design2', lacquerOnly: true },
   // ---- Materia (S. 22): Sandstein-Matte auf Meeresholz
   belgium:     { family: 'materia', label: 'BELGIUM',      pattern: 'slab', stone: 'belgium',     desc: 'Sandstein, hellgrau.', table: 'materia', maxH: 2830 },
   greece:      { family: 'materia', label: 'GREECE',       pattern: 'slab', stone: 'greece',      desc: 'Sandstein, anthrazit.', table: 'materia', maxH: 2830 },
