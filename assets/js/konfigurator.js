@@ -708,7 +708,7 @@ function renderSummary() {
   const text = summaryLines().map(([k, v]) => `${k}: ${v}`).join('\n') + (p.total != null ? `\nPreisindikation: ${eur(p.total)} (Listenpreis netto)` : '') + `\nLink: ${location.href.split('#')[0].split('?')[0]}${hash()}`;
   const href = `pages/kontakt.html?konfiguration=${encodeURIComponent(text)}`;
   $('requestBtn').href = href; $('stickyRequest').href = href;
-  $('dimText').textContent = `${state.w} × ${state.h} mm`; $('dimW').textContent = `${state.w} mm`; $('dimH').textContent = `${state.h + transomH()} mm`; $('dimT').textContent = isSteel() ? `Paneel 40 mm · ${steelSections(state.w, state.h, state.hardware)} Sektionen` : `Torblatt 80 mm · Rahmen ${C.pillarFor(state.w, state.h, state.pedestrian)} mm`;
+  $('dimText').textContent = `${state.w} × ${state.h} mm`; $('dimW').textContent = `${state.w} mm`; $('dimH').textContent = `${state.h + transomH()} mm`; $('dimT').textContent = isSteel() ? `Paneel 40 mm · ${steelSections(state.w, state.h, state.hardware)} Sektionen` : state.type === 'basculap' ? 'Torblatt 40 mm Sandwichpaneele · Stahlrahmen' : `Torblatt 80 mm · Rahmen ${C.pillarFor(state.w, state.h, state.pedestrian)} mm`;
   $('stickySummary').textContent = `${C.MODELS[state.model].label} · ${surfaceLabel} · ${state.w} × ${state.h}`;
   $('stickyPrice').textContent = p.total != null ? eur(p.total) : 'auf Anfrage';
   const mdl = C.MODELS[state.model];

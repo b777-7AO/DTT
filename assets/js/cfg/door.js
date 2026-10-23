@@ -113,8 +113,11 @@ export function makeLeaf(w, h, modelId, M, { depth = LEAF_T, band = null, joints
   const fieldsOf = () => (model.fields && w > 1.3 ? model.fields : 1);
   const fieldRanges = (gap = GROOVE_W) => { const n = fieldsOf(), fw = (xR[1] - xR[0] - (n - 1) * gap) / n; return Array.from({ length: n }, (_, i) => [xR[0] + i * (fw + gap), xR[0] + i * (fw + gap) + fw]); };
   if (pat === 'flat') {
-    // FLAT, Piana, Liscio: three vertical fields with 9 mm joints
-    clipY([yR]).forEach(([a, b]) => fieldRanges().forEach(([x0, x1]) => vStrip(x0, x1, a, b)));
+    // FLAT, Piana: three vertical fields with 9 mm joints. Liscio (Basculap): one flat skin made of 500 mm sandwich panels, fine horizontal joints
+    clipY([yR]).forEach(([a, b]) => {
+      if (model.panels) { const n = Math.max(1, Math.round((b - a) / model.panels)), ph = (b - a) / n; for (let i = 0; i < n; i++) hStrip(a + i * ph + (i ? .003 : 0), a + (i + 1) * ph - (i < n - 1 ? .003 : 0)); }
+      else fieldRanges().forEach(([x0, x1]) => vStrip(x0, x1, a, b));
+    });
   }
   if (pat === 'vgroove' || pat === 'ribs') {
     // VIP (≈220 mm), DOC (≈110 mm), Madeira; MILLERIGHE ribs 12 mm on a 22 mm pitch with a centre joint
@@ -341,8 +344,8 @@ function steelHandle(parent, x, y, z, M, code) {
   parent.add(box(.14, .03, .025, mat, x, y, z + .012, { shadow: false }));
   parent.add(box(.02, .02, .02, mat, x - .05, y, z + .005, { shadow: false })); parent.add(box(.02, .02, .02, mat, x + .05, y, z + .005, { shadow: false }));
 }
-function bottomTrim(parent, w, y, z, M, color) { const mat = M.handle.clone(); mat.color.set(color || '#3a3d40'); parent.add(box(w, .06, .006, mat, 0, y + .03, z + .003, { shadow: false })); }
-function seal(parent, w, y, z, M) { parent.add(box(w, .03, .03, M.seal, 0, y - .015, z, { shadow: false })); }
+function bottomTrim(parent, w, y, z, M, color) { const mat = M.handle.clone(); mat.color.set(color || '#3a3d40'); parent.add(box(w - .01, .05, .004, mat, 0, y + .025, z + .002, { shadow: false })); }
+function seal(parent, w, y, z, M, t = .08) { parent.add(box(w - .02, .014, t - .01, M.seal, 0, y - .006, -t / 2 + .005, { shadow: false })); }
 export const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
 /* ---------- complete door rig ----------
@@ -411,7 +414,7 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
 
   if (type === 'secur' || type === 'basculap') {
     // SECUR: frame pillars 110 mm, 80 mm leaf flush with the frame, counterweight boxes 370 mm deep beside the opening (inside)
-    const P = pillarFor(state.w, state.h, state.pedestrian) / 1000, FM = type === 'secur' ? M.door : M.frame;
+    const P = pillarFor(state.w, state.h, state.pedestrian) / 1000, FM = type === 'secur' ? M.door : M.frame, T = type === 'basculap' ? .04 : LEAF_T;
     const fh = dh, fw = dw, zF = -.05, lw = fw - 2 * P + .02, lh = fh - P - .03 + .01, lz = zF + .005;
     const frame = new THREE.Group();
     frame.add(box(P, fh, LEAF_T + .02, FM, -(fw / 2 - P / 2), fh / 2, zF - .01));
@@ -423,10 +426,10 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
     snap.add(frame);
     if (studio || true) { [-1, 1].forEach(s => { g.add(box(CW_W, fh - .02, CW_D, M.galv, s * (fw / 2 - CW_W / 2), (fh - .02) / 2, zF - LEAF_T - CW_D / 2 - .02, { shadow: studio })); }); }
     const pivot = new THREE.Group(); pivot.position.set(0, lh + .02, lz);
-    const leaf = makeLeaf(lw, lh, state.model, M, { joints: false, windows: windows()?.map(v => [v[0], lh / 2 - .45, v[2], v[3]]) });
+    const leaf = makeLeaf(lw, lh, state.model, M, { depth: T, joints: false, windows: windows()?.map(v => [v[0], lh / 2 - .45, v[2], v[3]]) });
     leaf.position.set(0, -lh / 2, 0);
     shellHandle(leaf, 0, 1.05 - lh / 2 - .02, leaf.userData.raise, M, state.handle, handleColor);
-    bottomTrim(leaf, lw, -lh / 2, leaf.userData.raise, M, handleColor); seal(leaf, lw, -lh / 2, -.02, M);
+    if (type === 'secur') bottomTrim(leaf, lw, -lh / 2, leaf.userData.raise, M, handleColor); seal(leaf, lw, -lh / 2, -.02, M, T);
     if (state.pedestrian) {   // pedestrian door outline on the right, own handle
       const px = lw / 2 - .46, pw = .8, ph = lh - .1;
       leaf.add(box(pw + .01, .006, LEAF_T + .03, M.doorDark, px, -lh / 2 + ph, -LEAF_T / 2 + .012, { shadow: false }));

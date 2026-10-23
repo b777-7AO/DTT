@@ -91,7 +91,7 @@ export const MODELS = {
   sl_bidoga:     { family: 'sl', label: 'Bidoga',     pattern: 'hgroove', pitch: .25, desc: 'Zwei Bretter je Lamelle.' },
   sl_madeira:    { family: 'sl', label: 'Madeira',    pattern: 'vgroove', pitch: .10, desc: 'Vertikale Nuten.' },
   // ---- Basculap
-  b_liscio:    { family: 'basculap', label: 'Liscio',    pattern: 'flat',    desc: 'Glatt.' },
+  b_liscio:    { family: 'basculap', label: 'Liscio',    pattern: 'flat',    panels: .5, desc: 'Glatt, Sandwichpaneele 500 mm.' },
   b_multidoga: { family: 'basculap', label: 'Multidoga', pattern: 'hboard',  pitch: .07, desc: 'Horizontale Bretteroptik.' },
   b_bidoga:    { family: 'basculap', label: 'Bidoga',    pattern: 'hgroove', pitch: .25, desc: 'Zweiteilige Felder.' },
   b_veneziana: { family: 'basculap', label: 'Veneziana', pattern: 'ribs',    pitch: .03, desc: 'Feine horizontale Lamellen.', horizontal: true },
