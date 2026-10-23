@@ -23,8 +23,8 @@ export const TYPES = {
   },
   basculap: {
     label: 'Basculap Kipptor', short: 'Kipptor',
-    desc: 'Kipptor mit Gegengewichten und lackierter Metall- oder Holzoptik. Die wirtschaftliche Alternative zum SECUR.',
-    facts: ['Einteiliges Torblatt', 'Lackiert in RAL', 'Vier Ästhetiken: glatt, Multidoga, Bidoga, Veneziana'],
+    desc: 'Zweiteiliges Kipptor ohne Deckenschienen: das Torblatt knickt in der Mitte und legt sich unter die Decke, ohne vor das Haus zu schwenken.',
+    facts: ['Zweiteiliges Torblatt, 40 mm Sandwichpaneele', 'Keine Deckenschienen, schwenkt nicht nach außen', 'Lackiert in RAL', 'Vier Ästhetiken: glatt, Multidoga, Bidoga, Veneziana'],
     families: ['basculap'], priced: false, kind: 'tilt',
   },
   steel: {

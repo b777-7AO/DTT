@@ -412,7 +412,44 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
       else { p.position.x = xc - R - pw / 2; p.position.z = zL - R - (s - d1 - R * Math.PI / 2) - pw / 2; p.rotation.y = Math.PI / 2; } }); };
   }
 
-  if (type === 'secur' || type === 'basculap') {
+  if (type === 'basculap') {
+    /* Two-section trackless up-and-over (manufacturer film "Trackless Sectional"): the leaf is two hinged panels of H/2.
+       Bottom edge B runs vertically in the frame uprights, top edge T runs horizontally along the lintel into the garage,
+       the hinge M is the outer point of the fold, so nothing ever passes the frame line. Open: both panels flat under the ceiling. */
+    const P = pillarFor(state.w, state.h, false) / 1000, FM = M.frame, T = .04;
+    const fh = dh, fw = dw, zF = -.05, lw = fw - 2 * P + .02, lh = fh - P - .03 + .01, lz = zF + .005, L = lh / 2, gap = .006;
+    const frame = new THREE.Group();
+    frame.add(box(P, fh, T + .03, FM, -(fw / 2 - P / 2), fh / 2, zF - .015));
+    frame.add(box(P, fh, T + .03, FM, (fw / 2 - P / 2), fh / 2, zF - .015));
+    frame.add(box(fw - 2 * P + .002, P, T + .03, FM, 0, fh - P / 2, zF - .015, { rot: true }));
+    snap.add(frame);
+    // side counterweight boxes behind the uprights
+    [-1, 1].forEach(sg => g.add(box(CW_W, fh - .02, CW_D, M.galv, sg * (fw / 2 - CW_W / 2), (fh - .02) / 2, zF - T - CW_D / 2 - .02, { shadow: studio })));
+    const gL = new THREE.Group(), gU = new THREE.Group();
+    const lower = makeLeaf(lw, L - gap, state.model, M, { depth: T, joints: false }); lower.position.set(0, (L - gap) / 2, 0); gL.add(lower);
+    const upper = makeLeaf(lw, L - gap, state.model, M, { depth: T, joints: false }); upper.position.set(0, (L - gap) / 2 + gap, 0); gU.add(upper);
+    shellHandle(lower, 0, 1.05 - (L - gap) / 2, lower.userData.raise, M, state.handle, handleColor); seal(lower, lw, -(L - gap) / 2, -.02, M, T);
+    // hinge line and the side levers (frame upright at the lintel -> upper panel), as in the film
+    gL.add(box(lw, .012, T + .006, M.seal, 0, L - gap / 2, -T / 2, { shadow: false }));
+    const levers = [-1, 1].map(sg => { const a = new THREE.Group(); a.add(box(.03, 1, .05, M.darkMetal, 0, .5, 0, { shadow: false })); a.position.set(sg * (lw / 2 - .02), 0, 0); g.add(a); return a; });
+    snap.add(gL, gU);
+    animate = t => {
+      const e = ease(t), H = lh;
+      const yb = H * Math.pow(e, 1.5), zt = -H * Math.pow(e, .7);          // the top edge leads, the bottom edge follows
+      const B = [0, yb], Tt = [zt, H + .02];                                    // (z, y) in the leaf plane coordinates, lz added below
+      const dz = Tt[0] - B[0], dy = Tt[1] - B[1], d = Math.hypot(dz, dy), hh = Math.sqrt(Math.max(0, L * L - d * d / 4));
+      const mz = (B[0] + Tt[0]) / 2 + hh * dy / d, my = (B[1] + Tt[1]) / 2 - hh * dz / d;   // hinge on the outer side of the chord
+      gL.position.set(0, B[1], lz + B[0]); gL.rotation.x = Math.atan2(mz - B[0], my - B[1]);
+      gU.position.set(0, my, lz + mz); gU.rotation.x = Math.atan2(Tt[0] - mz, Tt[1] - my);
+      levers.forEach((a, i) => {
+        const ax = i ? 1 : -1, pz = lz - .08, py = fh - .06;                   // lever pivot at the upright, just under the lintel inside
+        const uz = mz + (Tt[0] - mz) * .42, uy = my + (Tt[1] - my) * .42;      // attachment ~40 % up the upper panel
+        const len = Math.hypot(uz - pz, uy - py); a.scale.y = Math.max(.05, len); a.position.set(ax * (lw / 2 - .02), py, pz); a.rotation.x = Math.atan2(uz - pz, uy - py);
+      });
+    };
+  }
+
+  if (type === 'secur') {
     // SECUR: frame pillars 110 mm, 80 mm leaf flush with the frame, counterweight boxes 370 mm deep beside the opening (inside)
     const P = pillarFor(state.w, state.h, state.pedestrian) / 1000, FM = type === 'secur' ? M.door : M.frame, T = type === 'basculap' ? .04 : LEAF_T;
     const fh = dh, fw = dw, zF = -.05, lw = fw - 2 * P + .02, lh = fh - P - .03 + .01, lz = zF + .005;
