@@ -225,11 +225,12 @@ function renderTrajCard(tr) {
     ['½ H', 'Ausschwenken außen / innen', `${mm(tr.aOut)} / ${mm(tr.aIn)}`],
     ['¾ H', 'Ausschwenken außen / innen', `${mm(tr.bOut)} / ${mm(tr.bIn)}`],
   ].filter(Boolean);
-  card.innerHTML = `<strong>Öffnungsbahn ${tr.nonprotruding ? 'nicht ausschwenkend' : 'ausschwenkend (Standard)'}</strong>
+  card.innerHTML = `<button type="button" class="traj-summary" aria-expanded="false"><span>Öffnungsbahn${tr.nonprotruding ? '' : ` · S ${mm(tr.s)}`} · R ${mm(tr.r)} · E ${mm(tr.e)} mm</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><strong>Öffnungsbahn ${tr.nonprotruding ? 'nicht ausschwenkend' : 'ausschwenkend (Standard)'}</strong>
     <small>Bestellhöhe H ${mm(state.h)} mm${tr.exact ? '' : ` · Tabellenzeile ${mm(tr.h)} mm`} · Rahmenkopf 110 mm · Torblatt hinten 150 mm unter dem Sturz</small>
     <table>${rows.map(([k, l, v]) => `<tr><th>${k}</th><td>${l}</td><td>${typeof v === 'number' ? mm(v) : v} mm</td></tr>`).join('')}</table>
     <small>Preisliste 08/2026, Seite ${tr.nonprotruding ? '10' : '9'}. ${tr.nonprotruding ? 'Nicht ausschwenkendes Torblatt: Code F01, 651 €.' : 'Vergrößerter Überstand 50/100/150 mm: Code G31, 514 €.'}</small>`;
 }
+$('trajCard').addEventListener('click', e => { const b = e.target.closest('.traj-summary'); if (!b) return; const open = $('trajCard').classList.toggle('is-open'); b.setAttribute('aria-expanded', String(open)); });
 function setTrajVisible(on) {
   if (traj) traj.visible = on;
   $('trajCard').hidden = !on || !trajRow && state.type !== 'secur';

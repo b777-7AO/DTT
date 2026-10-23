@@ -277,3 +277,26 @@
 .cfg-assist-btn.is-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
 .cfg-assist-btn:hover { border-color: var(--navy); }
 @media (max-width: 900px) { .cfg-assist { top: 50px; font-size: .78rem; flex-wrap: wrap; justify-content: center; } }
+
+/* phone: the trajectory card collapses to one line at the top of the stage, tap to open; photo tools scroll sideways */
+.traj-summary { display: none; }
+@media (max-width: 900px) {
+  .cfg-traj-card { top: 50px; left: 10px; right: 10px; max-width: none; padding: 0; font-size: .72rem; overflow: hidden; }
+  .cfg-traj-card .traj-summary { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: .5rem; border: 0; background: transparent; padding: .5rem .7rem; font: inherit; font-family: var(--font-head); font-weight: 600; font-size: .74rem; color: var(--navy); cursor: pointer; text-align: left; }
+  .cfg-traj-card .traj-summary svg { width: 16px; height: 16px; flex: none; transition: transform .2s; }
+  .cfg-traj-card.is-open .traj-summary svg { transform: rotate(180deg); }
+  .cfg-traj-card > strong, .cfg-traj-card > small, .cfg-traj-card > table { display: none; margin-left: .7rem; margin-right: .7rem; }
+  .cfg-traj-card.is-open > strong, .cfg-traj-card.is-open > small, .cfg-traj-card.is-open > table { display: block; }
+  .cfg-traj-card.is-open > table { display: table; width: calc(100% - 1.4rem); margin: .2rem .7rem .4rem; }
+  .cfg-traj-card.is-open > small:last-child { padding-bottom: .5rem; }
+  .cfg-traj-card tr:nth-child(n+4) { display: table-row; }
+  .cfg-traj-card.is-open > small:last-child { display: block; }
+  .cfg-traj { font-size: .62rem; padding: .2rem .4rem; }
+  .cfg-photo-tools { flex-wrap: nowrap; overflow-x: auto; gap: .4rem; padding: .5rem 10px; scrollbar-width: none; }
+  .cfg-photo-tools::-webkit-scrollbar { display: none; }
+  .cfg-photo-tools .btn { flex: none; white-space: nowrap; }
+  .cfg-photo-tools .cfg-hint { display: none; }
+  .cfg-assist { top: 48px; left: 10px; right: 10px; transform: none; max-width: none; }
+}
+.l-short { display: none; }
+@media (max-width: 900px) { .l-long { display: none; } .l-short { display: inline; } }
