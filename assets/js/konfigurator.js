@@ -470,7 +470,9 @@ function renderUI() {
   const t = C.TYPES[state.type], model = C.MODELS[state.model];
   // 1 Tortyp
   const ty = $('optType'); ty.innerHTML = '';
-  Object.entries(C.TYPES).forEach(([id, v]) => { const b = el('button', 'cfg-card', `${ICONS[id]}<span>${v.label}<small>${v.desc}</small></span>`); b.type = 'button'; b.dataset.id = id; b.setAttribute('aria-pressed', String(state.type === id)); ty.appendChild(b); });
+  const TYPE_IMG = { secur: 'assets/img/garagentore-1.jpg', sr: 'assets/img/garagentore-4.jpg', sl: 'assets/img/garagentore-3.jpg', basculap: 'assets/img/garagentore-2.jpg', steel: 'assets/img/catalog/cover-guardy.jpg', wing: 'assets/img/garagentore-5.jpg' };
+  const TYPE_ONE = { secur: 'Echtholz, ein Torblatt, kippt nach oben', sr: 'Echtholz-Lamellen, läuft unter die Decke', sl: 'Echtholz, öffnet zur Seite', basculap: 'Kipptor, lackiert, günstig', steel: 'Stahl, 40 mm Paneel, läuft unter die Decke', wing: 'Zwei Flügel, öffnen nach außen' };
+  Object.entries(C.TYPES).forEach(([id, v]) => { const b = el('button', 'cfg-tile', `<img src="${TYPE_IMG[id]}" alt="" loading="lazy"><span><strong>${v.short}</strong><small>${TYPE_ONE[id]}</small></span>${ICONS[id]}`); b.type = 'button'; b.dataset.id = id; b.setAttribute('aria-pressed', String(state.type === id)); ty.appendChild(b); });
   $('typeFacts').innerHTML = t.facts.map(f => `<li>${f}</li>`).join('');
   // 2 Modell: family tabs + cards with live thumbnails
   const fams = t.families; if (!fams.includes(familyTab)) familyTab = model.family;
@@ -494,7 +496,11 @@ function renderUI() {
       ss.hidden = false;
       [['std', 'Standardpaneel'], ['paint', 'Lackiert in RAL'], ['db703', 'DB 703 Eisenglimmer']].forEach(([id, l]) => chip(ss, id, l, state.surface === id));
       const sc = $('optSteelColor'); sc.innerHTML = ''; sc.className = 'cfg-swatches' + (state.surface === 'paint' ? '' : ' is-empty');
-      if (state.surface === 'paint') C.RAL.forEach(c => swatch(sc, c.id, `RAL ${c.id}<br>${c.name}`, c.hex, state.color === c.id));
+      if (state.surface === 'paint') {
+        const POP = ['9016', '9010', '7016', '7035', '7039', '9005', '8017', '6009'], expanded = sc.dataset.all === '1' || !POP.includes(state.color);
+        (expanded ? C.RAL : POP.map(id => C.RAL.find(r => r.id === id))).forEach(c => swatch(sc, c.id, `RAL ${c.id}<br>${c.name}`, c.hex, state.color === c.id));
+        const more = el('button', 'cfg-swatch cfg-swatch-more', `<span class="dot">${expanded ? '−' : '+'}</span><small>${expanded ? 'Weniger' : 'Alle 28 Farben'}</small>`); more.type = 'button'; more.dataset.id = '__more'; sc.appendChild(more);
+      }
       $('steelPaintNote').textContent = state.surface === 'paint' ? `Lackierung außen ${['9006', '9007'].includes(state.color) ? '43' : '38'} € je m² Torfläche, auch in NCS oder beidseitig auf Anfrage.` : state.surface === 'db703' ? 'DB 703 Eisenglimmer-Paneel, Aufpreis 5 % auf den Torpreis.' : 'Paneel laut aktuellem Paneelangebot, ohne Lackierung.';
     }
   }
@@ -504,7 +510,13 @@ function renderUI() {
   const SL = { paint: 'Lackiert (RAL)', stain: 'Imprägniert', natural: 'Natur', metal: 'Metal Skin' };
   surfs.forEach(s => chip(st, s, SL[s], state.surface === s)); st.hidden = surfs.length < 2;
   const co = $('optColor'); co.innerHTML = ''; const cn = $('colorName');
-  if (state.surface === 'paint') { C.RAL.forEach(c => swatch(co, c.id, `RAL ${c.id}<br>${c.name}`, c.hex, state.color === c.id)); co.className = 'cfg-swatches'; }
+  if (state.surface === 'paint') {
+    const POP = ['9016', '9010', '7016', '7035', '7039', '9005', '8017', '6009'];
+    const sel = C.RAL.findIndex(r => r.id === state.color), expanded = co.dataset.all === '1' || (sel >= 0 && !POP.includes(state.color));
+    const list = expanded ? C.RAL : POP.map(id => C.RAL.find(r => r.id === id));
+    list.forEach(c => swatch(co, c.id, `RAL ${c.id}<br>${c.name}`, c.hex, state.color === c.id)); co.className = 'cfg-swatches';
+    const more = el('button', 'cfg-swatch cfg-swatch-more', `<span class="dot">${expanded ? '−' : '+'}</span><small>${expanded ? 'Weniger' : 'Alle 28 Farben'}</small>`); more.type = 'button'; more.dataset.id = '__more'; co.appendChild(more);
+  }
   else if (state.surface === 'stain') { C.STAINS.forEach(c => swatch(co, c.id, c.name, swCss(c.sw), state.color === c.id)); co.className = 'cfg-swatches'; }
   else if (state.surface === 'metal') { C.METAL.forEach(c => swatch(co, c.id, c.name, c.hex, state.color === c.id)); co.className = 'cfg-swatches'; }
   else co.className = 'cfg-swatches is-empty';
@@ -624,7 +636,7 @@ document.addEventListener('click', e => {
   else if (box === 'optModel') update({ model: id });
   else if (box === 'optEssence') update({ essence: id, surface: id === 'okoume' ? (state.surface === 'natural' ? 'paint' : state.surface) : (state.surface === 'paint' || state.surface === 'metal' ? 'natural' : state.surface) });
   else if (box === 'optSurface') update({ surface: id });
-  else if (box === 'optColor') update({ color: id });
+  else if (box === 'optColor') { if (id === '__more') { const co = $('optColor'); co.dataset.all = co.dataset.all === '1' ? '0' : '1'; renderUI(); } else update({ color: id }); }
   else if (box === 'optFinish') update({ finish: id });
   else if (box === 'optWindows') update({ windows: id === 'none' ? '' : id });
   else if (box === 'optTransom') update({ transom: id === 'none' ? '' : id }, { world: true });
@@ -635,7 +647,7 @@ document.addEventListener('click', e => {
   else if (box === 'optFacade') update({ facade: id }, { world: true });
   else if (box === 'optRoof') update({ roof: id }, { world: true });
   else if (box === 'optSteelSurface') update({ surface: id });
-  else if (box === 'optSteelColor') update({ color: id });
+  else if (box === 'optSteelColor') { if (id === '__more') { const co = $('optSteelColor'); co.dataset.all = co.dataset.all === '1' ? '0' : '1'; renderUI(); } else update({ color: id }); }
   else if (box === 'optHardware') update({ hardware: id });
   else if (box === 'optSprings') update({ springs: id });
   else if (box === 'optFve') update({ fveType: id });
@@ -661,12 +673,21 @@ $('saveImage').addEventListener('click', () => {
   const a = document.createElement('a'); a.href = url; a.download = `DTT-${C.MODELS[state.model].label}-${state.surface === 'paint' ? state.color : state.surface}.jpg`; a.click();
 });
 document.querySelectorAll('.cfg-tab').forEach(tab => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
-document.querySelectorAll('.cfg-step-head').forEach(h => h.addEventListener('click', () => { const s = h.parentElement; s.classList.toggle('is-collapsed'); }));
-document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => { const s = $(b.dataset.jump); s.classList.remove('is-collapsed'); s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
-document.querySelectorAll('.cfg-stepnav a').forEach(a => a.addEventListener('click', e => { e.preventDefault(); const s = $(a.dataset.step); s.classList.remove('is-collapsed'); s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
-(() => { const panel = document.querySelector('.cfg-panel'), links = [...document.querySelectorAll('.cfg-stepnav a')]; if (!panel) return;
-  const io = new IntersectionObserver(entries => { entries.forEach(en => { if (en.isIntersecting) links.forEach(l => l.classList.toggle('is-active', l.dataset.step === en.target.id)); }); }, { root: window.matchMedia('(max-width: 900px)').matches ? null : panel, rootMargin: '-20% 0px -70% 0px', threshold: 0 });
-  ['step1', 'step2', 'step3', 'step4', 'step5'].forEach(id => io.observe($(id))); })();
+/* wizard: one step at a time */
+let step = 1; const STEPS = 6;
+function showStep(n, scroll = true) {
+  step = Math.max(1, Math.min(STEPS, n));
+  for (let i = 1; i <= STEPS; i++) { const sec = $('step' + i); if (sec) sec.classList.toggle('is-active', i === step); }
+  document.querySelectorAll('#cfgProgress li').forEach(li => { const k = +li.dataset.step; li.classList.toggle('is-active', k === step); li.classList.toggle('is-done', k < step); });
+  $('prevStep').hidden = step === 1; $('nextStep').hidden = step === STEPS; $('stickyRequest').hidden = step !== STEPS;
+  $('nextStep').childNodes[0].textContent = step === STEPS - 1 ? 'Fertig' : 'Weiter';
+  if (scroll) { const panel = document.querySelector('.cfg-panel'); if (window.matchMedia('(max-width: 900px)').matches) $('cfgProgress').scrollIntoView({ behavior: 'smooth', block: 'start' }); else panel.scrollTo({ top: 0, behavior: 'smooth' }); }
+}
+$('prevStep').addEventListener('click', () => showStep(step - 1)); $('nextStep').addEventListener('click', () => showStep(step + 1));
+document.querySelectorAll('#cfgProgress li').forEach(li => li.addEventListener('click', () => showStep(+li.dataset.step)));
+
+document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => showStep(+b.dataset.jump.replace('step', ''))));
+showStep(q.has('step') ? +q.get('step') : 1, false);
 
 /* ------------------------------------------------------------------ Go */
 if (q.has('clean')) document.body.classList.add('cfg-clean');

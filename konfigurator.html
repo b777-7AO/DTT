@@ -15,7 +15,7 @@
   <meta name="theme-color" content="#000e28">
   <link rel="stylesheet" href="assets/css/fonts.css">
   <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="stylesheet" href="assets/css/konfigurator.css?v=70">
+  <link rel="stylesheet" href="assets/css/konfigurator.css?v=81">
   <script type="importmap">
   { "imports": {
       "three": "./assets/vendor/three/three.module.js",
@@ -117,37 +117,33 @@
       <header class="cfg-panel-head">
         <div class="cfg-head-row">
           <h1>Tor-Studio</h1>
-          <button type="button" class="cfg-reset" id="resetBtn">Zurücksetzen</button>
+          <button type="button" class="cfg-reset" id="resetBtn">Neu starten</button>
         </div>
-        <p>Stellen Sie Ihr Tor in fünf Schritten zusammen. Jede Wahl erscheint sofort in 3D.</p>
-        <div class="cfg-subhead">Schnellstart</div>
-        <div class="cfg-chips" id="optPreset"></div>
+        <ol class="cfg-progress" id="cfgProgress" aria-label="Schritte">
+          <li data-step="1" class="is-active"><span>1</span>Tortyp</li><li data-step="2"><span>2</span>Design</li><li data-step="3"><span>3</span>Farbe</li><li data-step="4"><span>4</span>Extras</li><li data-step="5"><span>5</span>Maß</li><li data-step="6"><span>6</span>Fertig</li>
+        </ol>
+        <div class="cfg-chips" id="optPreset" hidden></div>
       </header>
-      <nav class="cfg-stepnav" aria-label="Schritte">
-        <a href="#step1" data-step="step1" class="is-active">Tortyp</a><a href="#step2" data-step="step2">Modell</a><a href="#step3" data-step="step3">Oberfläche</a><a href="#step4" data-step="step4">Ausstattung</a><a href="#step5" data-step="step5">Maß</a>
-      </nav>
 
       <section class="cfg-step" id="step1">
-        <button type="button" class="cfg-step-head"><span class="t">Tortyp</span><span class="cfg-sel" id="selType"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-head"><h2>Welches Tor darf es sein?</h2><p>Tippen Sie eine Bauart an. Sie sehen sie sofort am Haus.</p><span class="cfg-sel" id="selType" hidden></span></div>
         <div class="cfg-step-body">
           <div class="cfg-cards" id="optType"></div>
           <ul class="cfg-facts" id="typeFacts"></ul>
-          <button type="button" class="cfg-next" data-jump="step2">Weiter: Modell<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </section>
 
       <section class="cfg-step" id="step2">
-        <button type="button" class="cfg-step-head"><span class="t">Modell</span><span class="cfg-sel" id="selModel"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-head"><h2>Welches Design gefällt Ihnen?</h2><p>Jede Karte zeigt das Design in Ihrer aktuellen Farbe.</p><span class="cfg-sel" id="selModel" hidden></span></div>
         <div class="cfg-step-body">
           <div class="cfg-chips cfg-chips-tabs" id="optFamily"></div>
           <p class="cfg-help" id="familyDesc"></p>
           <div class="cfg-models" id="optModel"></div>
-          <button type="button" class="cfg-next" data-jump="step3">Weiter: Oberfläche<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </section>
 
       <section class="cfg-step" id="step3">
-        <button type="button" class="cfg-step-head"><span class="t">Oberfläche</span><span class="cfg-sel" id="colorName"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-head"><h2>Welche Farbe oder welches Holz?</h2><p class="cfg-sel-line">Aktuell: <span id="colorName"></span></p></div>
         <div class="cfg-step-body">
           <div class="cfg-fixed" id="surfFixed" hidden></div>
           <div id="steelSurface" hidden>
@@ -167,12 +163,11 @@
               <div class="cfg-chips" id="optFinish"></div>
             </div>
           </div>
-          <button type="button" class="cfg-next" data-jump="step4">Weiter: Ausstattung<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </section>
 
       <section class="cfg-step" id="step4">
-        <button type="button" class="cfg-step-head"><span class="t">Ausstattung</span><span class="cfg-sel" id="selOptions"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-head"><h2>Was soll Ihr Tor können?</h2><p>Alles hier ist optional. Ohne Auswahl bekommen Sie die Serienausstattung.</p><span class="cfg-sel" id="selOptions" hidden></span></div>
         <div class="cfg-step-body">
           <div id="securOptions">
             <label class="cfg-switch"><input type="checkbox" id="opt_securplus"><span class="track"></span><span class="text"><strong>SECUR PLUS</strong><small>Einbruchschutz Klasse 3 statt Klasse 1, verstärkter Rahmen</small></span></label>
@@ -192,27 +187,28 @@
           <div class="cfg-swatches small" id="optHandle"></div>
           <div class="cfg-subhead">Antrieb</div>
           <div class="cfg-chips" id="optDrive"></div>
-          <div class="cfg-subhead">Smart &amp; Zubehör</div>
+          <details class="cfg-more"><summary>Smart-Home und Zubehör</summary>
           <label class="cfg-switch"><input type="checkbox" id="opt_sildomo"><span class="track"></span><span class="text"><strong>SILDOMO</strong><small>Öffnen per Smartphone, bis 10 Nutzer</small></span></label>
           <label class="cfg-switch"><input type="checkbox" id="opt_link"><span class="track"></span><span class="text"><strong>SILDOMO LINK</strong><small>WLAN, Alexa und Google Home</small></span></label>
           <label class="cfg-switch"><input type="checkbox" id="opt_keypad"><span class="track"></span><span class="text"><strong>Funk-Codetastatur</strong><small>Beleuchtet, mit Unterputz-Empfänger</small></span></label>
           <label class="cfg-switch"><input type="checkbox" id="opt_remote"><span class="track"></span><span class="text"><strong>Zusätzlicher Handsender</strong><small>4 Kanäle</small></span></label>
           <label class="cfg-switch"><input type="checkbox" id="opt_blockmatic"><span class="track"></span><span class="text"><strong>BLOCKMATIC</strong><small>Motorische Sicherheitsriegel</small></span></label>
+          </details>
           </div>
           <div id="steelOptions" hidden></div>
-          <button type="button" class="cfg-next" data-jump="step5">Weiter: Maß &amp; Haus<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </section>
 
       <section class="cfg-step" id="step5">
-        <button type="button" class="cfg-step-head"><span class="t">Maß &amp; Haus</span><span class="cfg-sel" id="selSize"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="cfg-step-head"><h2>Wie groß ist Ihre Öffnung?</h2><p>Ungefähr reicht. Das genaue Maß nehmen wir vor Ort.</p><span class="cfg-sel" id="selSize" hidden></span></div>
         <div class="cfg-step-body">
-          <div class="cfg-subhead">Bestellmaß</div>
+          <div class="cfg-subhead">Typische Größen</div>
+          <div class="cfg-chips cfg-size-presets" id="optSize"></div>
+          <div class="cfg-subhead">Oder genau eingeben</div>
           <div class="cfg-size">
             <label>Breite<span class="unit"><input type="number" id="inpW" min="2000" max="6500" step="5" inputmode="numeric">mm</span></label>
             <label>Höhe<span class="unit"><input type="number" id="inpH" min="1875" max="3480" step="5" inputmode="numeric">mm</span></label>
           </div>
-          <div class="cfg-chips" id="optSize"></div>
           <p class="cfg-help" id="sectorNote"></p>
           <div id="houseGroup">
             <div class="cfg-subhead">Fassade</div>
@@ -223,8 +219,8 @@
         </div>
       </section>
 
-      <section class="cfg-summary" id="summaryBox">
-        <h2>Ihre Konfiguration</h2>
+      <section class="cfg-summary cfg-step" id="step6">
+        <div class="cfg-step-head"><h2>Ihr Tor ist fertig.</h2><p>So sieht Ihre Zusammenstellung aus. Mit einem Klick fragen Sie das Angebot an.</p></div>
         <div class="cfg-pricebox" id="priceBox"></div>
         <details class="cfg-details"><summary>Konfiguration im Detail</summary><dl id="summary"></dl></details>
         <div class="cfg-summary-actions">
@@ -235,15 +231,17 @@
         <p class="cfg-note">Alle Modelle, Maße und Preise nach unseren Preislisten (Echtholz 08/2026, Stahl-Sektionaltore ab 14.09.2026). Die 3D-Darstellung ist eine maßstäbliche Visualisierung, die Montage erfolgt nach Aufmaß durch DTT.</p>
       </section>
 
-      <div class="cfg-sticky" id="stickyBar">
-        <div class="cfg-sticky-text"><span class="dot" id="stickyDot"></span><span id="stickySummary"></span><strong id="stickyPrice"></strong></div>
-        <a class="btn btn-primary btn-sm" id="stickyRequest" href="pages/kontakt.html">Anfragen</a>
+      <div class="cfg-wiznav" id="wizNav">
+        <button type="button" class="btn btn-ghost" id="prevStep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Zurück</button>
+        <div class="wiz-price"><span class="dot" id="stickyDot"></span><span class="wiz-price-text"><small>Preisindikation</small><strong id="stickyPrice"></strong></span><span id="stickySummary" hidden></span></div>
+        <button type="button" class="btn btn-primary" id="nextStep">Weiter<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <a class="btn btn-primary" id="stickyRequest" href="pages/kontakt.html" hidden>Angebot anfragen</a>
       </div>
     </aside>
   </main>
 
   <div data-include="partials/footer.html" data-root=""></div>
   <script src="assets/js/main.js"></script>
-  <script type="module" src="assets/js/konfigurator.js?v=70"></script>
+  <script type="module" src="assets/js/konfigurator.js?v=81"></script>
 </body>
 </html>

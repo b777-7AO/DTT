@@ -252,3 +252,78 @@
   .cfg-models { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 560px) { .cfg-models { grid-template-columns: repeat(2, 1fr); } .cfg-swatches { grid-template-columns: repeat(4, 1fr); } .cfg-summary-actions { grid-template-columns: 1fr; } .cfg-cards { grid-template-columns: repeat(3, 1fr); } .cfg-card span { font-size: .72rem; } .cfg-imgopts, .cfg-imgopts.cols-2 { grid-template-columns: repeat(2, 1fr); } .cfg-stage { height: 42vh; min-height: 260px; } }
+
+/* ============================================================
+   v7 wizard: one step at a time, big picture tiles, progress
+   ============================================================ */
+.cfg-progress { list-style: none; margin: 1rem 0 0; padding: 0 0 1rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: .3rem; border-bottom: 1px solid var(--line); counter-reset: none; }
+.cfg-progress li { display: grid; justify-items: center; gap: .35rem; font-family: var(--font-head); font-size: .7rem; font-weight: 600; color: var(--muted); cursor: pointer; text-align: center; position: relative; }
+.cfg-progress li span { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line-dark); display: grid; place-items: center; font-size: .78rem; color: var(--text-soft); background: #fff; transition: .2s; }
+.cfg-progress li::before { content: ""; position: absolute; top: 13px; left: -50%; right: 50%; height: 2px; background: var(--line); z-index: 0; }
+.cfg-progress li:first-child::before { display: none; }
+.cfg-progress li span { position: relative; z-index: 1; }
+.cfg-progress li.is-done span { background: var(--primary); border-color: var(--primary); color: #fff; }
+.cfg-progress li.is-done::before { background: var(--primary); }
+.cfg-progress li.is-active { color: var(--primary); }
+.cfg-progress li.is-active span { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 0 4px var(--primary-soft); }
+.cfg-progress li.is-active::before { background: var(--primary); }
+.cfg-progress li:hover span { border-color: var(--primary); }
+
+.cfg-step { display: none; border-top: 0; margin-top: 0; }
+.cfg-step.is-active { display: block; animation: stepIn .25s var(--ease); }
+@keyframes stepIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.cfg-step-head { display: block; padding: 1.3rem 0 1rem; cursor: default; }
+.cfg-step-head h2 { font-size: 1.3rem; margin: 0 0 .3rem; letter-spacing: -.01em; }
+.cfg-step-head p { margin: 0; font-size: .92rem; color: var(--text-soft); }
+.cfg-sel-line { font-size: .9rem; color: var(--text-soft); }
+.cfg-sel-line span { color: var(--navy); font-weight: 600; }
+.cfg-step .chev { display: none; }
+.cfg-step-body { padding-bottom: 1rem; }
+
+/* big picture tiles for the door type */
+#optType { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+.cfg-tile { position: relative; border: 1px solid var(--line); border-radius: 3px; background: #fff; padding: 0; cursor: pointer; text-align: left; font: inherit; color: var(--navy); overflow: hidden; display: grid; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.cfg-tile img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.cfg-tile > span { display: grid; gap: .15rem; padding: .65rem .75rem .75rem; }
+.cfg-tile strong { font-family: var(--font-head); font-size: .9rem; font-weight: 700; }
+.cfg-tile small { font-size: .76rem; color: var(--text-soft); line-height: 1.35; }
+.cfg-tile > svg { position: absolute; top: 8px; left: 8px; width: 40px; height: 30px; background: rgba(255,255,255,.92); border-radius: 3px; padding: 4px; color: var(--navy); }
+.cfg-tile:hover { border-color: var(--line-dark); box-shadow: var(--shadow-card); transform: translateY(-1px); }
+.cfg-tile[aria-pressed="true"] { border-color: var(--primary); box-shadow: inset 0 0 0 2px var(--primary); }
+.cfg-tile[aria-pressed="true"]::after { content: ""; position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; background: var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 14px no-repeat; }
+.cfg-tile[aria-pressed="true"] strong { color: var(--primary); }
+
+.cfg-size-presets .cfg-chip { padding: .6rem 1rem; font-size: .9rem; }
+
+.cfg-wiznav { display: flex; justify-content: space-between; gap: .6rem; padding: .6rem 0 1rem; }
+.cfg-wiznav .btn { flex: 1; }
+.cfg-wiznav #nextStep { flex: 2; }
+.cfg-summary.cfg-step { border-top: 0; padding-top: 0; }
+
+@media (max-width: 900px) {
+  .cfg-progress { grid-template-columns: repeat(6, 1fr); gap: .15rem; }
+  .cfg-progress li { font-size: .62rem; }
+  .cfg-progress li span { width: 24px; height: 24px; font-size: .7rem; }
+  .cfg-progress li::before { top: 11px; }
+  .cfg-wiznav { position: sticky; bottom: 0; background: rgba(255,255,255,.97); margin-inline: -1.2rem; padding-inline: 1.2rem; z-index: 4; border-top: 1px solid var(--line); }
+}
+
+/* v7.1: price lives in the sticky wizard bar, popular colours first, accessories behind a disclosure */
+.cfg-sticky { display: none; }
+.cfg-wiznav { position: sticky; bottom: -2rem; margin: 1rem -1.8rem -2rem; padding: .8rem 1.8rem 1.6rem; background: rgba(255,255,255,.97); border-top: 1px solid var(--line); z-index: 4; box-shadow: 0 -10px 24px -16px rgba(0,14,40,.3); display: flex; align-items: center; gap: .6rem; }
+.cfg-wiznav .btn { flex: none; }
+.cfg-wiznav #nextStep, .cfg-wiznav #stickyRequest { flex: 1; }
+.wiz-price { flex: 1; min-width: 0; display: flex; align-items: center; gap: .55rem; }
+.wiz-price .dot { width: 18px; height: 18px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); background: #383e42; }
+.wiz-price-text { display: grid; line-height: 1.15; min-width: 0; }
+.wiz-price-text small { font-size: .68rem; color: var(--muted); }
+.wiz-price-text strong { font-family: var(--font-head); font-size: 1rem; color: var(--navy); white-space: nowrap; }
+.cfg-swatch-more .dot { display: grid; place-items: center; background: var(--bg-soft); color: var(--primary); font-size: 1.3rem; font-weight: 600; }
+.cfg-more { margin-top: .8rem; border: 1px solid var(--line); border-radius: 3px; padding: 0 .8rem; }
+.cfg-more summary { cursor: pointer; padding: .7rem 0; font-family: var(--font-head); font-weight: 600; font-size: .86rem; color: var(--navy); list-style: none; display: flex; justify-content: space-between; }
+.cfg-more summary::-webkit-details-marker { display: none; }
+.cfg-more summary::after { content: "+"; color: var(--primary); font-size: 1.1rem; line-height: 1; }
+.cfg-more[open] summary::after { content: "\2013"; }
+.cfg-more[open] { padding-bottom: .4rem; }
+@media (max-width: 1180px) { .cfg-wiznav { margin-inline: -1.4rem; padding-inline: 1.4rem; } }
+@media (max-width: 900px) { .cfg-wiznav { margin-inline: -1.2rem; padding-inline: 1.2rem; bottom: 0; padding-bottom: .8rem; } .wiz-price-text small { display: none; } }
