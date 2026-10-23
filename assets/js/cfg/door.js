@@ -433,32 +433,24 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
     gL.add(box(lw, .012, T + .006, M.seal, 0, L - gap / 2, -T / 2, { shadow: false }));
     const levers = [-1, 1].map(sg => { const a = new THREE.Group(); a.add(box(.03, 1, .05, M.darkMetal, 0, .5, 0, { shadow: false })); a.position.set(sg * (lw / 2 - .02), 0, 0); g.add(a); return a; });
     snap.add(gL, gU);
-    /* Two stackable panels (price list p. 3): phase 1 the hinge rises from mid height to the lintel line and stays at the frame
-       (a few cm proud, within the 70 mm frame face), the top edge slides inward along the lintel, the lower panel hangs vertical in
-       the uprights; phase 2 the lower panel swings up and slides in beneath the upper one while the pair moves in to R (stacked under the ceiling). */
-    const tr = foldTrajectoryFor(state.h), yTop = fh - .25 + .02, Rd = tr ? tr.r / 1000 : L + .3;
-    const SPLIT = .6, gapS = T + .012, OUT = .06;
+    /* Two stackable panels (price list p. 3): each section has its lower edge guided in the uprights and its upper edge on the
+       lintel line. The upper section lifts first and lies horizontal at the lintel, its far edge at R; the lower section follows up
+       the uprights and slides in horizontally beneath it. Open = both sections stacked under the ceiling from R − L to R. */
+    const tr = foldTrajectoryFor(state.h), yTop = fh - .25 + .02, Rd = tr ? tr.r / 1000 : L + .3, gapS = T + .012;
+    const sm = k => k * k * (3 - 2 * k);
+    const section = (k, yLow, yHigh) => {           // k 0..1: lower edge rises yLow→yHigh in the uprights, upper edge slides along the lintel line inward
+      const kk = sm(k), yP = yLow + (yHigh - yLow) * kk, yQ = Math.max(yP, (yLow + L) + (yHigh - (yLow + L)) * kk);
+      const dy = Math.min(L, yQ - yP), zQ = -Math.sqrt(Math.max(0, L * L - dy * dy)) - (Rd - L) * kk, zP = zQ + Math.sqrt(Math.max(0, L * L - dy * dy));
+      return { yP, zP, yQ, zQ };
+    };
     animate = t => {
       const e = ease(t);
-      let ym, zm, yb, zb, yt, zt;
-      if (e <= SPLIT) {
-        const k = e / SPLIT, kk = k * k * (3 - 2 * k);
-        ym = L + (yTop - L) * kk; zm = OUT * Math.sin(Math.PI * Math.min(1, k * 1.15));
-        yb = ym - Math.sqrt(Math.max(0, L * L - zm * zm)); zb = 0;                       // lower panel hangs in the uprights
-        const yGuide = 2 * L + .02 + (yTop - 2 * L - .02) * kk;                            // top edge descends to the lintel line
-        const dy = Math.min(L, Math.max(0, yGuide - ym)); yt = ym + dy; zt = zm - Math.sqrt(Math.max(0, L * L - dy * dy));
-      } else {
-        const k = (e - SPLIT) / (1 - SPLIT), kk = k * k * (3 - 2 * k);
-        ym = yTop; zm = OUT - (Rd - L + OUT) * kk;                                        // hinge slides in to R − L
-        yt = yTop; zt = zm - L;                                                           // upper panel horizontal, inward
-        const phi = Math.PI / 2 * kk;                                                     // lower panel swings up and slides in UNDER the upper one
-        zb = zm - L * Math.sin(phi); yb = ym - L * Math.cos(phi) - gapS * Math.sin(phi);
-      }
-      gL.position.set(0, yb, lz + zb); gL.rotation.x = Math.atan2(zm - zb, ym - yb);
-      gU.position.set(0, ym, lz + zm); gU.rotation.x = Math.atan2(zt - zm, yt - ym);
+      const U = section(Math.min(1, e / .62), L, yTop), Lo = section(Math.max(0, Math.min(1, (e - .3) / .7)), 0, yTop - gapS);
+      gL.position.set(0, Lo.yP, lz + Lo.zP); gL.rotation.x = Math.atan2(Lo.zQ - Lo.zP, Lo.yQ - Lo.yP);
+      gU.position.set(0, U.yP, lz + U.zP); gU.rotation.x = Math.atan2(U.zQ - U.zP, U.yQ - U.yP);
       levers.forEach((a, i) => {
         const ax = i ? 1 : -1, pz = lz - .1, py = fh - .08;
-        const uz = lz + zm + (zt - zm) * .42, uy = ym + (yt - ym) * .42;
+        const uz = lz + U.zP + (U.zQ - U.zP) * .42, uy = U.yP + (U.yQ - U.yP) * .42;
         const len = Math.hypot(uz - pz, uy - py); a.scale.y = Math.max(.05, len); a.position.set(ax * (lw / 2 - .02), py, pz); a.rotation.x = Math.atan2(uz - pz, uy - py);
       });
     };
