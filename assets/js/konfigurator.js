@@ -292,7 +292,8 @@ const thumbs = (() => {
     const url = r.domElement.toDataURL('image/jpeg', .85);
     if (own) mats.applyDoor(state);
     // only cache once every texture of this finish has arrived, otherwise the leaf renders black
-    if (assetsReady) cache.set(key(id), url);
+    const ready = [M.door.map, M.door.normalMap, M.door.roughnessMap].every(t => !t || (t.image && (t.image.complete !== false)) || t.isCanvasTexture);
+    if (assetsReady && ready) cache.set(key(id), url); else setTimeout(() => thumbs.refresh(), 900);
     return url;
   }
   function pump() {
