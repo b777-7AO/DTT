@@ -214,11 +214,11 @@ export const ROOF = { flat: 'Flachdach', gable: 'Satteldach' };
 
 /* Schnellstart-Vorlagen */
 export const PRESETS = [
-  { id: 'vip7016', label: 'VIP Anthrazit', patch: { type: 'secur', model: 'vip', essence: 'okoume', surface: 'paint', color: '7016' } },
+  { id: 'vipoak', label: 'VIP Eiche', patch: { type: 'secur', model: 'vip', essence: 'oak', surface: 'natural', color: 'oak' } },
   { id: 'oldoak', label: 'OLD Eiche', patch: { type: 'secur', model: 'old', essence: 'oak', surface: 'natural', color: 'oak' } },
   { id: 'slotlarch', label: 'SLOT Lärche', patch: { type: 'secur', model: 'slot', essence: 'larch_br', surface: 'natural', color: 'larch_br' } },
-  { id: 'sugi', label: 'SUGI schwarz', patch: { type: 'secur', model: 'sugi' } },
   { id: 'greece', label: 'Materia Greece', patch: { type: 'secur', model: 'greece' } },
+  { id: 'vip7016', label: 'VIP Anthrazit', patch: { type: 'secur', model: 'vip', essence: 'okoume', surface: 'paint', color: '7016' } },
   { id: 'srwhite', label: 'SR Piana Weiß', patch: { type: 'sr', model: 'sr_piana', essence: 'okoume', surface: 'paint', color: '9016' } },
   { id: 'steel7016', label: 'Stahl Anthrazit', patch: { type: 'steel', model: 'st_glatt', surface: 'paint', color: '7016' } },
 ];

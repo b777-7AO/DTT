@@ -20,7 +20,7 @@ const $ = id => document.getElementById(id);
 
 /* ------------------------------------------------------------------ State */
 const state = {
-  type: 'secur', model: 'vip', essence: 'okoume', surface: 'paint', color: '7016', finish: 'matt',
+  type: 'secur', model: 'vip', essence: 'oak', surface: 'natural', color: 'oak', finish: 'matt',   // first visit: natural oak, never a dark lacquer
   securplus: false, nonprotruding: false, pedestrian: false, windows: '', transom: '', grille: false, glazing: false,
   handle: 'std', drive: 'combimatic', sildomo: false, link: false, keypad: false, remote: false, blockmatic: false,
   w: 3000, h: 2250, facade: 'weiss', roof: 'flat', mode: 'house', view: 'street',
