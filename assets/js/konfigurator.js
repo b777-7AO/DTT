@@ -102,7 +102,7 @@ renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadow
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 let assetsReady = false;
-const manager = new THREE.LoadingManager(() => { assetsReady = true; finishLoading(); });
+const manager = new THREE.LoadingManager(() => { assetsReady = true; finishLoading(); if (window.__thumbsReady) window.__thumbsReady(); });
 const mats = createMaterials(renderer, manager);
 const { M, tx } = mats;
 
@@ -281,11 +281,19 @@ const thumbs = (() => {
     const fill = new THREE.DirectionalLight(0xe8f0ff, .9); fill.position.set(2, .5, 2); sc.add(fill);
     sc.background = new THREE.Color(0xe6e8eb); cam = new THREE.PerspectiveCamera(26, W / H, .05, 20); cam.position.set(.55, .3, 2.05); cam.lookAt(0, -.02, 0);
   }
-  function key(id) { return id + '|' + state.model + state.surface + state.color + state.essence + state.finish; }
+  function key(id) { return id + '|' + (fixedFinish(id) ? 'own' : state.surface + state.color + state.essence + state.finish); }
+  const fixedFinish = id => { const m = C.MODELS[id]; return m.family === 'materia' || m.family === 'japan' || !!m.woodlook; };
   function render(id) {
     if (!r) init();
+    // models with their own surface (sandstone, charred or aged fir, wood-look foil) are drawn in that surface, not in the current one
+    const own = fixedFinish(id) || fixedFinish(state.model);
+    if (own) mats.applyDoor({ ...state, model: id });
     const leaf = makeLeaf(1.24, .8, id, M, { joints: false }); sc.add(leaf); const fl = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), M.studioFloor); fl.rotation.x = -Math.PI / 2; fl.position.y = -.4; sc.add(fl); r.render(sc, cam); sc.remove(leaf, fl); dispose(leaf); fl.geometry.dispose();
-    const url = r.domElement.toDataURL('image/jpeg', .85); cache.set(key(id), url); return url;
+    const url = r.domElement.toDataURL('image/jpeg', .85);
+    if (own) mats.applyDoor(state);
+    // only cache once every texture of this finish has arrived, otherwise the leaf renders black
+    if (assetsReady) cache.set(key(id), url);
+    return url;
   }
   function pump() {
     if (busy || !queue.length) return; busy = true;
@@ -299,8 +307,10 @@ const thumbs = (() => {
     invalidate() { queue = queue.filter(q => q.el.isConnected); },
     clearCache() { cache.clear(); },
     debug(id) { return render(id); },
+    refresh() { cache.clear(); document.querySelectorAll('#optModel .cfg-model').forEach(b => { queue.push({ id: b.dataset.id, el: b.querySelector('img') }); }); setTimeout(pump, 0); },
   };
 })();
+window.__thumbsReady = () => thumbs.refresh();
 
 /* ------------------------------------------------------------------ Price indication (manufacturer list prices 08/2026) */
 /* list price of the steel sectional door (price list Rev. 2635, valid from 14.09.2026) */
