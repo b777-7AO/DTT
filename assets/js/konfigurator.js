@@ -14,6 +14,7 @@ import * as G from './cfg/catalog_guardy.js';
 import { createMaterials, TEX } from './cfg/materials.js';
 import { buildDoorRig, makeLeaf, ease, steelSections } from './cfg/door.js';
 import { buildHouse, buildStudio, dispose, updateImpostors } from './cfg/house.js';
+import { detectDoor } from './cfg/photo_detect.js';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -468,28 +469,64 @@ function applyOverlay() {
   if (!photo.corners || !photo.snapW) return;
   const r = photoRect(), pts = photo.corners.map(([nx, ny]) => [r.x + nx * r.w, r.y + ny * r.h]);
   transform2d(photo.overlay, photo.snapW, photo.snapH, pts);
-  photo.handles.forEach((hd, i) => { hd.style.left = pts[i][0] + 'px'; hd.style.top = pts[i][1] + 'px'; hd.hidden = false; });
-  const svg = $('quadSvg'); svg.removeAttribute('hidden'); $('quadPoly').setAttribute('points', pts.map(p => p.join(',')).join(' '));
-  const mv = $('moveHandle'); mv.hidden = false; const cx = pts.reduce((a, p) => a + p[0], 0) / 4, cy = pts.reduce((a, p) => a + p[1], 0) / 4; mv.style.left = cx + 'px'; mv.style.top = cy + 'px';
+  photo.handles.forEach((hd, i) => { hd.style.left = pts[i][0] + 'px'; hd.style.top = pts[i][1] + 'px'; hd.hidden = assist.handlesHidden; });
+  const svg = $('quadSvg'); svg.toggleAttribute('hidden', assist.handlesHidden); $('quadPoly').setAttribute('points', pts.map(p => p.join(',')).join(' '));
+  const mv = $('moveHandle'); mv.hidden = assist.handlesHidden; const cx = pts.reduce((a, p) => a + p[0], 0) / 4, cy = pts.reduce((a, p) => a + p[1], 0) / 4; mv.style.left = cx + 'px'; mv.style.top = cy + 'px';
   photo.overlay.hidden = false;
+}
+/* ---- assistant: find the garage opening in the photo, offer to hide the handles once the user has adjusted them ---- */
+const assist = { handlesHidden: false, moved: false, asked: false };
+function assistMsg(text, actions = [], busy = false) {
+  const box = $('photoAssist'); box.hidden = false; box.classList.toggle('is-busy', busy);
+  $('photoAssistText').textContent = text;
+  const act = $('photoAssistActions'); act.innerHTML = '';
+  actions.forEach(([label, fn, primary]) => { const b = el('button', 'cfg-assist-btn' + (primary ? ' is-primary' : ''), label); b.type = 'button'; b.addEventListener('click', () => { box.hidden = true; fn(); }); act.appendChild(b); });
+  if (!actions.length && !busy) setTimeout(() => { if ($('photoAssistText').textContent === text) box.hidden = true; }, 4500);
+}
+function setHandlesHidden(on) {
+  assist.handlesHidden = on;
+  photo.handles.forEach(h => { h.hidden = on; }); $('moveHandle').hidden = on; $('quadSvg').toggleAttribute('hidden', on);
+  const b = $('photoHandles'); b.textContent = on ? 'Ecken anzeigen' : 'Ecken ausblenden'; b.setAttribute('aria-pressed', String(!on));
+}
+function runDetect() {
+  assistMsg('Tor wird im Foto gesucht …', [], true);
+  setTimeout(() => {
+    let res = null;
+    try { res = detectDoor(photo.img); } catch (err) { console.error('detect', err); }
+    if (res && res.score >= .55) {
+      photo.corners = res.corners.map(p => [p[0], p[1]]); setHandlesHidden(false); applyOverlay();
+      assistMsg(`Garagenöffnung erkannt (${Math.round(res.score * 100)} % sicher). Passt die Lage?`, [['Passt', () => setHandlesHidden(true), true], ['Anpassen', () => { assist.asked = false; }]]);
+    } else {
+      defaultCorners(); setHandlesHidden(false); applyOverlay();
+      assistMsg('Kein eindeutiges Tor gefunden. Ziehen Sie die orangefarbenen Ecken auf Ihre Garagenöffnung.');
+    }
+  }, 40);
 }
 function loadPhoto(file) {
   if (!file) return; const url = URL.createObjectURL(file);
-  photo.img.onload = () => { $('photoEmpty').hidden = true; photo.img.hidden = false; $('photoTools').hidden = false; renderDoorSnapshot(); defaultCorners(); applyOverlay(); };
+  assist.moved = false; assist.asked = false;
+  photo.img.onload = () => { $('photoEmpty').hidden = true; photo.img.hidden = false; $('photoTools').hidden = false; renderDoorSnapshot(); defaultCorners(); applyOverlay(); runDetect(); };
   photo.img.src = url;
 }
+function afterManualMove() {
+  assist.moved = true;
+  if (assist.asked || assist.handlesHidden) return; assist.asked = true;
+  setTimeout(() => assistMsg('Ecken ausblenden, um das Tor frei im Foto zu sehen?', [['Ausblenden', () => setHandlesHidden(true), true], ['Später', () => {}]]), 350);
+}
+$('photoDetect').addEventListener('click', runDetect);
+$('photoHandles').addEventListener('click', () => setHandlesHidden(!assist.handlesHidden));
 photo.handles.forEach((hd, i) => {
   hd.addEventListener('pointerdown', e => { hd.setPointerCapture(e.pointerId); photo.drag = i; e.preventDefault(); });
   hd.addEventListener('pointermove', e => { if (photo.drag !== i) return; const s = photo.stage.getBoundingClientRect(), r = photoRect(); photo.corners[i] = [(e.clientX - s.left - r.x) / r.w, (e.clientY - s.top - r.y) / r.h]; applyOverlay(); });
-  hd.addEventListener('pointerup', () => { photo.drag = null; });
+  hd.addEventListener('pointerup', () => { if (photo.drag === i) afterManualMove(); photo.drag = null; });
 });
 (() => { const mv = $('moveHandle'); let last = null;
   mv.addEventListener('pointerdown', e => { mv.setPointerCapture(e.pointerId); last = [e.clientX, e.clientY]; e.preventDefault(); });
   mv.addEventListener('pointermove', e => { if (!last) return; const r = photoRect(); const dx = (e.clientX - last[0]) / r.w, dy = (e.clientY - last[1]) / r.h; last = [e.clientX, e.clientY]; photo.corners = photo.corners.map(([x, y]) => [x + dx, y + dy]); applyOverlay(); });
-  mv.addEventListener('pointerup', () => { last = null; }); })();
+  mv.addEventListener('pointerup', () => { if (last) afterManualMove(); last = null; }); })();
 $('photoInput').addEventListener('change', e => loadPhoto(e.target.files[0]));
 $('photoInput2').addEventListener('change', e => loadPhoto(e.target.files[0]));
-$('photoReset').addEventListener('click', () => { defaultCorners(); applyOverlay(); });
+$('photoReset').addEventListener('click', () => { defaultCorners(); setHandlesHidden(false); applyOverlay(); });
 window.addEventListener('resize', () => { if (photo.active) applyOverlay(); });
 function adj(m) { return [m[4] * m[8] - m[5] * m[7], m[2] * m[7] - m[1] * m[8], m[1] * m[5] - m[2] * m[4], m[5] * m[6] - m[3] * m[8], m[0] * m[8] - m[2] * m[6], m[2] * m[3] - m[0] * m[5], m[3] * m[7] - m[4] * m[6], m[1] * m[6] - m[0] * m[7], m[0] * m[4] - m[1] * m[3]]; }
 function mulMM(a, b) { const c = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { let s = 0; for (let k = 0; k < 3; k++) s += a[3 * i + k] * b[3 * k + j]; c[3 * i + j] = s; } return c; }
