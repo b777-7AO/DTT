@@ -2,7 +2,7 @@
    Maßhaltig nach Herstellerangaben (Torblatt 80 mm, Rahmenpfosten 110 mm, Gegengewichtskasten 370 mm tief, Fräsnut 9 × 5 mm).
    Jede Fräsung ist echte Geometrie: dunkle Rückplatte + erhabene Leisten/Kassetten, keine koplanaren Flächen. */
 import * as THREE from 'three';
-import { MODELS, HANDLES, pillarFor, trajectoryFor } from './catalog.js';
+import { MODELS, HANDLES, pillarFor, trajectoryFor, foldTrajectoryFor } from './catalog.js';
 import { GRID_STD, GRID_EXT, HARDWARE, WINDOWS as ST_WINDOWS } from './catalog_guardy.js';
 
 /* number of panel sections of the steel door for a size, from the price grid rows */
@@ -433,17 +433,21 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
     gL.add(box(lw, .012, T + .006, M.seal, 0, L - gap / 2, -T / 2, { shadow: false }));
     const levers = [-1, 1].map(sg => { const a = new THREE.Group(); a.add(box(.03, 1, .05, M.darkMetal, 0, .5, 0, { shadow: false })); a.position.set(sg * (lw / 2 - .02), 0, 0); g.add(a); return a; });
     snap.add(gL, gU);
+    /* Inward fold, envelope from the price-list table (A…G at 1000…2200 mm, open leaf 250 mm under the frame head):
+       the hinge M runs along the envelope into the garage, the bottom edge B stays in the uprights, the top edge T on the lintel line. */
+    const tr = foldTrajectoryFor(state.h), yTop = fh - .25 + .02, H = lh;
+    const envPts = [[0, 0], ...(tr ? tr.pts.map(([y, v]) => [y / 1000, v / 1000]) : [[1.0, .11], [1.4, .22], [1.8, .55]]), [yTop, L]];
+    const envAt = y => { for (let i = 1; i < envPts.length; i++) if (y <= envPts[i][0]) { const [y0, z0] = envPts[i - 1], [y1, z1] = envPts[i], k = Math.max(0, Math.min(1, (y - y0) / (y1 - y0))), kk = k * k * (3 - 2 * k); return z0 + (z1 - z0) * kk; } return envPts[envPts.length - 1][1]; };
     animate = t => {
-      const e = ease(t), H = lh;
-      const yb = H * Math.pow(e, 1.5), zt = -H * Math.pow(e, .7);          // the top edge leads, the bottom edge follows
-      const B = [0, yb], Tt = [zt, H + .02];                                    // (z, y) in the leaf plane coordinates, lz added below
-      const dz = Tt[0] - B[0], dy = Tt[1] - B[1], d = Math.hypot(dz, dy), hh = Math.sqrt(Math.max(0, L * L - d * d / 4));
-      const mz = (B[0] + Tt[0]) / 2 + hh * dy / d, my = (B[1] + Tt[1]) / 2 - hh * dz / d;   // hinge on the outer side of the chord
-      gL.position.set(0, B[1], lz + B[0]); gL.rotation.x = Math.atan2(mz - B[0], my - B[1]);
-      gU.position.set(0, my, lz + mz); gU.rotation.x = Math.atan2(Tt[0] - mz, Tt[1] - my);
+      const e = ease(t);
+      const ym = L + (yTop - L) * e, zm = -Math.min(L - .001, envAt(ym));            // hinge: height from mid to lintel line, inward by the envelope
+      const yb = ym - Math.sqrt(Math.max(0, L * L - zm * zm));                         // bottom edge in the uprights, z = 0
+      const dyT = yTop - ym, zt = zm - Math.sqrt(Math.max(0, L * L - dyT * dyT));     // top edge on the lintel line, further inside
+      gL.position.set(0, yb, lz); gL.rotation.x = Math.atan2(zm, ym - yb);
+      gU.position.set(0, ym, lz + zm); gU.rotation.x = Math.atan2(zt - zm, dyT);
       levers.forEach((a, i) => {
-        const ax = i ? 1 : -1, pz = lz - .08, py = fh - .06;                   // lever pivot at the upright, just under the lintel inside
-        const uz = mz + (Tt[0] - mz) * .42, uy = my + (Tt[1] - my) * .42;      // attachment ~40 % up the upper panel
+        const ax = i ? 1 : -1, pz = lz - .1, py = fh - .08;
+        const uz = lz + zm + (zt - zm) * .42, uy = ym + dyT * .42;
         const len = Math.hypot(uz - pz, uy - py); a.scale.y = Math.max(.05, len); a.position.set(ax * (lw / 2 - .02), py, pz); a.rotation.x = Math.atan2(uz - pz, uy - py);
       });
     };

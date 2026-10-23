@@ -187,7 +187,9 @@ function buildTrajectory() {
   if (traj) { world.remove(traj); dispose(traj); traj = null; }
   trajRow = null; trajPts = {};
   $('trajCard').hidden = true; $('trajLabels').innerHTML = '';
-  if (state.type !== 'secur' || photo.active) return;
+  if (photo.active) return;
+  if (state.type === 'basculap') { buildFoldTrajectory(); return; }
+  if (state.type !== 'secur') return;
   const tr = C.trajectoryFor(state.h, state.nonprotruding); if (!tr) { renderTrajCard(null); return; }
   trajRow = tr;
   const H = state.h / 1000, dw = dims.dw, sOut = tr.nonprotruding ? 0 : tr.s / 1000, r = tr.r / 1000, e = tr.e / 1000;
@@ -215,6 +217,31 @@ function buildTrajectory() {
   Object.entries(L).forEach(([k, t]) => { const d = el('div', 'cfg-traj', t); d.dataset.k = k; d.hidden = true; $('trajLabels').appendChild(d); });
   renderTrajCard(tr);
 }
+/* two-section door (SECURLAP OO list p. 4): inward envelope A…G, R under the ceiling, Hnp = H − 250 */
+function buildFoldTrajectory() {
+  const tr = C.foldTrajectoryFor(state.h), mm = v => v.toLocaleString('de-DE'), card = $('trajCard');
+  if (!tr) { trajRow = null; card.innerHTML = `<strong>Öffnungsbahn</strong><p>Das zweiteilige Kipptor ist bis 2.980 mm Bestellhöhe gelistet. Für ${mm(state.h)} mm bitte anfragen.</p>`; return; }
+  trajRow = tr;
+  const dw = dims.dw, Hm = state.h / 1000, hnp = tr.hnp / 1000, R = tr.r / 1000;
+  const sh = new THREE.Shape(); sh.moveTo(0, .02);
+  const inner = tr.pts.map(([y, v]) => new THREE.Vector2(-v / 1000, y / 1000));
+  sh.splineThru([...inner, new THREE.Vector2(-Math.min(R, inner.length ? Math.max(R * .55, inner[inner.length - 1].x * -1 + .2) : R * .5), hnp - .02)]);
+  sh.lineTo(-R, hnp); sh.lineTo(-R, hnp + .06); sh.lineTo(0, hnp + .06); sh.closePath();
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: dw, bevelEnabled: false, curveSegments: 24 });
+  geo.rotateY(-Math.PI / 2); geo.translate(dw / 2, 0, 0);
+  traj = new THREE.Group(); const m = new THREE.Mesh(geo, trajMat); m.renderOrder = 2; traj.add(m);
+  traj.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 12), trajLine)); traj.visible = false; world.add(traj);
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+  trajPts = { r: [dw / 2 - .15, hnp + .1, -R], hnp: [0, hnp - .08, -R * .5] };
+  const L = { r: `R ${mm(tr.r)} mm · Platzbedarf unter der Decke`, hnp: `Hnp ${mm(tr.hnp)} mm · Durchfahrtshöhe offen` };
+  tr.pts.forEach(([y, v], i) => { const k = 'p' + i; trajPts[k] = [-dw / 2 + .15, y / 1000, -v / 1000]; L[k] = `${letters[C.TRAJECTORY_FOLD.heights.indexOf(y)]} ${mm(v)} mm · bei ${mm(y)} mm`; });
+  Object.entries(L).forEach(([k, t]) => { const d = el('div', 'cfg-traj', t); d.dataset.k = k; d.hidden = true; $('trajLabels').appendChild(d); });
+  const rows = tr.pts.map(([y, v]) => [letters[C.TRAJECTORY_FOLD.heights.indexOf(y)], `Ausschwenken nach innen in ${mm(y)} mm Höhe`, v]);
+  card.innerHTML = `<button type="button" class="traj-summary" aria-expanded="false"><span>Öffnungsbahn · R ${mm(tr.r)} · Hnp ${mm(tr.hnp)} mm</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><strong>Öffnungsbahn zweiteiliges Kipptor, nicht ausschwenkend</strong>
+    <small>Bestellhöhe H ${mm(state.h)} mm${tr.exact ? '' : ` · Tabellenzeile ${mm(tr.h)} mm`} · offenes Torblatt 250 mm unter dem Rahmenkopf · Rahmenpfosten 400 mm tief, 70 mm Ansicht</small>
+    <table>${rows.map(([k, l, v]) => `<tr><th>${k}</th><td>${l}</td><td>${mm(v)} mm</td></tr>`).join('')}<tr><th>R</th><td>Platzbedarf unter der Decke ab Rahmenlinie</td><td>${mm(tr.r)} mm</td></tr><tr><th>Hnp</th><td>Durchfahrtshöhe bei offenem Tor</td><td>${mm(tr.hnp)} mm</td></tr></table>
+    <small>Preisliste SECURLAP OO 08/2026, Seite 4. Das Tor schwenkt beim Öffnen nicht nach außen.</small>`;
+}
 function renderTrajCard(tr) {
   const card = $('trajCard'), mm = v => v.toLocaleString('de-DE');
   if (!tr) { card.innerHTML = `<strong>Öffnungsbahn</strong><p>Nicht ausschwenkend ist bis 2.580 mm Bestellhöhe gelistet. Für ${mm(state.h)} mm bitte anfragen.</p>`; return; }
@@ -233,7 +260,7 @@ function renderTrajCard(tr) {
 $('trajCard').addEventListener('click', e => { const b = e.target.closest('.traj-summary'); if (!b) return; const open = $('trajCard').classList.toggle('is-open'); b.setAttribute('aria-expanded', String(open)); });
 function setTrajVisible(on) {
   if (traj) traj.visible = on;
-  $('trajCard').hidden = !on || !trajRow && state.type !== 'secur';
+  $('trajCard').hidden = !on || (!trajRow && state.type !== 'secur' && state.type !== 'basculap');
   if (!on) $('trajLabels').querySelectorAll('.cfg-traj').forEach(d => { d.hidden = true; });
 }
 
@@ -264,7 +291,7 @@ function goView(name, instant = false) {
   const v = { tgt: v0.tgt, pos: v0.tgt.map((t, i) => t + (v0.pos[i] - t) * k) };
   document.querySelectorAll('#cfgViews button').forEach(b => b.classList.toggle('is-active', b.dataset.view === name));
   setTrajVisible(name === 'inside' && state.mode === 'house');
-  if (name === 'inside' && state.mode === 'house' && state.type === 'secur' && doorTarget === 0 && !instant) setDoor(true);
+  if (name === 'inside' && state.mode === 'house' && (state.type === 'secur' || state.type === 'basculap') && doorTarget === 0 && !instant) setDoor(true);
   controls.minAzimuthAngle = -Infinity; controls.maxAzimuthAngle = Infinity; controls.minDistance = .5; controls.maxDistance = 60; controls.minPolarAngle = 0;
   if (instant) { camera.position.fromArray(v.pos); controls.target.fromArray(v.tgt); applyLimits(v0); controls.update(); return; }
   pendingLimits = v0;

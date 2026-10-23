@@ -219,6 +219,29 @@ export const TRAJECTORY = {
   headroom: { frameHead: 110, lossOpen: '230/310', rearDrop: 150 },
   options: { G31: { label: 'Vergrößerter Überstand 50/100/150 mm', price: 514 }, F01: { label: 'Nicht ausschwenkendes Torblatt', price: 651 }, F02: { label: 'Deckenführungen nach Vorgabe der Technik', price: 2259 }, G10: { label: 'Distanzleisten 25 mm zwischen Wand und Rahmen (Torblatt nicht über die Lichte hinaus)', price: 261 } },
 };
+
+/* Öffnungsbahn des zweiteiligen Kipptors (Preisliste SECURLAP OO 08/2026, S. 4 "Door dimensions and opening trajectory").
+   Het = Bestellhöhe Außenkante Rahmen, Hnp = Durchfahrtshöhe bei offenem Tor (= Het − 250), A…G = Ausschwenken des Torblatts
+   nach INNEN in Höhe 1000/1200/1400/1600/1800/2000/2200 mm über Fertigfußboden, R = Platzbedarf unter der Decke ab Rahmenlinie. mm. */
+export const TRAJECTORY_FOLD = {
+  heights: [1000, 1200, 1400, 1600, 1800, 2000, 2200],
+  rows: [
+    [1980, 1730, [180, 310, 440, 850, null, null, null], 1350], [2030, 1780, [170, 300, 400, 800, null, null, null], 1400], [2080, 1830, [150, 280, 350, 650, null, null, null], 1450], [2130, 1880, [120, 200, 300, 500, null, null, null], 1500],
+    [2180, 1930, [100, 150, 250, 380, 620, null, null], 1350], [2230, 1980, [100, 150, 250, 350, 550, null, null], 1400], [2280, 2030, [110, 150, 220, 320, 550, null, null], 1450], [2330, 2080, [110, 150, 220, 320, 500, null, null], 1500],
+    [2380, 2130, [110, 160, 220, 320, 480, 750, null], 1550], [2430, 2180, [120, 160, 220, 320, 480, 750, null], 1600], [2480, 2230, [120, 160, 220, 320, 480, 750, null], 1650], [2530, 2280, [120, 160, 220, 320, 480, 750, null], 1700],
+    [2580, 2330, [120, 160, 220, 320, 480, 750, null], 1750], [2630, 2380, [120, 160, 220, 320, 480, 750, 950], 1800], [2680, 2430, [120, 160, 220, 320, 480, 750, 950], 1850], [2730, 2480, [130, 180, 250, 370, 520, 700, 950], 1900],
+    [2780, 2530, [130, 180, 250, 370, 520, 700, 950], 1950], [2830, 2580, [130, 180, 250, 370, 520, 700, 880], 2000], [2880, 2630, [130, 180, 250, 370, 520, 700, 880], 2050], [2930, 2680, [130, 180, 250, 370, 520, 700, 880], 2100],
+    [2980, 2730, [130, 180, 250, 370, 520, 700, 880], 2150],
+  ].map(([h, hnp, inward, r]) => ({ h, hnp, inward, r })),
+  frame: { face: 70, upright: 400, headTop: 250 },
+};
+export function foldTrajectoryFor(h) {
+  const row = TRAJECTORY_FOLD.rows.find(r => r.h >= h) || null;
+  if (!row) return null;
+  const pts = TRAJECTORY_FOLD.heights.map((y, i) => [y, row.inward[i]]).filter(([y, v]) => v != null && y < row.hnp);
+  return { ...row, pts, exact: row.h === h };
+}
+
 /* row for an order height: the next listed height (table step 50 mm); null when the variant is not listed for this height */
 export function trajectoryFor(h, nonprotruding = false) {
   const rows = nonprotruding ? TRAJECTORY.nonprotruding : TRAJECTORY.protruding;
