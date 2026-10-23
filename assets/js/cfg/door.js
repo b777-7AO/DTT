@@ -431,6 +431,7 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
     shellHandle(lower, 0, 1.05 - (L - gap) / 2, lower.userData.raise, M, state.handle, handleColor); seal(lower, lw, -(L - gap) / 2, -.02, M, T);
     // hinge line and the side levers (frame upright at the lintel -> upper panel), as in the film
     gL.add(box(lw, .012, T + .006, M.seal, 0, L - gap / 2, -T / 2, { shadow: false }));
+    [-1, 1].forEach(sg => [.0, .34].forEach(o => gL.add(box(.06, .09, .012, M.darkMetal, sg * (lw / 2 - .08 - o), L - gap / 2 - .02, -T - .006, { shadow: false }))));
     const levers = [-1, 1].map(sg => { const a = new THREE.Group(); a.add(box(.03, 1, .05, M.darkMetal, 0, .5, 0, { shadow: false })); a.position.set(sg * (lw / 2 - .02), 0, 0); g.add(a); return a; });
     snap.add(gL, gU);
     /* Two stackable panels (price list p. 3): each section has its lower edge guided in the uprights and its upper edge on the
@@ -445,7 +446,13 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
     };
     animate = t => {
       const e = ease(t);
-      const U = section(Math.min(1, e / .62), L, yTop), Lo = section(Math.max(0, Math.min(1, (e - .3) / .7)), 0, yTop - gapS);
+      const U = section(Math.min(1, e / .62), L, yTop);
+      // lower blade stays hinged to the upper blade's lower edge: it hangs in the uprights while the upper one lies down,
+      // then swings in on that joint until it lies beneath the upper blade (stacked, still connected)
+      const k2 = sm(Math.max(0, Math.min(1, (e - .62) / .38))), phi = Math.PI / 2 * k2;
+      const hang = Math.sqrt(Math.max(0, L * L - U.zP * U.zP));
+      const Lo = { yQ: U.yP, zQ: U.zP, yP: U.yP - hang * Math.cos(phi) - gapS * Math.sin(phi), zP: U.zP - L * Math.sin(phi) + (hang - L) * Math.cos(phi) * 0 };
+      if (k2 === 0) Lo.zP = 0;
       gL.position.set(0, Lo.yP, lz + Lo.zP); gL.rotation.x = Math.atan2(Lo.zQ - Lo.zP, Lo.yQ - Lo.yP);
       gU.position.set(0, U.yP, lz + U.zP); gU.rotation.x = Math.atan2(U.zQ - U.zP, U.yQ - U.yP);
       levers.forEach((a, i) => {
