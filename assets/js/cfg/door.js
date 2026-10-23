@@ -435,7 +435,7 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
     snap.add(gL, gU);
     /* Two stackable panels (price list p. 3): phase 1 the hinge rises from mid height to the lintel line and stays at the frame
        (a few cm proud, within the 70 mm frame face), the top edge slides inward along the lintel, the lower panel hangs vertical in
-       the uprights; phase 2 the lower panel claps up onto the upper one while the pair slides in to R (stacked under the ceiling). */
+       the uprights; phase 2 the lower panel swings up and slides in beneath the upper one while the pair moves in to R (stacked under the ceiling). */
     const tr = foldTrajectoryFor(state.h), yTop = fh - .25 + .02, Rd = tr ? tr.r / 1000 : L + .3;
     const SPLIT = .6, gapS = T + .012, OUT = .06;
     animate = t => {
@@ -451,8 +451,8 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
         const k = (e - SPLIT) / (1 - SPLIT), kk = k * k * (3 - 2 * k);
         ym = yTop; zm = OUT - (Rd - L + OUT) * kk;                                        // hinge slides in to R − L
         yt = yTop; zt = zm - L;                                                           // upper panel horizontal, inward
-        const phi = Math.PI / 2 * kk;                                                     // clap: lower panel swings up onto the upper one
-        zb = zm - L * Math.sin(phi); yb = ym - L * Math.cos(phi) + gapS * Math.sin(phi);
+        const phi = Math.PI / 2 * kk;                                                     // lower panel swings up and slides in UNDER the upper one
+        zb = zm - L * Math.sin(phi); yb = ym - L * Math.cos(phi) - gapS * Math.sin(phi);
       }
       gL.position.set(0, yb, lz + zb); gL.rotation.x = Math.atan2(zm - zb, ym - yb);
       gU.position.set(0, ym, lz + zm); gU.rotation.x = Math.atan2(zt - zm, yt - ym);
