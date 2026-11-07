@@ -1,6 +1,6 @@
 /* DTT Tor-Studio · Materialien (PBR, Texturen in Metern) */
 import * as THREE from 'three';
-import { RAL, STAINS, ESSENCES, METAL, STONES, SPECIAL_WOOD, MODELS } from './catalog.js?v=1107d';
+import { RAL, STAINS, ESSENCES, METAL, STONES, SPECIAL_WOOD, MODELS } from './catalog.js?v=1107e';
 
 export const TEX = 'assets/tex/';
 
@@ -83,11 +83,11 @@ export function createMaterials(renderer, manager) {
     cutoutCache.set(file, m); return m;
   }
   const sets = {};
-  const woodSet = (base) => sets['w' + base] || (sets['w' + base] = pbr('wood_' + base, 1.0));
+  const woodSet = (base) => sets['w' + base] || (sets['w' + base] = pbr((base === 'oak' || base === 'okoume' ? 'wood2_' : 'wood_') + base, 1.0));   // oak / okoumé: 2k Poly Haven veneer scans (CC0), grain turned horizontal
   const specialSet = (name, tile) => sets[name] || (sets[name] = pbr(name, tile, { mirror: true }));
   const fineStructure = tx('finestructure_n.jpg', { tile: .22 });
   const paintRough = tx('paint_r.jpg', { tile: .7 });
-  const WOOD_BASE_MEAN = { okoume: '#e09e6f', oak: '#a67c4e', larch: '#9f7447', fir: '#e6cfa9' };
+  const WOOD_BASE_MEAN = { okoume: '#d1a382', oak: '#a17e57', larch: '#9f7447', fir: '#e6cfa9' };
   const lin = hex => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 
   /* Door surface from the configuration state */

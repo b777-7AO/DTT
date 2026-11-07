@@ -9,12 +9,12 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import * as C from './cfg/catalog.js?v=1107d';
-import * as G from './cfg/catalog_guardy.js?v=1107d';
-import { createMaterials, TEX } from './cfg/materials.js?v=1107d';
-import { buildDoorRig, makeLeaf, ease, steelSections } from './cfg/door.js?v=1107d';
-import { buildHouse, buildStudio, dispose, updateImpostors } from './cfg/house.js?v=1107d';
-import { detectDoor } from './cfg/photo_detect.js?v=1107d';
+import * as C from './cfg/catalog.js?v=1107e';
+import * as G from './cfg/catalog_guardy.js?v=1107e';
+import { createMaterials, TEX } from './cfg/materials.js?v=1107e';
+import { buildDoorRig, makeLeaf, ease, steelSections } from './cfg/door.js?v=1107e';
+import { buildHouse, buildStudio, dispose, updateImpostors } from './cfg/house.js?v=1107e';
+import { detectDoor } from './cfg/photo_detect.js?v=1107e';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);

@@ -2,8 +2,8 @@
    Maßhaltig nach Herstellerangaben (Torblatt 80 mm, Rahmenpfosten 110 mm, Gegengewichtskasten 370 mm tief, Fräsnut 9 × 5 mm).
    Jede Fräsung ist echte Geometrie: dunkle Rückplatte + erhabene Leisten/Kassetten, keine koplanaren Flächen. */
 import * as THREE from 'three';
-import { MODELS, HANDLES, pillarFor, trajectoryFor, foldTrajectoryFor } from './catalog.js?v=1107d';
-import { GRID_STD, GRID_EXT, HARDWARE, WINDOWS as ST_WINDOWS } from './catalog_guardy.js?v=1107d';
+import { MODELS, HANDLES, pillarFor, trajectoryFor, foldTrajectoryFor } from './catalog.js?v=1107e';
+import { GRID_STD, GRID_EXT, HARDWARE, WINDOWS as ST_WINDOWS } from './catalog_guardy.js?v=1107e';
 
 /* number of panel sections of the steel door for a size, from the price grid rows */
 export function steelSections(w, h, hardware) {
