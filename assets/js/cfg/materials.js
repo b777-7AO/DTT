@@ -1,6 +1,6 @@
 /* DTT Tor-Studio · Materialien (PBR, Texturen in Metern) */
 import * as THREE from 'three';
-import { RAL, STAINS, ESSENCES, METAL, STONES, SPECIAL_WOOD, MODELS } from './catalog.js?v=1107c';
+import { RAL, STAINS, ESSENCES, METAL, STONES, SPECIAL_WOOD, MODELS } from './catalog.js?v=1107d';
 
 export const TEX = 'assets/tex/';
 

@@ -2,8 +2,8 @@
    Maßhaltig nach Herstellerangaben (Torblatt 80 mm, Rahmenpfosten 110 mm, Gegengewichtskasten 370 mm tief, Fräsnut 9 × 5 mm).
    Jede Fräsung ist echte Geometrie: dunkle Rückplatte + erhabene Leisten/Kassetten, keine koplanaren Flächen. */
 import * as THREE from 'three';
-import { MODELS, HANDLES, pillarFor, trajectoryFor, foldTrajectoryFor } from './catalog.js?v=1107c';
-import { GRID_STD, GRID_EXT, HARDWARE, WINDOWS as ST_WINDOWS } from './catalog_guardy.js?v=1107c';
+import { MODELS, HANDLES, pillarFor, trajectoryFor, foldTrajectoryFor } from './catalog.js?v=1107d';
+import { GRID_STD, GRID_EXT, HARDWARE, WINDOWS as ST_WINDOWS } from './catalog_guardy.js?v=1107d';
 
 /* number of panel sections of the steel door for a size, from the price grid rows */
 export function steelSections(w, h, hardware) {
@@ -449,10 +449,15 @@ export function buildDoorRig({ M, state, dims, studio = false }) {
       const U = section(Math.min(1, e / .62), L, yTop);
       // lower blade stays hinged to the upper blade's lower edge: it hangs in the uprights while the upper one lies down,
       // then swings in on that joint until it lies beneath the upper blade (stacked, still connected)
-      const k2 = sm(Math.max(0, Math.min(1, (e - .62) / .38))), phi = Math.PI / 2 * k2;
+      // phase 2 (Julian: "the lower section should slide underneath the upper section, stacked in parallel below the ceiling"):
+      // the lower blade's top edge Q leaves the joint, drops by the stacking gap and slides inward along the line just beneath the
+      // upper blade; its lower edge P follows L behind on the same path, first up the upright (z = 0), then round the corner and inward
+      const k2 = sm(Math.max(0, Math.min(1, (e - .62) / .38)));
       const hang = Math.sqrt(Math.max(0, L * L - U.zP * U.zP));
-      const Lo = { yQ: U.yP, zQ: U.zP, yP: U.yP - hang * Math.cos(phi) - gapS * Math.sin(phi), zP: U.zP - L * Math.sin(phi) + (hang - L) * Math.cos(phi) * 0 };
-      if (k2 === 0) Lo.zP = 0;
+      const yS = U.yP - gapS * Math.min(1, k2 * 4), zQ = U.zP - L * k2;                       // Q: from the joint to the far end of the upper blade
+      const back = -zQ;                                                                        // horizontal distance from Q back to the upright line
+      const Lo = back >= L ? { yQ: yS, zQ, yP: yS, zP: zQ + L } : { yQ: yS, zQ, yP: yS - Math.sqrt(Math.max(0, L * L - back * back)), zP: 0 };
+      if (k2 === 0) { Lo.yQ = U.yP; Lo.zQ = U.zP; Lo.yP = U.yP - hang; Lo.zP = 0; }
       gL.position.set(0, Lo.yP, lz + Lo.zP); gL.rotation.x = Math.atan2(Lo.zQ - Lo.zP, Lo.yQ - Lo.yP);
       gU.position.set(0, U.yP, lz + U.zP); gU.rotation.x = Math.atan2(U.zQ - U.zP, U.yQ - U.yP);
       levers.forEach((a, i) => {
