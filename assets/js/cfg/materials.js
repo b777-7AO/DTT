@@ -1,6 +1,6 @@
 /* DTT Tor-Studio · Materialien (PBR, Texturen in Metern) */
 import * as THREE from 'three';
-import { RAL, STAINS, ESSENCES, METAL, STONES, SPECIAL_WOOD, MODELS } from './catalog.js';
+import { RAL, STAINS, ESSENCES, METAL, STONES, SPECIAL_WOOD, MODELS } from './catalog.js?v=1107c';
 
 export const TEX = 'assets/tex/';
 
@@ -55,9 +55,11 @@ export function createMaterials(renderer, manager) {
     garageFloor: std({ ...pbr('garagefloor', 3), roughness: 1 }),
     pavers: std({ ...pbr('pavers', 2.0, { mirror: true }), roughness: 1, lightMap: noiseTex(.8, 1.0, 9), lightMapIntensity: 1 }),
     concrete: std({ ...pbr('concrete', 2.0), roughness: 1 }),
-    asphalt: std({ ...pbr('asphalt', 4), roughness: 1 }),
+    asphalt: std({ map: tx('asphalt_02_diff_1k.jpg', { srgb: true, tile: 5 }), normalMap: tx('asphalt_02_nor_gl_1k.jpg', { tile: 5 }), normalScale: new THREE.Vector2(.7, .7), roughnessMap: tx('asphalt_02_rough_1k.jpg', { tile: 5 }), roughness: 1, color: 0x9a9a98, lightMap: noiseTex(.78, 1.0, 13), lightMapIntensity: 1 }),   // Poly Haven asphalt_02 (CC0)
+    meadow: std({ map: tx('lawn_d.jpg', { srgb: true, tile: 2.4, mirror: true }), normalMap: tx('lawn_n.jpg', { tile: 2.4, mirror: true }), normalScale: new THREE.Vector2(.55, .55), roughness: 1, color: 0xd2dcc6, lightMap: noiseTex(.74, 1.0, 9), lightMapIntensity: 1 }),   // near lawn: mown grass with soft blotches so the tiling never shows
+    meadowFar: std({ map: tx('leafy_grass_diff_1k.jpg', { srgb: true, tile: 9, mirror: true }), normalMap: tx('leafy_grass_nor_gl_1k.jpg', { tile: 9, mirror: true }), normalScale: new THREE.Vector2(.5, .5), roughness: 1, color: 0x9cc479, lightMap: noiseTex(.7, 1.0, 40), lightMapIntensity: 1 }),   // far fields
     lawn: std({ map: tx('lawn_d.jpg', { srgb: true, tile: 2.6, mirror: true }), normalMap: tx('lawn_n.jpg', { tile: 2.6, mirror: true }), normalScale: new THREE.Vector2(.5, .5), roughness: 1, color: 0xd9dccc, lightMap: noiseTex(.58, .96, 18), lightMapIntensity: 1 }),
-    hedge: std({ map: tx('hedge_d.jpg', { srgb: true, tile: 1.1 }), normalMap: tx('hedge_n.jpg', { tile: 1.1 }), normalScale: new THREE.Vector2(.8, .8), roughness: 1 }),
+    hedge: std({ map: tx('hedge_d.jpg', { srgb: true, tile: 1.1 }), normalMap: tx('hedge_n.jpg', { tile: 1.1 }), normalScale: new THREE.Vector2(.8, .8), roughness: 1, color: 0x8a9c7c }),   // toned down: trimmed hedge, not neon
     cladding: std({ ...pbr('wood_clad', 1.25), roughness: 1, color: 0xd9c0a0 }),
     kerb: std({ color: 0xb4b1aa, roughness: .9 }),
     door: new THREE.MeshPhysicalMaterial({ color: 0x383e3f, roughness: .55, metalness: .05 }),

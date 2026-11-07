@@ -1,0 +1,7 @@
+Third-party textures and impostors used by the DTT Tor-Studio (all CC0 from Poly Haven, polyhaven.com):
+- env_yard.jpg / env_yard_1k.hdr: HDRI abandoned_hopper_terminal_04 (4k tonemapped backdrop, 1k lighting)
+- leafy_grass_*_1k.jpg, grass_ground_*_1k.jpg, aerial_grass_rock_*_1k.jpg: ground scans (diff / nor_gl / rough)
+- asphalt_02_*_1k.jpg, concrete_pavers_02_*_1k.jpg: road and paving scans
+- tree_01.webp, tree_02.webp: island_tree_01 / island_tree_02 models rendered as 8-view impostor atlases in Blender
+- imp_island_tree_01.webp, imp_tree_small_02.webp, shrub_04*.glb, potted_plant_01.glb: Poly Haven scans (earlier)
+Silvelox swatches and catalogue pictures: provided by the manufacturer (rights to be confirmed before go-live).

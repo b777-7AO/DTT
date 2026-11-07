@@ -9,12 +9,12 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import * as C from './cfg/catalog.js';
-import * as G from './cfg/catalog_guardy.js';
-import { createMaterials, TEX } from './cfg/materials.js';
-import { buildDoorRig, makeLeaf, ease, steelSections } from './cfg/door.js';
-import { buildHouse, buildStudio, dispose, updateImpostors } from './cfg/house.js';
-import { detectDoor } from './cfg/photo_detect.js';
+import * as C from './cfg/catalog.js?v=1107c';
+import * as G from './cfg/catalog_guardy.js?v=1107c';
+import { createMaterials, TEX } from './cfg/materials.js?v=1107c';
+import { buildDoorRig, makeLeaf, ease, steelSections } from './cfg/door.js?v=1107c';
+import { buildHouse, buildStudio, dispose, updateImpostors } from './cfg/house.js?v=1107c';
+import { detectDoor } from './cfg/photo_detect.js?v=1107c';
 
 const q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -98,7 +98,7 @@ readHash();
 const canvas = $('cfgCanvas'), wrap = $('canvasWrap');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
 const useAO = !q.has('noao') && window.matchMedia('(pointer: fine)').matches && Math.min(window.innerWidth, window.innerHeight) > 600;
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, useAO ? 1.75 : 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -108,26 +108,26 @@ const mats = createMaterials(renderer, manager);
 const { M, tx } = mats;
 
 const scene = new THREE.Scene();
-const sky = tx('sky.jpg', { srgb: true, wrap: false }); sky.mapping = THREE.EquirectangularReflectionMapping;
-let skyEnv = sky; new RGBELoader(manager).load(TEX + 'sky_1k.hdr', t => { t.mapping = THREE.EquirectangularReflectionMapping; skyEnv = t; if (state.mode === 'house') scene.environment = t; });
+const sky = tx('env_yard.jpg', { srgb: true, wrap: false }); sky.mapping = THREE.EquirectangularReflectionMapping;   // 4k backdrop of the same HDRI (abandoned_hopper_terminal_04, Poly Haven CC0)
+let skyEnv = sky; new RGBELoader(manager).load(TEX + 'env_yard_1k.hdr', t => { t.mapping = THREE.EquirectangularReflectionMapping; skyEnv = t; if (state.mode === 'house') scene.environment = t; });
 scene.background = sky; scene.environment = sky; scene.environmentIntensity = .55; scene.backgroundIntensity = .9;
 const SUN_IN_SKY = new THREE.Vector3(.555, .742, .377), SKY_ROT = 1.95;
 const pmrem = new THREE.PMREMGenerator(renderer); const studioEnv = pmrem.fromScene(new RoomEnvironment(), .04).texture; pmrem.dispose();
 scene.backgroundRotation.set(0, SKY_ROT, 0); scene.environmentRotation.set(0, SKY_ROT, 0);
 const sunDir = SUN_IN_SKY.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -SKY_ROT).normalize();
-const camera = new THREE.PerspectiveCamera(36, 1, .2, 320);
+const camera = new THREE.PerspectiveCamera(36, 1, .2, 1200);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = .08; controls.enablePan = false; controls.maxPolarAngle = Math.PI / 2 - .03;
 class AOPass extends GTAOPass { overrideVisibility() { super.overrideVisibility(); this.scene.traverse(o => { if (o.userData.cutout) o.visible = false; }); } }
 let composer = null, aoPass = null, aoOn = useAO;
 if (useAO) {
-  composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { samples: 4, type: THREE.HalfFloatType }));
+  composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { samples: 8, type: THREE.HalfFloatType }));
   composer.addPass(new RenderPass(scene, camera));
-  aoPass = new AOPass(scene, camera, 1, 1, {}, { radius: .34, distanceExponent: 1, thickness: 1, scale: 1, samples: 16, distanceFallOff: 1, screenSpaceRadius: false }, { lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 4, radiusExponent: 1, rings: 2, samples: 16 });
-  aoPass.output = GTAOPass.OUTPUT.Default; aoPass.blendIntensity = .95;
+  aoPass = new AOPass(scene, camera, 1, 1, {}, { radius: .34, distanceExponent: 1, thickness: 1, scale: 1, samples: 16, distanceFallOff: 1, screenSpaceRadius: false }, { lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 5, radiusExponent: 1, rings: 3, samples: 16 });
+  aoPass.output = GTAOPass.OUTPUT.Default; aoPass.blendIntensity = .8;
   composer.addPass(aoPass);
-  const lensPass = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uAmount: { value: .28 } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'uniform sampler2D tDiffuse; uniform float uTime; uniform float uAmount; varying vec2 vUv; float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + uTime) * 43758.5453); } void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - .5; float v = 1.0 - uAmount * smoothstep(.25, 1.1, dot(d, d) * 2.2); float g = (hash(vUv * 1200.0) - .5) * .012; gl_FragColor = vec4(c.rgb * v + g, c.a); }' });
+  const lensPass = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uAmount: { value: .16 }, uTexel: { value: new THREE.Vector2(1 / 1920, 1 / 1080) }, uSharpen: { value: .22 } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform sampler2D tDiffuse; uniform float uTime; uniform float uAmount; uniform vec2 uTexel; uniform float uSharpen; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); vec3 n = texture2D(tDiffuse, vUv + vec2(uTexel.x, 0.)).rgb + texture2D(tDiffuse, vUv - vec2(uTexel.x, 0.)).rgb + texture2D(tDiffuse, vUv + vec2(0., uTexel.y)).rgb + texture2D(tDiffuse, vUv - vec2(0., uTexel.y)).rgb; vec3 sharp = c.rgb + (c.rgb - n * .25) * uSharpen; vec2 d = vUv - .5; float v = 1.0 - uAmount * smoothstep(.25, 1.1, dot(d, d) * 2.2); gl_FragColor = vec4(max(sharp, 0.) * v, c.a); }' });
   composer.addPass(lensPass); composer.addPass(new OutputPass());
   window.__lens = lensPass;
 }
@@ -163,7 +163,7 @@ function buildWorld() {
   else { house = h.group; world.add(house); }
   scene.background = studioMode ? new THREE.Color(0xe9eaec) : sky;
   scene.environment = studioMode ? studioEnv : skyEnv;
-  scene.fog = studioMode ? null : new THREE.Fog(0xc9d2da, 70, 220);
+  scene.fog = studioMode ? null : new THREE.Fog(0xcfd9e2, 160, 720);
   scene.environmentIntensity = studioMode ? .75 : .55;
   sun.visible = !studioMode; hemi.visible = !studioMode; fill.visible = !studioMode; studioLights.visible = studioMode;
   renderer.toneMappingExposure = studioMode ? 1.1 : 1.0;
@@ -316,7 +316,7 @@ function setMode(mode) {
 }
 
 /* ------------------------------------------------------------------ Render loop + dimension labels */
-function resize() { const w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); if (composer) composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+function resize() { const w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); if (composer) composer.setSize(w, h); if (window.__lens) { const pr = renderer.getPixelRatio(); window.__lens.uniforms.uTexel.value.set(1 / (w * pr), 1 / (h * pr)); } camera.aspect = w / h; camera.updateProjectionMatrix(); }
 new ResizeObserver(resize).observe(wrap); resize();
 const _v = new THREE.Vector3();
 function place(el, x, y, z, edge = 40) {
@@ -340,7 +340,8 @@ const perf = { samples: [], last: 0, adjusted: false };
 function adaptQuality(now) {
   if (perf.adjusted) return; if (perf.last) perf.samples.push(now - perf.last); perf.last = now; if (perf.samples.length < 40) return;
   const avg = perf.samples.slice(5).reduce((a, b) => a + b, 0) / (perf.samples.length - 5); perf.adjusted = true;
-  if (avg > 45) { aoOn = false; renderer.setPixelRatio(1); if (composer) composer.setPixelRatio(1); resize(); if (avg > 70) { sun.shadow.mapSize.set(1024, 1024); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.needsUpdate = true; } }
+  if (avg > 34 && avg <= 60) { renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); if (composer) composer.setPixelRatio(renderer.getPixelRatio()); resize(); }
+  if (avg > 60) { aoOn = false; renderer.setPixelRatio(1); if (composer) composer.setPixelRatio(1); resize(); if (avg > 70) { sun.shadow.mapSize.set(1024, 1024); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.needsUpdate = true; } }
 }
 function finishLoading() {
   if (overlayDone || !doorRig) return; overlayDone = true;
@@ -810,7 +811,7 @@ document.querySelectorAll('.cfg-stepnav a').forEach(a => a.addEventListener('cli
 
 /* ------------------------------------------------------------------ Go */
 if (q.has('clean')) document.body.classList.add('cfg-clean');
-window.__cfg = { camera, controls, state, scene, world, dims: () => dims, price, thumbs, update, setMode, goView, setDoor, doorAt: t => { doorAnimStart = null; doorT = t; doorTarget = t >= 1 ? 1 : 0; doorRig.animate(t); }, THREE };
+window.__cfg = { renderer, draw, invalidate: () => {}, stopCam: () => { camTween = null; }, camera, controls, state, scene, world, dims: () => dims, price, thumbs, update, setMode, goView, setDoor, doorAt: t => { doorAnimStart = null; doorT = t; doorTarget = t >= 1 ? 1 : 0; doorRig.animate(t); }, THREE };
 buildWorld(); buildDoor(); renderUI();
 setMode(state.mode === 'photo' ? 'house' : state.mode);
 goView(q.get('view') || (state.mode === 'house' ? 'front' : 'studio'), true);
