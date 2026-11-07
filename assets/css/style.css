@@ -169,13 +169,15 @@ nav.main-nav > ul > li > a:hover::after, nav.main-nav > ul > li.active > a::afte
 .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, rgba(0,14,40,.42), rgba(0,14,40,.05) 60%); pointer-events: none; }
 .hero .container { position: relative; z-index: 1; }
 .hero-card {
-  background: var(--white); max-width: 600px; padding: clamp(2.2rem, 4vw, 3.4rem) clamp(1.8rem, 4vw, 3.2rem);
-  box-shadow: var(--shadow); border-top: 4px solid var(--primary);
+  background: var(--white); max-width: 390px; padding: clamp(1.2rem, 2vw, 1.6rem) clamp(1.2rem, 2.2vw, 1.6rem);
+  box-shadow: var(--shadow); border-top: 3px solid var(--primary);
 }
-.hero-card h1 { margin: 0; color: var(--navy); }
-.hero-card .lead { font-size: 1.18rem; color: var(--text-soft); margin: 0 0 1.9rem; max-width: 420px; line-height: 1.5; }
-.hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; }
-.hero-sub { margin: 1.2rem 0 0; font-size: .94rem; }
+.hero-card h1 { margin: 0; color: var(--navy); font-size: clamp(1.55rem, 2.4vw, 2.15rem); }
+.hero-card .rule { width: 32px; height: 2px; margin: .7rem 0 .8rem; }
+.hero-card .lead { font-size: .95rem; color: var(--text-soft); margin: 0 0 1rem; max-width: 330px; line-height: 1.45; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: .55rem; }
+.hero-card .btn { padding: .58rem .95rem; font-size: .84rem; }
+.hero-sub { margin: .8rem 0 0; font-size: .82rem; }
 
 /* ============================================================
    CATEGORY ROW
@@ -544,8 +546,8 @@ footer.site-footer { background: var(--navy); color: rgba(255,255,255,.72); }
   .logo-img { height: 44px; }
   .hero { padding: 1.4rem 0 2.2rem; min-height: 0; align-items: flex-end; }
   .hero::after { background: linear-gradient(180deg, rgba(0,14,40,.1), rgba(0,14,40,.55)); }
-  .hero-card { padding: 1.7rem 1.3rem 1.6rem; max-width: none; margin-top: 46vw; }
-  .hero-card .lead { font-size: 1.05rem; margin-bottom: 1.3rem; }
+  .hero-card { padding: 1.2rem 1.1rem 1.1rem; max-width: none; margin-top: 46vw; }
+  .hero-card .lead { font-size: .92rem; margin-bottom: .9rem; }
   .hero-actions { gap: .6rem; }
   .hero-actions .btn { flex: 1 1 auto; }
   .cat5 { padding: 0 20px .6rem; }
