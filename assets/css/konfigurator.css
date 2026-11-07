@@ -62,8 +62,8 @@
 
 /* ---- Photo mode ---- */
 .cfg-photo { position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; background: #2b3140; }
-.cfg-photo-stage { position: relative; flex: 1; overflow: hidden; display: grid; place-items: center; }
-.cfg-photo-stage img#photoImg { max-width: 100%; max-height: 100%; user-select: none; -webkit-user-drag: none; }
+.cfg-photo-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, 1fr); place-items: center; }   /* definite track sizes: the photo's percentage max-height resolves, tall phone pictures fit entirely */
+.cfg-photo-stage img#photoImg { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .cfg-photo-empty { text-align: center; color: #dbe2ee; max-width: 380px; padding: 2rem; display: grid; justify-items: center; gap: .6rem; }
 .cfg-photo-empty svg { color: var(--orange); }
 .cfg-photo-empty strong { font-family: var(--font-head); font-size: 1.15rem; color: #fff; }
