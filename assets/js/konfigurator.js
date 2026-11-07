@@ -21,7 +21,7 @@ const $ = id => document.getElementById(id);
 
 /* ------------------------------------------------------------------ State */
 const state = {
-  type: 'secur', model: 'vip', essence: 'oak', surface: 'natural', color: 'oak', finish: 'matt',   // first visit: natural oak, never a dark lacquer
+  type: 'secur', model: 'flat', essence: 'oak', surface: 'natural', color: 'oak', finish: 'matt',   // first visit: SECUR FLAT (Liscio) in natural oak, never a dark lacquer
   securplus: false, nonprotruding: false, pedestrian: false, windows: '', transom: '', grille: false, glazing: false,
   handle: 'std', drive: 'combimatic', sildomo: false, link: false, keypad: false, remote: false, blockmatic: false,
   w: 3000, h: 2250, facade: 'weiss', roof: 'flat', mode: 'house', view: 'street',
@@ -39,7 +39,7 @@ function readHash() {
   const p = new URLSearchParams(location.hash.slice(1));
   HASH_KEYS.forEach(k => { if (!p.has(k)) return; const v = p.get(k); state[k] = BOOLS.includes(k) ? v === '1' : (k === 'w' || k === 'h' ? parseInt(v, 10) : v); });
   if (!C.TYPES[state.type]) state.type = 'secur';
-  if (!C.MODELS[state.model]) state.model = 'vip';
+  if (!C.MODELS[state.model]) state.model = 'flat';
   state.w = clamp(state.w, limitsFor(state.type).w); state.h = clamp(state.h, limitsFor(state.type).h);
   normalise();
 }
@@ -49,7 +49,7 @@ const clamp = (v, [a, b]) => Math.min(b, Math.max(a, Number.isFinite(v) ? v : a)
 function essencesFor(modelId) {
   const m = C.MODELS[modelId];
   if (m.family === 'steel') return [];
-  if (m.family === 'basculap') return C.ESSENCES.filter(e => e.id === 'okoume');
+  if (m.family === 'basculap') return C.ESSENCES.filter(e => ['oak', 'okoume'].includes(e.id));   // Basculap: natural oak (default) or lacquered okoumé
   if (!m.table) return C.ESSENCES.filter(e => ['okoume', 'oak', 'oak_br', 'larch_br', 'fir'].includes(e.id));
   const cols = Object.keys(C.PRICES[m.table].A0);
   return C.ESSENCES.filter(e => cols.includes(e.col) && !(e.col === 'brushed' && m.table === 'bugne' && !m.brushedOk));
@@ -57,13 +57,15 @@ function essencesFor(modelId) {
 function surfacesFor(modelId, essenceId) {
   const m = C.MODELS[modelId];
   if (m.family === 'materia' || m.family === 'japan' || m.family === 'steel') return [];
-  if (m.lacquerOnly || m.family === 'basculap') return ['paint'];
+  if (m.lacquerOnly || (m.family === 'basculap' && essenceId === 'okoume')) return ['paint'];
   if (essenceId === 'okoume') return m.metalskin ? ['paint', 'stain', 'metal'] : ['paint', 'stain'];
   return ['natural', 'stain'];
 }
 function normalise() {
   const t = C.TYPES[state.type], models = C.modelsOf(state.type);
-  if (!models.includes(state.model)) state.model = models[0];
+  // type switched (model no longer belongs to the type): start every type with its smooth 'Liscio' design in natural oak
+  const LISCIO = { secur: 'flat', basculap: 'b_liscio', sr: 'sr_piana', sl: 'sl_piana', steel: 'st_glatt' };
+  if (!models.includes(state.model)) { state.model = models.includes(LISCIO[state.type]) ? LISCIO[state.type] : models[0]; if (state.type !== 'steel') { state.essence = 'oak'; state.surface = 'natural'; } }
   const ess = essencesFor(state.model); if (!ess.some(e => e.id === state.essence)) state.essence = ess[0] ? ess[0].id : 'okoume';
   const surf = surfacesFor(state.model, state.essence);
   if (state.type === 'steel') {
