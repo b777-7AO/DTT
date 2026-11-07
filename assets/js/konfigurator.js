@@ -489,9 +489,14 @@ function renderDoorSnapshot() {
   const prevT = doorT; if (prevT !== 0) doorRig.animate(0);
   const bg = scene.background, fog = scene.fog; scene.background = null; scene.fog = null;
   renderer.setSize(w, h, false); renderer.setClearColor(0x000000, 0); renderer.render(scene, cam);
-  const url = renderer.domElement.toDataURL('image/png');
+  // crop the snapshot to its opaque bounds (leaf + frame, no transparent margins), so the door fills the marked area completely
+  const src = document.createElement('canvas'); src.width = w; src.height = h; const sctx = src.getContext('2d'); sctx.drawImage(renderer.domElement, 0, 0);
   scene.background = bg; scene.fog = fog; resize(); if (prevT !== 0) doorRig.animate(prevT);
-  photo.snapW = w; photo.snapH = h; photo.overlay.src = url; photo.overlay.style.width = w + 'px'; photo.overlay.style.height = h + 'px';
+  const data = sctx.getImageData(0, 0, w, h).data; let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (data[(y * w + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  let url = src.toDataURL('image/png'), cw = w, ch = h;
+  if (x1 > x0 && y1 > y0) { cw = x1 - x0 + 1; ch = y1 - y0 + 1; const c = document.createElement('canvas'); c.width = cw; c.height = ch; c.getContext('2d').drawImage(src, x0, y0, cw, ch, 0, 0, cw, ch); url = c.toDataURL('image/png'); }
+  photo.snapW = cw; photo.snapH = ch; photo.overlay.src = url; photo.overlay.style.width = cw + 'px'; photo.overlay.style.height = ch + 'px';
 }
 function photoRect() { const s = photo.stage.getBoundingClientRect(), i = photo.img.getBoundingClientRect(); return { x: i.left - s.left, y: i.top - s.top, w: i.width, h: i.height }; }
 function defaultCorners() {
@@ -813,7 +818,7 @@ document.querySelectorAll('.cfg-stepnav a').forEach(a => a.addEventListener('cli
 
 /* ------------------------------------------------------------------ Go */
 if (q.has('clean')) document.body.classList.add('cfg-clean');
-window.__cfg = { renderer, draw, invalidate: () => {}, stopCam: () => { camTween = null; }, camera, controls, state, scene, world, dims: () => dims, price, thumbs, update, setMode, goView, setDoor, doorAt: t => { doorAnimStart = null; doorT = t; doorTarget = t >= 1 ? 1 : 0; doorRig.animate(t); }, THREE };
+window.__cfg = { renderer, draw, photo, loadPhoto, exportPhoto, invalidate: () => {}, stopCam: () => { camTween = null; }, camera, controls, state, scene, world, dims: () => dims, price, thumbs, update, setMode, goView, setDoor, doorAt: t => { doorAnimStart = null; doorT = t; doorTarget = t >= 1 ? 1 : 0; doorRig.animate(t); }, THREE };
 buildWorld(); buildDoor(); renderUI();
 setMode(state.mode === 'photo' ? 'house' : state.mode);
 goView(q.get('view') || (state.mode === 'house' ? 'front' : 'studio'), true);
