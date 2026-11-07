@@ -1,7 +1,7 @@
 /* DTT Tor-Studio · Haus und Umgebung (aus Konfigurator v3, Wände mit echten Öffnungen) */
 import * as THREE from 'three';
-import { FACADE } from './catalog.js?v=1107e';
-import { box } from './door.js?v=1107e';
+import { FACADE } from './catalog.js?v=1107q';
+import { box } from './door.js?v=1107q';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const plane = (w, h, mat, x, y, z) => {
